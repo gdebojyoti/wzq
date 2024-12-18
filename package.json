@@ -1,0 +1,25 @@
+{
+  "name": "wzq",
+  "version": "0.1.0",
+  "description": "Wuziqi is a turn-based multiplayer game where the goal is to be the first to occupy five consecutive cells - either horizontally, vertically, or diagonally",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "next": "^15.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/react": "19.0.1",
+    "typescript": "5.7.2"
+  }
+}
