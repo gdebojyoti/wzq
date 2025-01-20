@@ -3,11 +3,11 @@ const Button = ({ children, type, className: overrideClassName = '' }) => {
 
   switch (type) {
     case 'primary': {
-      className += ' bg-purple-600'
+      className += ' bg-[#9B59B6]'
       break
     }
     case 'secondary': {
-      className += ' text-purple-600 border border-purple-600'
+      className += ' text-[#9B59B6] border border-[#9B59B6]'
       break
     }
   }

@@ -21,8 +21,8 @@ const Page = () => {
       break
   }
   
-  return <main className='h-screen bg-gray-900 text-gray-50'>
-    <div className='w-full max-w-md h-full mx-auto bg-gray-800'>
+  return <main className='h-screen bg-[#222] text-white'>
+    <div className='w-full max-w-md h-full mx-auto bg-[#333]'>
       <ScreenComponent />
     </div>
   </main>

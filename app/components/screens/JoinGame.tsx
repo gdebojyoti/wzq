@@ -12,7 +12,7 @@ const JoinGame = () => {
       <div className="w-full flex flex-col items-center relative">
         <div>Enter game code</div>
         <input type='text' placeholder="987987" className="w-[200px] mt-5 border-b text-6xl text-center outline-none placeholder:opacity-30" />
-        <div className="absolute top-full mt-5 text-center text-red-400">Incorrect code. Please try again</div>
+        <div className="absolute top-full mt-5 text-center text-[#D93D3D]">Incorrect code. Please try again</div>
       </div>
 
       <Button type='primary'>Join Game</Button>
