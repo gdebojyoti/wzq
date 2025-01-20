@@ -5,7 +5,13 @@ import Landing from './components/screens/Landing'
 const Page = () => {
   const screen = 'LANDING'
 
-  let ScreenComponent = Landing
+  let ScreenComponent = null
+
+  switch (screen) {
+    case 'LANDING':
+      ScreenComponent = Landing
+      break
+  }
   
   return <main className='h-screen bg-gray-900 text-gray-50'>
     <div className='w-full max-w-md h-full mx-auto bg-gray-800'>
