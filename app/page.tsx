@@ -3,9 +3,10 @@ import React from 'react'
 import Landing from './components/screens/Landing'
 import Lobby from './components/screens/Lobby'
 import Join from './components/screens/Join'
+import Game from './components/screens/Game'
 
 const Page = () => {
-  const screen: string = 'JOIN_GAME'
+  const screen: string = 'GAME'
 
   let ScreenComponent = null
 
@@ -18,6 +19,9 @@ const Page = () => {
       break
     case 'JOIN_GAME':
       ScreenComponent = Join
+      break
+    case 'GAME':
+      ScreenComponent = Game
       break
   }
   
