@@ -1,9 +1,17 @@
 import React from 'react'
 
+import Landing from './components/screens/Landing'
+
 const Page = () => {
-  return <h1 className='text-red-500 bg-blue-300 text-xl text-green-300 '>
-    I got in
-  </h1>
+  const screen = 'LANDING'
+
+  let ScreenComponent = Landing
+  
+  return <main className='h-screen bg-gray-900 text-gray-50'>
+    <div className='w-full max-w-md h-full mx-auto bg-gray-800'>
+      <ScreenComponent />
+    </div>
+  </main>
 }
 
 export default Page
