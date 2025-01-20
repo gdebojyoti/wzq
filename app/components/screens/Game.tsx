@@ -6,7 +6,7 @@ import Users from "../game/Users"
 const Game = () => {
   return (
     <div className="h-full flex flex-col justify-around items-center relative">
-      <Heading>It's <strong>your</strong> turn</Heading>
+      <Heading>It&apos;s <strong>your</strong> turn</Heading>
 
       <BackButton />
 
