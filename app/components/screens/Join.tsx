@@ -2,7 +2,7 @@ import Heading from "../common/Heading"
 import BackButton from "../common/BackButton"
 import Button from "../common/Button"
 
-const JoinGame = () => {
+const Join = () => {
   return (
     <div className="h-full flex flex-col justify-around items-center relative">
       <Heading>Join Game</Heading>
@@ -20,4 +20,4 @@ const JoinGame = () => {
   )
 }
 
-export default JoinGame
+export default Join

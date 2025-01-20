@@ -2,7 +2,7 @@ import React from 'react'
 
 import Landing from './components/screens/Landing'
 import Lobby from './components/screens/Lobby'
-import JoinGame from './components/screens/JoinGame'
+import Join from './components/screens/Join'
 
 const Page = () => {
   const screen: string = 'JOIN_GAME'
@@ -17,7 +17,7 @@ const Page = () => {
       ScreenComponent = Lobby
       break
     case 'JOIN_GAME':
-      ScreenComponent = JoinGame
+      ScreenComponent = Join
       break
   }
   
