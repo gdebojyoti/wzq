@@ -1,4 +1,4 @@
-const Button = ({ children, type, className: overrideClassName = '' }) => {
+const Button = ({ children, type, onClick, className: overrideClassName = '' }) => {
   let className = 'w-40 h-10 rounded-full ' + overrideClassName
 
   switch (type) {
@@ -13,7 +13,7 @@ const Button = ({ children, type, className: overrideClassName = '' }) => {
   }
 
   return (
-    <button className={className}>
+    <button className={className} onClick={onClick}>
       {children}
     </button>
   )
