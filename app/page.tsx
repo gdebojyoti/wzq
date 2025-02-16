@@ -6,7 +6,7 @@ import Join from './components/screens/Join'
 import Game from './components/screens/Game'
 
 const Page = () => {
-  const screen: string = 'GAME'
+  const screen: string = 'LANDING'
 
   let ScreenComponent = null
 
