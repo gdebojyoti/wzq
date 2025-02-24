@@ -9,7 +9,7 @@ import Game from './Game'
 
 const ScreenComponent = () => {
   const [screen, setScreen] = useState('LANDING')
-  
+
   let Component = null
 
   switch (screen) {
@@ -26,7 +26,7 @@ const ScreenComponent = () => {
       Component = Game
       break
   }
-  
+
   return <Component setScreen={setScreen} />
 }
 

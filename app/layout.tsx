@@ -4,7 +4,7 @@ import './globals.css'
 
 const RootLayout = ({ children }) => {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>{children}</body>
     </html>
   )

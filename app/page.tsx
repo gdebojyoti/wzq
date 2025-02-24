@@ -4,7 +4,6 @@ import ScreenComponent from './components/screens/ScreenComponent'
 import SocketProvider from './contexts/SocketContext'
 
 const Page = () => {
-  
   return (
     <SocketProvider>
       <main className='h-screen bg-[#222] text-white'>
