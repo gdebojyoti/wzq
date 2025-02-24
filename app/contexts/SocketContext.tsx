@@ -1,7 +1,10 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { io, Socket } from 'socket.io-client'
+
+import { setGameData } from '../store/slices/gameSlice'
 
 const SocketContext = createContext < Socket > (null)
 
@@ -12,6 +15,8 @@ export const useSocket = () => {
 const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState < Socket > (null)
 
+  const dispatch = useDispatch()
+
   useEffect(() => {
     console.log('connecting to socket')
     const socketInstance = io('http://localhost:3001/')
@@ -21,6 +26,10 @@ const SocketProvider = ({ children }) => {
     // TODO: temporary; delete this
     socketInstance.on('message', (arg) => {
       console.log('msg from socket server:', arg) // world
+    })
+
+    socketInstance.on('GAME_CREATED', (data) => {
+      dispatch(setGameData(data))
     })
 
     return () => {
