@@ -3,6 +3,8 @@ import BackButton from "../common/BackButton"
 import Button from "../common/Button"
 
 const Join = () => {
+  const onJoin = () => {}
+
   return (
     <div className="h-full flex flex-col justify-around items-center relative">
       <Heading>Join Game</Heading>
@@ -15,7 +17,7 @@ const Join = () => {
         <div className="absolute top-full mt-5 text-center text-[#D93D3D]">Incorrect code. Please try again</div>
       </div>
 
-      <Button type='primary'>Join Game</Button>
+      <Button type='primary' onClick={onJoin}>Join Game</Button>
     </div>
   )
 }
