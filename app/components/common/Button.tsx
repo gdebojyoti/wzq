@@ -1,5 +1,5 @@
 const Button = ({ children, type, onClick, className: overrideClassName = '' }) => {
-  let className = 'w-40 h-10 rounded-full ' + overrideClassName
+  let className = 'w-40 h-10 rounded-full cursor-pointer ' + overrideClassName
 
   switch (type) {
     case 'primary': {
