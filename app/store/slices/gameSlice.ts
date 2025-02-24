@@ -12,11 +12,11 @@ const gameSlice = createSlice({
     setGameData: (initialState, action) => {
       initialState.data = action.payload
     },
-    updateGameScreen: (initialState, action) => {
+    updateScreen: (initialState, action) => {
       initialState.screen = action.payload
     }
   }
 })
 
-export const { setGameData, updateGameScreen } = gameSlice.actions
+export const { setGameData, updateScreen } = gameSlice.actions
 export default gameSlice.reducer

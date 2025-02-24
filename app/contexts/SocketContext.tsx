@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { io, Socket } from 'socket.io-client'
 
-import { setGameData, updateGameScreen } from '../store/slices/gameSlice'
+import { setGameData, updateScreen } from '../store/slices/gameSlice'
 
 const SocketContext = createContext < Socket > (null)
 
@@ -33,7 +33,7 @@ const SocketProvider = ({ children }) => {
 
     socketInstance.on('GAME_CREATED', (data) => {
       dispatch(setGameData(data))
-      dispatch(updateGameScreen('LOBBY'))
+      dispatch(updateScreen('LOBBY'))
     })
 
     return () => {

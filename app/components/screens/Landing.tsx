@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import Logo from '../common/Logo'
 import Button from '../common/Button'
 import { useSocket } from '../../contexts/SocketContext'
-import { updateGameScreen } from '../../store/slices/gameSlice'
+import { updateScreen } from '../../store/slices/gameSlice'
 
 const Landing = () => {
   const socket = useSocket()
@@ -17,7 +17,7 @@ const Landing = () => {
   }
 
   const joinGame = () => {
-    dispatch(updateGameScreen('JOIN_GAME'))
+    dispatch(updateScreen('JOIN_GAME'))
   }
 
   return (
