@@ -1,6 +1,5 @@
-'use client'
-
-import React, { useState } from 'react'
+import React from 'react'
+import { useSelector } from 'react-redux'
 
 import Landing from './Landing'
 import Lobby from './Lobby'
@@ -8,7 +7,8 @@ import Join from './Join'
 import Game from './Game'
 
 const ScreenComponent = () => {
-  const [screen, setScreen] = useState('LANDING')
+  // @ts-expect-error TODO: replace standardjs with eslint
+  const screen = useSelector(state => state.game.screen)
 
   let Component = null
 
@@ -27,7 +27,9 @@ const ScreenComponent = () => {
       break
   }
 
-  return <Component setScreen={setScreen} />
+  return (
+    <Component />
+  )
 }
 
 export default ScreenComponent

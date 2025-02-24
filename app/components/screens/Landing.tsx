@@ -1,20 +1,23 @@
+import { useDispatch } from 'react-redux'
+
 import Logo from '../common/Logo'
 import Button from '../common/Button'
 import { useSocket } from '../../contexts/SocketContext'
+import { updateGameScreen } from '../../store/slices/gameSlice'
 
-const Landing = ({ setScreen }) => {
+const Landing = () => {
   const socket = useSocket()
+  const dispatch = useDispatch()
 
   const hostGame = () => {
     socket.emit('HOST_GAME', {
       name: 'Deb',
       gridSize: 16
     })
-    setScreen('LOBBY')
   }
 
   const joinGame = () => {
-    setScreen('JOIN_GAME')
+    dispatch(updateGameScreen('JOIN_GAME'))
   }
 
   return (
