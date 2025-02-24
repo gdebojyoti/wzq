@@ -1,8 +1,15 @@
 import Logo from "../common/Logo"
 import Button from "../common/Button"
+import { useSocket } from "../../contexts/SocketContext"
 
 const Landing = ({ setScreen }) => {
+  const socket = useSocket()
+
   const hostGame = () => {
+    socket.emit('HOST_GAME', {
+      name: 'Deb',
+      gridSize: 16
+    })
     setScreen('LOBBY')
   }
 
