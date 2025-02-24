@@ -2,7 +2,11 @@ import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
   screen: 'LANDING',
-  data: {}
+  data: {},
+  error: {
+    type: '',
+    msg: ''
+  }
 }
 
 const gameSlice = createSlice({
@@ -14,9 +18,12 @@ const gameSlice = createSlice({
     },
     updateScreen: (initialState, action) => {
       initialState.screen = action.payload
+    },
+    setError: (initialState, action) => {
+      initialState.error = action.payload
     }
   }
 })
 
-export const { setGameData, updateScreen } = gameSlice.actions
+export const { setGameData, updateScreen, setError } = gameSlice.actions
 export default gameSlice.reducer
