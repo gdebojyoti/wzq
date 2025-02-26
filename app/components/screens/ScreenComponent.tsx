@@ -10,7 +10,7 @@ const ScreenComponent = () => {
   // @ts-expect-error TODO: replace standardjs with eslint
   const screen = useSelector(state => state.game.screen)
 
-  let Component = null
+  let Component = () => null
 
   switch (screen) {
     case 'LANDING':
@@ -22,7 +22,7 @@ const ScreenComponent = () => {
     case 'JOIN_GAME':
       Component = Join
       break
-    case 'GAME':
+    case 'ONGOING':
       Component = Game
       break
   }

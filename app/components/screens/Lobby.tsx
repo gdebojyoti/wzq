@@ -1,8 +1,13 @@
+import { useSelector } from 'react-redux'
+
 import Heading from '../common/Heading'
 import BackButton from '../common/BackButton'
 import Button from '../common/Button'
 
 const Lobby = () => {
+  // @ts-expect-error TODO: replace standardjs with eslint
+  const code = useSelector(state => state.game.data.code)
+
   const onShare = () => {}
 
   return (
@@ -13,7 +18,7 @@ const Lobby = () => {
 
       <div className='flex flex-col items-center'>
         <div>Your game code is</div>
-        <div className='mt-5 text-6xl'>932110</div>
+        <div className='mt-5 text-6xl'>{code}</div>
       </div>
 
       <div className='flex flex-col items-center'>
