@@ -7,6 +7,7 @@ import { io, Socket } from 'socket.io-client'
 import { setGameData, updateScreen, setError } from '../store/slices/gameSlice'
 
 import { checkAndSetUserId } from './actions'
+import { saveGameInfoLocally } from '../components/screens/actions'
 
 const SocketContext = createContext < Socket > (null)
 
@@ -33,11 +34,17 @@ const SocketProvider = ({ children }) => {
     socketInstance.on('GAME_CREATED', (data) => {
       dispatch(setGameData(data))
       dispatch(updateScreen('LOBBY'))
+
+      const { id } = data
+      saveGameInfoLocally(id)
     })
 
     socketInstance.on('GAME_STARTED', (data) => {
       console.log('starting game', data)
-      dispatch(updateScreen('GAME'))
+      dispatch(updateScreen('ONGOING'))
+
+      const { id } = data
+      saveGameInfoLocally(id)
     })
 
     socketInstance.on('SYNC_GAME_DETAILS', (data) => {

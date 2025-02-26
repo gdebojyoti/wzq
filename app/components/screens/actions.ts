@@ -32,3 +32,10 @@ export function checkForOngoingGames () {
 
   return id
 }
+
+export function saveGameInfoLocally (id) {
+  const gameDetails = {
+    id
+  }
+  window.localStorage.setItem(GAME_DETAILS_KEY, JSON.stringify(gameDetails))
+}
