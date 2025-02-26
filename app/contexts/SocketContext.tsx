@@ -6,6 +6,8 @@ import { io, Socket } from 'socket.io-client'
 
 import { setGameData, updateScreen, setError } from '../store/slices/gameSlice'
 
+import { checkAndSetUserId } from './actions'
+
 const SocketContext = createContext < Socket > (null)
 
 export const useSocket = () => {
@@ -21,6 +23,8 @@ const SocketProvider = ({ children }) => {
     if (!dispatch) {
       return
     }
+
+    checkAndSetUserId(dispatch)
 
     const socketInstance = io('http://localhost:3001/')
 
