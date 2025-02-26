@@ -18,13 +18,13 @@ const Row = ({ index }) => {
 }
 
 const Cell = ({ children }) => {
-  console.log(Math.floor(GRID_WIDTH / CELL_COUNT))
+  const size = Math.floor(GRID_WIDTH / CELL_COUNT)
   return (
     <div
       className='flex justify-center items-center text-[8px] text-[#777] border-[.5px] border-[#5F5F5F] cursor-pointer hover:bg-[#6f6f6f] transition-colors'
       style={{
-        width: `${Math.floor(GRID_WIDTH / CELL_COUNT)}px`,
-        height: `${Math.floor(GRID_WIDTH / CELL_COUNT)}px`
+        width: `${size}px`,
+        height: `${size}px`
       }}
     >
       {children}
