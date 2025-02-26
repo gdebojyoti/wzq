@@ -40,7 +40,16 @@ const SocketProvider = ({ children }) => {
       dispatch(updateScreen('GAME'))
     })
 
+    socketInstance.on('SYNC_GAME_DETAILS', (data) => {
+      console.log('synced with server', data)
+      dispatch(setGameData(data))
+
+      const { status } = data
+      dispatch(updateScreen(status))
+    })
+
     socketInstance.on('ERROR', (data) => {
+      console.warn('error occurred', data)
       dispatch(setError(data))
     })
 
