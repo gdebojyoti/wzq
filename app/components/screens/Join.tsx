@@ -12,10 +12,13 @@ const Join = () => {
 
   // @ts-expect-error TODO: replace standardjs with eslint
   const { type: errorType, msg: errorMsg } = useSelector(state => state.game.error)
+  // @ts-expect-error TODO: replace standardjs with eslint
+  const playerId = useSelector(state => state.user.id)
 
   const onJoin = () => {
     socket.emit('JOIN_GAME', {
-      gameCode: text
+      gameCode: text,
+      playerId
     })
   }
 
