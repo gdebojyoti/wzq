@@ -1,7 +1,21 @@
 import config from '../../config.json'
+import { CellStatus } from '../../types/entities'
 
-const Cell = ({ children, onClick }) => {
+const Cell = ({ children, cellStatus, onClick }: CellType) => {
   const size = Math.floor(config.GRID_WIDTH / config.CELL_COUNT)
+
+  let decorator = null
+  switch (cellStatus) {
+    case CellStatus.Self: {
+      decorator = 'X'
+      break
+    }
+    case CellStatus.Opponent: {
+      decorator = 'O'
+      break
+    }
+  }
+
   return (
     <div
       onClick={onClick}
@@ -11,9 +25,16 @@ const Cell = ({ children, onClick }) => {
         height: `${size}px`
       }}
     >
+      {decorator}
       {children}
     </div>
   )
+}
+
+type CellType = {
+  children?: React.ReactNode
+  cellStatus: CellStatus
+  onClick: (event: React.MouseEvent<HTMLDivElement>) => void
 }
 
 export default Cell

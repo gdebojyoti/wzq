@@ -5,6 +5,7 @@ import { useSocket } from '../../contexts/SocketContext'
 import config from '../../config.json'
 
 import Cell from './Cell'
+import { CellStatus } from '../../types/entities'
 
 const Grid = () => {
   // @ts-expect-error TODO: replace standardjs with eslint
@@ -53,9 +54,10 @@ const Grid = () => {
         return (
           <div key={rowIndex} className='flex'>
             {(new Array(config.CELL_COUNT).fill('').map((_, colIndex) => {
+              const cellStatus = getCellStatus(turns, rowIndex, colIndex, playerId)
               return (
-                <Cell key={colIndex} onClick={() => takeTurn(rowIndex, colIndex)}>
-                  {rowIndex} : {rowIndex * config.CELL_COUNT + colIndex + 1}
+                <Cell key={colIndex} cellStatus={cellStatus} onClick={() => takeTurn(rowIndex, colIndex)}>
+                  {/* {rowIndex} : {rowIndex * config.CELL_COUNT + colIndex + 1} */}
                 </Cell>
               )
             }))}
@@ -75,6 +77,16 @@ function checkIfPlayersTurn (turns, playerId, hostPlayerId) {
   // check player id from most recent turn; current turn belongs to the other player
   const mostRecentTurn = turns[turns.length - 1]
   return mostRecentTurn.playerId !== playerId
+}
+
+function getCellStatus (turns, rowIndex, colIndex, currentPlayerId) {
+  const cell = turns.find(({ cell: { rowId, colId } }) => (rowId === rowIndex && colId === colIndex))
+  if (!cell) {
+    return CellStatus.Empty
+  }
+
+  const { playerId } = cell
+  return playerId === currentPlayerId ? CellStatus.Self : CellStatus.Opponent
 }
 
 export default Grid

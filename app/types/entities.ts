@@ -45,3 +45,9 @@ export type GameError = {
   type: string
   msg: string
 }
+
+export enum CellStatus {
+  Empty = 'EMPTY', // unoccupied
+  Self = 'SELF', // occupied by current player
+  Opponent = 'OPPONENT' // occupied by opponent player
+}
