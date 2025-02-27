@@ -1,17 +1,23 @@
 import config from '../../config.json'
 import { CellStatus } from '../../types/entities'
 
+// import sun from '../../../assets/sun.png'
+// import moon from '../../../assets/moon.png'
+import mars from '../../../assets/mars.png'
+import neptune from '../../../assets/neptune.png'
+
 const Cell = ({ children, cellStatus, onClick }: CellType) => {
   const size = Math.floor(config.GRID_WIDTH / config.CELL_COUNT)
 
   let decorator = null
+  const imgClass = 'w-[75%] h-[75%] object-contain'
   switch (cellStatus) {
     case CellStatus.Self: {
-      decorator = 'X'
+      decorator = <img src={mars.src} className={imgClass} />
       break
     }
     case CellStatus.Opponent: {
-      decorator = 'O'
+      decorator = <img src={neptune.src} className={imgClass} />
       break
     }
   }
