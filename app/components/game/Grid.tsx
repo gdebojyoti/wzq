@@ -29,6 +29,12 @@ const Grid = () => {
       return
     }
 
+    // check if the cell is occupied
+    const isCellOccupied = turns.find(({ cell }) => (cell.rowId === rowId && cell.colId === colId))
+    if (isCellOccupied) {
+      return
+    }
+
     const turn = {
       cell: {
         rowId,
