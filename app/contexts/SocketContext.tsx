@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { io, Socket } from 'socket.io-client'
 
-import { setGameData, updateScreen, setError } from '../store/slices/gameSlice'
+import { setGameData, updateScreen, setError, addTurn } from '../store/slices/gameSlice'
 
 import { checkAndSetUserId } from './actions'
 import { saveGameInfoLocally } from '../components/screens/actions'
@@ -53,6 +53,11 @@ const SocketProvider = ({ children }) => {
 
       const { status } = data
       dispatch(updateScreen(status))
+    })
+
+    socketInstance.on('TURN_TAKEN', (data) => {
+      console.log('turn complete', data)
+      dispatch(addTurn(data))
     })
 
     socketInstance.on('ERROR', (data) => {
