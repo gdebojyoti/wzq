@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 
 import { useSocket } from '../../contexts/SocketContext'
+import config from '../../config.json'
 
-const CELL_COUNT = 16
-const GRID_WIDTH = 380
+import Cell from './Cell'
 
 const Grid = () => {
   // @ts-expect-error TODO: replace standardjs with eslint
@@ -49,35 +49,19 @@ const Grid = () => {
 
   return (
     <div className={`border-[.5px] border-[#5F5F5F] ${!isPlayersTurn && 'pointer-events-none'}`}>
-      {(new Array(CELL_COUNT).fill('').map((_, rowIndex) => {
+      {(new Array(config.CELL_COUNT).fill('').map((_, rowIndex) => {
         return (
           <div key={rowIndex} className='flex'>
-            {(new Array(CELL_COUNT).fill('').map((_, colIndex) => {
+            {(new Array(config.CELL_COUNT).fill('').map((_, colIndex) => {
               return (
                 <Cell key={colIndex} onClick={() => takeTurn(rowIndex, colIndex)}>
-                  {rowIndex} : {rowIndex * CELL_COUNT + colIndex + 1}
+                  {rowIndex} : {rowIndex * config.CELL_COUNT + colIndex + 1}
                 </Cell>
               )
             }))}
           </div>
         )
       }))}
-    </div>
-  )
-}
-
-const Cell = ({ children, onClick }) => {
-  const size = Math.floor(GRID_WIDTH / CELL_COUNT)
-  return (
-    <div
-      onClick={onClick}
-      className='flex justify-center items-center text-[8px] text-[#777] border-[.5px] border-[#5F5F5F] cursor-pointer hover:bg-[#6f6f6f] transition-colors'
-      style={{
-        width: `${size}px`,
-        height: `${size}px`
-      }}
-    >
-      {children}
     </div>
   )
 }
