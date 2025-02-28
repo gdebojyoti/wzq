@@ -1,35 +1,98 @@
-const CELL_COUNT = 16
-const GRID_WIDTH = 380
+import { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
+
+import { useSocket } from '../../contexts/SocketContext'
+import config from '../../config.json'
+
+import Cell from './Cell'
+import { CellStatus } from '../../types/entities'
 
 const Grid = () => {
+  // @ts-expect-error TODO: replace standardjs with eslint
+  const playerId = useSelector(state => state.user.id)
+  // @ts-expect-error TODO: replace standardjs with eslint
+  const { id, hostPlayerId, turns } = useSelector(state => state.game.data)
+
+  const socket = useSocket()
+
+  const [turnsLocal, setTurnsLocal] = useState([])
+
+  useEffect(() => {
+    setTurnsLocal([...turns])
+  }, [turns])
+
+  const isPlayersTurn = checkIfPlayersTurn(turnsLocal, playerId, hostPlayerId)
+
+  // when player clicks on a cell
+  const takeTurn = (rowId, colId) => {
+    if (!isPlayersTurn) {
+      return
+    }
+
+    // check if the cell is occupied
+    const isCellOccupied = turns.find(({ cell }) => (cell.rowId === rowId && cell.colId === colId))
+    if (isCellOccupied) {
+      return
+    }
+
+    const turn = {
+      cell: {
+        rowId,
+        colId
+      },
+      playerId
+    }
+
+    setTurnsLocal([
+      ...turnsLocal,
+      turn
+    ])
+
+    socket.emit('TAKE_TURN', {
+      ...turn,
+      gameId: id
+    })
+  }
+
   return (
-    <div className='border-[.5px] border-[#5F5F5F]'>
-      {(new Array(CELL_COUNT).fill('').map((_, i) => <Row key={i} index={i} />))}
+    <div className={`border-[.5px] border-[#5F5F5F] ${!isPlayersTurn && 'pointer-events-none'}`}>
+      {(new Array(config.CELL_COUNT).fill('').map((_, rowIndex) => {
+        return (
+          <div key={rowIndex} className='flex'>
+            {(new Array(config.CELL_COUNT).fill('').map((_, colIndex) => {
+              const cellStatus = getCellStatus(turns, rowIndex, colIndex, playerId)
+              return (
+                <Cell key={colIndex} cellStatus={cellStatus} onClick={() => takeTurn(rowIndex, colIndex)}>
+                  {/* {rowIndex} : {rowIndex * config.CELL_COUNT + colIndex + 1} */}
+                </Cell>
+              )
+            }))}
+          </div>
+        )
+      }))}
     </div>
   )
 }
 
-const Row = ({ index }) => {
-  return (
-    <div className='flex'>
-      {(new Array(CELL_COUNT).fill('').map((_, i) => <Cell key={i}>{index * CELL_COUNT + i + 1}</Cell>))}
-    </div>
-  )
+function checkIfPlayersTurn (turns, playerId, hostPlayerId) {
+  // if no turns have been taken host player takes the first turn
+  if (!turns.length) {
+    return playerId === hostPlayerId
+  }
+
+  // check player id from most recent turn; current turn belongs to the other player
+  const mostRecentTurn = turns[turns.length - 1]
+  return mostRecentTurn.playerId !== playerId
 }
 
-const Cell = ({ children }) => {
-  console.log(Math.floor(GRID_WIDTH / CELL_COUNT))
-  return (
-    <div
-      className='flex justify-center items-center text-[8px] text-[#777] border-[.5px] border-[#5F5F5F] cursor-pointer hover:bg-[#6f6f6f] transition-colors'
-      style={{
-        width: `${Math.floor(GRID_WIDTH / CELL_COUNT)}px`,
-        height: `${Math.floor(GRID_WIDTH / CELL_COUNT)}px`
-      }}
-    >
-      {children}
-    </div>
-  )
+function getCellStatus (turns, rowIndex, colIndex, currentPlayerId) {
+  const cell = turns.find(({ cell: { rowId, colId } }) => (rowId === rowIndex && colId === colIndex))
+  if (!cell) {
+    return CellStatus.Empty
+  }
+
+  const { playerId } = cell
+  return playerId === currentPlayerId ? CellStatus.Self : CellStatus.Opponent
 }
 
 export default Grid
