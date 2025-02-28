@@ -8,6 +8,7 @@ import { setGameData, updateScreen, setError, addTurn } from '../store/slices/ga
 
 import { checkAndSetUserId } from './actions'
 import { saveGameInfoLocally } from '../components/screens/actions'
+import getScreenFromStatus from '../utils/getScreenFromStatus'
 
 const SocketContext = createContext < Socket > (null)
 
@@ -52,7 +53,8 @@ const SocketProvider = ({ children }) => {
       dispatch(setGameData(data))
 
       const { status } = data
-      dispatch(updateScreen(status))
+      console.log('getScreenFromStatus(status)', getScreenFromStatus(status))
+      dispatch(updateScreen(getScreenFromStatus(status)))
     })
 
     socketInstance.on('TURN_TAKEN', (data) => {

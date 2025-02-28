@@ -21,7 +21,7 @@ export enum GameScreen {
   Landing = 'LANDING',
   Lobby = 'LOBBY',
   JoinGame = 'JOIN_GAME',
-  Ongoing = 'ONGOING'
+  Game = 'GAME'
 }
 
 export enum GameStatus {
