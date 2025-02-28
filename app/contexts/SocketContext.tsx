@@ -60,6 +60,10 @@ const SocketProvider = ({ children }) => {
       dispatch(addTurn(data))
     })
 
+    socketInstance.on('GAME_OVER', (data) => {
+      console.log('GAME OVER!!', data)
+    })
+
     socketInstance.on('ERROR', (data) => {
       console.warn('error occurred', data)
       dispatch(setError(data))
