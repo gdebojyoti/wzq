@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-import { GameData, GameScreen } from '../../types/entities'
+import { GameData, GameScreen, GameStatus } from '../../types/entities'
 
 const initialState: GameData = {
   screen: GameScreen.Landing,
@@ -38,6 +38,10 @@ const gameSlice = createSlice({
     setError: (initialState, action) => {
       initialState.error = action.payload
     },
+    gameOver: (initialState, action) => {
+      initialState.data.status = GameStatus.Completed
+      initialState.data.winnerPlayerId = action.payload.winnerPlayerId
+    },
     resetGame: (initialState) => {
       initialState.data = {
         id: '',
@@ -55,5 +59,5 @@ const gameSlice = createSlice({
   }
 })
 
-export const { setGameData, updateScreen, addTurn, setError, resetGame } = gameSlice.actions
+export const { setGameData, updateScreen, addTurn, setError, gameOver, resetGame } = gameSlice.actions
 export default gameSlice.reducer

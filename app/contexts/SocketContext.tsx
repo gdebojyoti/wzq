@@ -4,11 +4,12 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { io, Socket } from 'socket.io-client'
 
-import { setGameData, updateScreen, setError, addTurn } from '../store/slices/gameSlice'
+import { setGameData, updateScreen, setError, addTurn, gameOver } from '../store/slices/gameSlice'
 
 import { checkAndSetUserId } from './actions'
 import { saveGameInfoLocally } from '../components/screens/actions'
 import getScreenFromStatus from '../utils/getScreenFromStatus'
+import { GameScreen } from '../types/entities'
 
 const SocketContext = createContext < Socket > (null)
 
@@ -34,7 +35,7 @@ const SocketProvider = ({ children }) => {
 
     socketInstance.on('GAME_CREATED', (data) => {
       dispatch(setGameData(data))
-      dispatch(updateScreen('LOBBY'))
+      dispatch(updateScreen(GameScreen.Lobby))
 
       const { id } = data
       saveGameInfoLocally(id)
@@ -42,7 +43,8 @@ const SocketProvider = ({ children }) => {
 
     socketInstance.on('GAME_STARTED', (data) => {
       console.log('starting game', data)
-      dispatch(updateScreen('ONGOING'))
+      dispatch(setGameData(data))
+      dispatch(updateScreen(GameScreen.Game))
 
       const { id } = data
       saveGameInfoLocally(id)
@@ -64,6 +66,7 @@ const SocketProvider = ({ children }) => {
 
     socketInstance.on('GAME_OVER', (data) => {
       console.log('GAME OVER!!', data)
+      dispatch(gameOver(data))
     })
 
     socketInstance.on('ERROR', (data) => {
