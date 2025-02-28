@@ -1,6 +1,9 @@
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import Button from '../common/Button'
+import { resetGame, updateScreen } from '../../store/slices/gameSlice'
+import config from '../../config.json'
+import { GameScreen } from '../../types/entities'
 
 const GameOver = () => {
   // @ts-expect-error TODO: replace standardjs with eslint
@@ -8,13 +11,24 @@ const GameOver = () => {
   // @ts-expect-error TODO: replace standardjs with eslint
   const winnerPlayerId = useSelector(state => state.game.data.winnerPlayerId)
 
+  const dispatch = useDispatch()
+
   const didWin = playerId === winnerPlayerId
 
   const emoji = didWin ? '🍻' : '😿'
   const h2 = didWin ? 'Congratulations!' : 'Tough luck!'
   const h3 = <>You have <strong>{didWin ? 'won' : 'lost'}</strong></>
 
-  const goHome = () => {}
+  const goHome = () => {
+    // clear local storage
+    window.localStorage.removeItem(config.GAME_DETAILS_KEY)
+
+    // reset game data in redux store
+    dispatch(resetGame())
+
+    // set screen to home
+    dispatch(updateScreen(GameScreen.Landing))
+  }
 
   return (
     <div className='fixed flex justify-center items-center w-full h-full bg-[#0009]'>

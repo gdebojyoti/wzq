@@ -37,9 +37,23 @@ const gameSlice = createSlice({
     },
     setError: (initialState, action) => {
       initialState.error = action.payload
+    },
+    resetGame: (initialState) => {
+      initialState.data = {
+        id: '',
+        code: '',
+        rowSize: 16,
+        colSize: 16,
+        status: null,
+        playerIds: [],
+        hostPlayerId: '',
+        winnerPlayerId: '',
+        createdAt: 0,
+        turns: []
+      }
     }
   }
 })
 
-export const { setGameData, updateScreen, addTurn, setError } = gameSlice.actions
+export const { setGameData, updateScreen, addTurn, setError, resetGame } = gameSlice.actions
 export default gameSlice.reducer
