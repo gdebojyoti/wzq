@@ -1,6 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 
+import { GameScreen } from '../../types/entities'
 import Landing from './Landing'
 import Lobby from './Lobby'
 import Join from './Join'
@@ -13,16 +14,16 @@ const ScreenComponent = () => {
   let Component = () => null
 
   switch (screen) {
-    case 'LANDING':
+    case GameScreen.Landing:
       Component = Landing
       break
-    case 'LOBBY':
+    case GameScreen.Lobby:
       Component = Lobby
       break
-    case 'JOIN_GAME':
+    case GameScreen.JoinGame:
       Component = Join
       break
-    case 'ONGOING':
+    case GameScreen.Game:
       Component = Game
       break
   }

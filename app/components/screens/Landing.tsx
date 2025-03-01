@@ -5,6 +5,7 @@ import Logo from '../common/Logo'
 import Button from '../common/Button'
 import { useSocket } from '../../contexts/SocketContext'
 import { updateScreen } from '../../store/slices/gameSlice'
+import { GameScreen } from '../../types/entities'
 
 import { checkForOngoingGames } from './actions'
 
@@ -43,7 +44,7 @@ const Landing = () => {
   }
 
   const joinGame = () => {
-    dispatch(updateScreen('JOIN_GAME'))
+    dispatch(updateScreen(GameScreen.JoinGame))
   }
 
   return (

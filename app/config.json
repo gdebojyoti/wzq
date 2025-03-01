@@ -1,4 +1,5 @@
 {
   "CELL_COUNT": 16,
-  "GRID_WIDTH": 380
+  "GRID_WIDTH": 380,
+  "GAME_DETAILS_KEY": "gameDetails"
 }
