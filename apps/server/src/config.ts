@@ -5,17 +5,17 @@ export interface Config {
   webOrigin: string;
 }
 
-export function readConfig(env: NodeJS.ProcessEnv): Config {
+export const readConfig = (env: NodeJS.ProcessEnv): Config => {
   return {
     port: readPort(env.PORT ?? "4000"),
     webOrigin: env.WEB_ORIGIN ?? "http://localhost:8081",
   };
-}
+};
 
-function readPort(value: string): number {
+const readPort = (value: string): number => {
   const port = Number(value);
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
     throw new Error(`PORT must be a port number, got "${value}"`);
   }
   return port;
-}
+};

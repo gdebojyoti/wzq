@@ -8,8 +8,23 @@ export default [
   {
     ignores: ["**/dist/"],
   },
-  // Bug checks only: code style is a convention (tactris's), not enforced, as in tactris.
-  ...neostandard({ ts: true, noStyle: true }),
+  ...neostandard({ ts: true, semi: true }),
+  // tactris's style, where it differs from standard's.
+  {
+    rules: {
+      "@stylistic/quotes": ["error", "double", { avoidEscape: true }],
+      "@stylistic/jsx-quotes": ["error", "prefer-double"],
+      "@stylistic/comma-dangle": ["error", "always-multiline"],
+      "@stylistic/member-delimiter-style": ["error", {
+        multiline: { delimiter: "semi", requireLast: true },
+        singleline: { delimiter: "semi", requireLast: false },
+      }],
+      "@stylistic/arrow-parens": ["error", "always"],
+      "@stylistic/space-before-function-paren": ["error", { anonymous: "always", named: "never", asyncArrow: "always" }],
+      // Components are `export default function`, which this allows; helpers are arrow-function constants.
+      "func-style": ["error", "expression"],
+    },
+  },
   // neostandard's default can't parse import attributes (`with { type: "json" }`) in webpack.config.js.
   { files: ["**/*.js"], languageOptions: { ecmaVersion: "latest" } },
   ...[react.configs.flat.recommended, react.configs.flat["jsx-runtime"], reactHooks.configs.flat.recommended].map((config) => ({
