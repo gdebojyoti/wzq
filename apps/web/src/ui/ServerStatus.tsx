@@ -10,7 +10,7 @@ const display: Record<Status, { label: string, dotColour: string }> = {
   disconnected: { label: 'Not connected to the server', dotColour: 'bg-rose-500' }
 }
 
-export function ServerStatus () {
+export default function ServerStatus () {
   const [status, setStatus] = useState<Status>('connecting')
 
   useEffect(() => {

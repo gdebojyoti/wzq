@@ -46,7 +46,7 @@ export default {
     new webpack.container.ModuleFederationPlugin({
       name: 'wzq',
       filename: 'remoteEntry.js',
-      exposes: { './Wzq': './src/Wzq.tsx' },
+      exposes: { './Wzq': './src/ui/Wzq.tsx' },
       shared: {
         react: { singleton: true, requiredVersion: pkg.dependencies.react },
         'react-dom': { singleton: true, requiredVersion: pkg.dependencies['react-dom'] }

@@ -5,6 +5,4 @@ export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 const serverUrl = process.env.SERVER_URL ?? 'http://localhost:4000'
 
-export function connectToServer (): GameSocket {
-  return io(serverUrl)
-}
+export const connectToServer = (): GameSocket => io(serverUrl)
