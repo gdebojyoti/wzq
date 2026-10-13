@@ -9,4 +9,4 @@ WZQ is one of several games on one site, each at its own path (`<domain>/wzq`, `
 
 ## Consequences
 
-Every game runs on the same origin, and once federated, in the same page. Anything the web app keeps in the browser (`localStorage` keys, cookies it sets itself) is prefixed with `wzq:`, and the server's cookie stays host-only rather than being set on the parent domain.
+Every game runs on the same origin, and once federated, in the same page. Anything the web app keeps in the browser (`localStorage` keys, cookies it sets itself) is named `wzq-<name>`, using only hyphens as separators (for example `wzq-theme`), and the server's cookie stays host-only rather than being set on the parent domain.
