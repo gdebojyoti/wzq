@@ -1,36 +1,31 @@
 {
   "name": "wzq",
-  "version": "1.0.0",
-  "description": "Wuziqi is a turn-based multiplayer game where the goal is to be the first to occupy five consecutive cells - either horizontally, vertically, or diagonally",
-  "main": "index.js",
+  "private": true,
+  "description": "Wuziqi (Gomoku, Five in a row): an online two-player game played between friends.",
+  "license": "ISC",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "npm run build -w @wzq/shared && concurrently -k -n shared,server,web -c magenta,blue,green \"npm run dev -w @wzq/shared\" \"npm run dev -w @wzq/server\" \"npm run dev -w @wzq/web\"",
+    "build": "npm run build --workspaces",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
     "prepare": "husky"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@reduxjs/toolkit": "^2.6.0",
-    "next": "^15.1.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-redux": "^9.2.0",
-    "socket.io-client": "^4.8.1"
-  },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.0-beta.8",
-    "@types/node": "22.10.2",
-    "@types/react": "19.0.1",
-    "eslint": "9.17.0",
-    "eslint-config-next": "15.1.1",
+    "@types/node": "^24.19.2",
+    "concurrently": "^10.0.6",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.0",
     "husky": "^9.1.7",
-    "postcss": "^8.4.49",
-    "standard": "^17.1.2",
-    "tailwindcss": "^4.0.0-beta.8",
-    "typescript": "5.7.2"
+    "neostandard": "^0.14.1",
+    "typescript": "~6.0.3"
   }
 }

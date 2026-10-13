@@ -1,0 +1,30 @@
+{
+  "name": "@wzq/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The WZQ game server: Express and Socket.IO.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "prebuild": "npm run build -w @wzq/shared",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "pretypecheck": "npm run build -w @wzq/shared",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wzq/shared": "*",
+    "express": "^5.3.0",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.4"
+  }
+}

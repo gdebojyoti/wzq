@@ -1,8 +1,20 @@
+## Repo layout
+
+One repo with npm workspaces (ADR-0001). Node 24.
+
+- `apps/web`: Next.js 16 web app, with Tailwind 4. Deploys to Vercel from this folder.
+- `apps/server`: Express and Socket.IO game server. Deploys to Render from this folder. Settings come from `PORT` and `WEB_ORIGIN` (see `.env.example`).
+- `packages/shared` (`@wzq/shared`): the Socket.IO event contract shared by web and server. It's compiled to `dist/`, so build it (`npm run build -w @wzq/shared`) before type-checking an app on its own. The root scripts do this for you.
+
+Root commands: `npm run dev` (starts web and server together), `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`. The pre-commit hook runs lint and typecheck.
+
+The old prototype is kept at the `prototype-v1` tag. `gdebojyoti/wzq.socket` is the retired prototype server and is not developed any more.
+
 ## Agent skills
 
 ### Issue tracker
 
-Issues for both repos (this frontend and the backend `gdebojyoti/wzq.socket`) are tracked only in GitHub Issues on `gdebojyoti/wzq`, using the `gh` CLI with an explicit `--repo gdebojyoti/wzq`. See `docs/agents/issue-tracker.md`.
+All issues are tracked in GitHub Issues on `gdebojyoti/wzq`, using the `gh` CLI with an explicit `--repo gdebojyoti/wzq`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
