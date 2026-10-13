@@ -1,54 +1,69 @@
-# Glossary
+# WZQ
 
-Terms used across WZQ. Use these words in code, issues and docs. The terms in _avoid_ are not used.
+WZQ is an online two-player game of Wuziqi (also called Gomoku or Five in a row), played between friends.
 
-**Game**
-A single match between two players, from creation until it ends.
-_Avoid_: match, room (in user-facing text)
+## Language
 
-**Host**
-The player who created a game. The host moves first.
+### Players
 
-**Player**
-One of the two people in a game. Identified by a **Player ID**.
+**Player**:
+One of the two people in a **Game**. A player is recognised across visits without needing an account.
+_Avoid_: user, opponent (except relative to another player)
 
-**Player ID**
-A UUID that the server issues to a browser and stores in a cookie. It's how the server knows which player is which, and it persists across page refreshes and browser restarts. There are no user accounts.
+**Host**:
+The **Player** who created a **Game**.
+_Avoid_: owner, creator
 
-**Lobby**
-The state of a game before the second player joins. The game code is only valid in the lobby.
+### Game lifecycle
 
-**Game code**
-The six-digit code that the host shares so another player can join. Valid only while the game is in the lobby.
+**Game**:
+A single match between two **Players**, from creation until it ends.
+_Avoid_: match, room
 
-**Board**
-A 16×16 grid of **Cells**.
+**Lobby**:
+The stage of a **Game** before the second **Player** has joined.
+_Avoid_: waiting room
 
-**Cell**
-One position on the board, identified by row and column.
+**Game code**:
+The six-digit code the **Host** shares so another **Player** can join a **Game** in the **Lobby**.
+_Avoid_: room code, invite code
 
-**Turn**
-One player placing a stone on an empty cell.
+**Rejoin**:
+A **Player** returning to a **Game** they are already in, such as after a page refresh or a lost connection.
+_Avoid_: reconnect (in user-facing text)
 
-**Win**
-A player has five or more of their stones in a row horizontally, vertically or diagonally.
+**Leave game**:
+A **Player** choosing to end a **Game** they are in, which makes it **Abandoned**.
+_Avoid_: resign, forfeit, quit
+
+### Play
+
+**Board**:
+The grid of **Cells** a **Game** is played on.
+_Avoid_: grid
+
+**Cell**:
+One position on the **Board**.
+_Avoid_: square, intersection
+
+**Stone**:
+A **Player's** mark on a **Cell**.
+_Avoid_: piece, token
+
+**Turn**:
+A **Player** placing one **Stone** on an empty **Cell**.
+_Avoid_: move
+
+### Outcomes
+
+**Win**:
+The result when a **Player** has five or more **Stones** in an unbroken horizontal, vertical or diagonal line.
 _Avoid_: victory
 
-**Draw**
-All cells are filled and no player has a win. The game ends with no winner.
-_Avoid_: stalemate
+**Draw**:
+The result when every **Cell** is filled and no **Player** has a **Win**.
+_Avoid_: stalemate, tie
 
-**Leave game**
-A player's action to end a game they're in. The game ends as **Abandoned**, with no winner. The button is labelled "Leave game".
-_Avoid_: resign, forfeit
-
-**Abandoned**
-A game ended by a **Leave game** action. It has no winner and is not a draw.
-
-**Rejoin**
-A player returns to a game they're already in, using the same **Player ID**. A page refresh counts as a rejoin. There is no time limit on rejoining in v1.
-
-**Game status**
-The state of a game. One of: Lobby, Ongoing, Completed, Draw, Abandoned.
-
-_Deferred to after v1: timer, rematch, spectator._
+**Abandoned**:
+The result of a **Game** ended by **Leave game**. There is no winner, and it is not a **Draw**.
+_Avoid_: cancelled, forfeited

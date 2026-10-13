@@ -1,19 +1,3 @@
-# 0001: Single repo with npm workspaces
+# Single repo with npm workspaces
 
-## Status
-Accepted
-
-## Context
-WZQ was split into two repos, `wzq` (frontend) and `wzq.socket` (backend), which drifted apart. Their shared types were copied by hand and had already diverged.
-
-## Decision
-Keep one repo, `gdebojyoti/wzq`, with npm workspaces:
-- `apps/web`: Next.js 16, Tailwind 4, strict TypeScript.
-- `apps/server`: Node 24, Express, Socket.IO, TypeScript. Uses `tsx` for development and `tsc` for builds.
-- `packages/shared`: event types shared by both apps. Game rules go here later.
-
-Root has one shared TypeScript base config, ESLint 9, and Husky pre-commit.
-
-## Consequences
-- The contract between web and server lives in one place.
-- Each app deploys independently, with its own root directory on Vercel and Render.
+The prototype was split across two repos (`wzq` and `wzq.socket`), and the event types copied between them by hand had already drifted apart. The rebuild is one repo with npm workspaces: `apps/web` (Next.js), `apps/server` (Express and Socket.IO) and `packages/shared` (the event contract, and later the game rules), so the contract between web and server lives in one place. Each app still deploys on its own, from its own root folder.
