@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues on `gdebojyoti/wzq`, using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues for both repos (this frontend and the backend `gdebojyoti/wzq.socket`) are tracked only in GitHub Issues on `gdebojyoti/wzq`, using the `gh` CLI with an explicit `--repo gdebojyoti/wzq`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

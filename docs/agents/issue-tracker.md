@@ -1,6 +1,8 @@
 # Issue tracker: GitHub
 
-Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Issues and specs for the whole WZQ project, both this frontend repo and the backend repo `gdebojyoti/wzq.socket`, live as GitHub issues on **`gdebojyoti/wzq`**. Use the `gh` CLI for all operations.
+
+**Always pass `--repo gdebojyoti/wzq`** (`-R`) to every `gh issue` / `gh api` call, even when working inside the `wzq.socket` clone, where `gh` would otherwise default to the backend repo. Only file issues on `wzq.socket` when the user explicitly asks for it. When a `wzq.socket` commit or PR resolves an issue, reference it in full (`Fixes gdebojyoti/wzq#<n>`); a bare `#<n>` there points at the backend repo.
 
 ## Conventions
 
@@ -12,7 +14,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: `gh issue close <number> --comment "..."`
 
-Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
+Do not infer the repo from `git remote -v`; the tracker is always `gdebojyoti/wzq` (see above).
 
 ## Pull requests as a triage surface
 
