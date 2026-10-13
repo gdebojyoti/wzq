@@ -1,7 +1,5 @@
 # WZQ
 
-URL: https://wzq.debojyotighosh.com/
-
 **Wuziqi** (also called _Gomoku_ or _Five in a row_) is a turn-based strategy game. Imagine Tic-Tac-Toe, but you need five **Stones** in a row, instead of three, to **Win**. WZQ is an online two-player version played between friends.
 
 ## Repo layout
