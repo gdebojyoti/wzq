@@ -11,7 +11,7 @@ export interface GameServer {
   io: Server<ClientToServerEvents, ServerToClientEvents>;
 }
 
-export function createGameServer(config: Config): GameServer {
+export const createGameServer = (config: Config): GameServer => {
   const app = express();
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
@@ -26,4 +26,4 @@ export function createGameServer(config: Config): GameServer {
   });
 
   return { httpServer, io };
-}
+};

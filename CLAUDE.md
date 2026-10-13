@@ -12,16 +12,11 @@ The old prototype is kept at the `prototype-v1` tag. `gdebojyoti/wzq.socket` is 
 
 ## Code style
 
-The whole repo follows the code style of the sibling game `gdebojyoti/tactris`. Nothing enforces it: ESLint only checks for bugs. The style is:
-- double quotes and semicolons
-- trailing commas in multiline lists, objects and arguments
-- `;` after each member of an interface or type literal
-- parentheses around arrow-function parameters: `(x) =>`
-- `function name(` with no space before the parenthesis
+The whole repo follows the code style of the sibling game `gdebojyoti/tactris`. ESLint enforces most of it (see `eslint.config.js`); run `npx eslint --fix` to fix what it can. Beyond what lint checks:
 - components as `export default function`, helpers as arrow-function constants
-- no blank lines between imports
+- no fixed line width: wrap where it reads well, which keeps most lines under 120 characters
 
-There's no fixed line width: wrap where it reads well, which keeps most lines under 120 characters. Read tactris on GitHub for reference only, and keep every change inside this repo.
+Read tactris on GitHub for reference only, and keep every change inside this repo.
 
 ## Agent skills
 
