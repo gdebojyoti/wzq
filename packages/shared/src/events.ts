@@ -3,8 +3,8 @@
 
 /** Events the web app sends to the server. */
 export interface ClientToServerEvents {
-  /** Checks the server is answering; the server acknowledges with `'pong'`. */
-  ping: (ack: (reply: 'pong') => void) => void
+  /** Checks the server is answering; the server acknowledges with `"pong"`. */
+  ping: (ack: (reply: "pong") => void) => void;
 }
 
 /** Events the server sends to the web app. */
