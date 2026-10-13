@@ -1,0 +1,28 @@
+{
+  "name": "@wzq/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The WZQ web app: Next.js.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "prebuild": "npm run build -w @wzq/shared",
+    "build": "next build",
+    "start": "next start",
+    "pretypecheck": "npm run build -w @wzq/shared",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@wzq/shared": "*",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "socket.io-client": "^4.8.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3"
+  }
+}

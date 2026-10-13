@@ -1,8 +1,8 @@
 # Issue tracker: GitHub
 
-Issues and specs for the whole WZQ project, both this frontend repo and the backend repo `gdebojyoti/wzq.socket`, live as GitHub issues on **`gdebojyoti/wzq`**. Use the `gh` CLI for all operations.
+Issues and specs for the whole WZQ project (web app, server and shared code, all in this repo) live as GitHub issues on **`gdebojyoti/wzq`**. Use the `gh` CLI for all operations.
 
-**Always pass `--repo gdebojyoti/wzq`** (`-R`) to every `gh issue` / `gh api` call, even when working inside the `wzq.socket` clone, where `gh` would otherwise default to the backend repo. Only file issues on `wzq.socket` when the user explicitly asks for it. When a `wzq.socket` commit or PR resolves an issue, reference it in full (`Fixes gdebojyoti/wzq#<n>`); a bare `#<n>` there points at the backend repo.
+**Always pass `--repo gdebojyoti/wzq`** (`-R`) to every `gh issue` / `gh api` call. The retired prototype server repo `gdebojyoti/wzq.socket` gets no new issues unless the user explicitly asks for one.
 
 ## Conventions
 
