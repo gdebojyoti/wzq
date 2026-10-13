@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm ci --include-workspace-root",
   "outputDirectory": "dist",
   "trailingSlash": false,
   "redirects": [{ "source": "/", "destination": "/wzq", "permanent": false }],
