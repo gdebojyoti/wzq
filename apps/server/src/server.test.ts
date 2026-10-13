@@ -6,7 +6,7 @@ import type { ClientToServerEvents, ServerToClientEvents } from '@wzq/shared'
 
 import { createGameServer, type GameServer } from './server.js'
 
-const webOrigin = 'http://localhost:3000'
+const webOrigin = 'http://localhost:8081'
 
 let server: GameServer
 let url: string

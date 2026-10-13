@@ -1,0 +1,12 @@
+{
+  "outputDirectory": "dist",
+  "trailingSlash": false,
+  "redirects": [{ "source": "/", "destination": "/wzq", "permanent": false }],
+  "rewrites": [{ "source": "/wzq", "destination": "/index.html" }],
+  "headers": [
+    {
+      "source": "/(.*\\.[0-9a-f]{20}\\.js)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
+}

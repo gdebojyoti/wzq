@@ -8,7 +8,7 @@ export interface Config {
 export function readConfig (env: NodeJS.ProcessEnv): Config {
   return {
     port: readPort(env.PORT ?? '4000'),
-    webOrigin: env.WEB_ORIGIN ?? 'http://localhost:3000'
+    webOrigin: env.WEB_ORIGIN ?? 'http://localhost:8081'
   }
 }
 

@@ -4,7 +4,7 @@ import { readConfig } from './config.js'
 
 describe('readConfig', () => {
   it('uses local development defaults when nothing is set', () => {
-    expect(readConfig({})).toEqual({ port: 4000, webOrigin: 'http://localhost:3000' })
+    expect(readConfig({})).toEqual({ port: 4000, webOrigin: 'http://localhost:8081' })
   })
 
   it('reads the port and web address from the environment', () => {

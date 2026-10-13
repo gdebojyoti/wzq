@@ -6,7 +6,7 @@
 
 | Folder            | What it is                                              |
 | ----------------- | ------------------------------------------------------- |
-| `apps/web`        | The web app: Next.js and Tailwind.                      |
+| `apps/web`        | The web app: React, Webpack 5 and Tailwind.             |
 | `apps/server`     | The game server: Express and Socket.IO.                 |
 | `packages/shared` | The event contract shared by the web app and server.    |
 
@@ -18,11 +18,11 @@ Needs Node 24.
 
 ```sh
 npm install
-npm run dev        # web on http://localhost:3000, server on http://localhost:4000
+npm run dev        # web on http://localhost:8081/wzq, server on http://localhost:4000
 ```
 
 Other commands, run from the root: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 
-Both apps work without configuration locally. To change the defaults, copy `apps/server/.env.example` to `apps/server/.env`, or `apps/web/.env.example` to `apps/web/.env.local`.
+Both apps work without configuration locally. To change the defaults, copy `apps/server/.env.example` to `apps/server/.env`, or `apps/web/.env.example` to `apps/web/.env`.
 
 The original prototype is kept at the `prototype-v1` tag.
