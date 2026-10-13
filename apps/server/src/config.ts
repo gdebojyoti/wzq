@@ -1,14 +1,14 @@
 export interface Config {
   /** Port the server listens on. */
   port: number;
-  /** Address of the web app: the only origin allowed to call the server. */
-  webOrigin: string;
+  /** Addresses of the web app: the only origins allowed to call the server. */
+  webOrigins: string[];
 }
 
 export const readConfig = (env: NodeJS.ProcessEnv): Config => {
   return {
     port: readPort(env.PORT ?? "4000"),
-    webOrigin: env.WEB_ORIGIN ?? "http://localhost:8081",
+    webOrigins: readOrigins(env.WEB_ORIGIN ?? "http://localhost:8081"),
   };
 };
 
@@ -18,4 +18,8 @@ const readPort = (value: string): number => {
     throw new Error(`PORT must be a port number, got "${value}"`);
   }
   return port;
+};
+
+const readOrigins = (value: string): string[] => {
+  return value.split(",").map((origin) => origin.trim()).filter(Boolean);
 };

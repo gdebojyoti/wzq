@@ -19,7 +19,7 @@ export const createGameServer = (config: Config): GameServer => {
 
   const httpServer = createServer(app);
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
-    cors: { origin: config.webOrigin },
+    cors: { origin: config.webOrigins },
   });
   io.on("connection", (socket) => {
     socket.on("ping", (ack) => ack("pong"));

@@ -5,12 +5,13 @@ import type { ClientToServerEvents, ServerToClientEvents } from "@wzq/shared";
 import { createGameServer, type GameServer } from "./server.js";
 
 const webOrigin = "http://localhost:8081";
+const hostOrigin = "https://debojyotighosh.com";
 
 let server: GameServer;
 let url: string;
 
 beforeEach(async () => {
-  server = createGameServer({ port: 0, webOrigin });
+  server = createGameServer({ port: 0, webOrigins: [webOrigin, hostOrigin] });
   await new Promise<void>((resolve) => server.httpServer.listen(0, resolve));
   const { port } = server.httpServer.address() as AddressInfo;
   url = `http://localhost:${port}`;
@@ -41,15 +42,17 @@ describe("createGameServer", () => {
     }
   });
 
-  it("lets only the web app call it from a browser", async () => {
+  it("lets only the listed web addresses call it from a browser", async () => {
     const handshake = (origin: string) => fetch(`${url}/socket.io/?EIO=4&transport=polling`, {
       headers: { origin },
     });
 
     const fromWebApp = await handshake(webOrigin);
+    const fromHost = await handshake(hostOrigin);
     const fromElsewhere = await handshake("https://example.com");
 
     expect(fromWebApp.headers.get("access-control-allow-origin")).toBe(webOrigin);
+    expect(fromHost.headers.get("access-control-allow-origin")).toBe(hostOrigin);
     expect(fromElsewhere.headers.get("access-control-allow-origin")).not.toBe("https://example.com");
   });
 });
