@@ -1,1 +1,1 @@
-export type { ClientToServerEvents, ServerToClientEvents } from './events.js'
+export type { ClientToServerEvents, ServerToClientEvents } from "./events.js";

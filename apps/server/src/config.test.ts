@@ -1,18 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest";
+import { readConfig } from "./config.js";
 
-import { readConfig } from './config.js'
+describe("readConfig", () => {
+  it("uses local development defaults when nothing is set", () => {
+    expect(readConfig({})).toEqual({ port: 4000, webOrigin: "http://localhost:8081" });
+  });
 
-describe('readConfig', () => {
-  it('uses local development defaults when nothing is set', () => {
-    expect(readConfig({})).toEqual({ port: 4000, webOrigin: 'http://localhost:3000' })
-  })
+  it("reads the port and web address from the environment", () => {
+    expect(readConfig({ PORT: "10000", WEB_ORIGIN: "https://wzq.debojyotighosh.com" }))
+      .toEqual({ port: 10000, webOrigin: "https://wzq.debojyotighosh.com" });
+  });
 
-  it('reads the port and web address from the environment', () => {
-    expect(readConfig({ PORT: '10000', WEB_ORIGIN: 'https://wzq.debojyotighosh.com' }))
-      .toEqual({ port: 10000, webOrigin: 'https://wzq.debojyotighosh.com' })
-  })
-
-  it('rejects a port that is not a whole number', () => {
-    expect(() => readConfig({ PORT: 'abc' })).toThrow('PORT must be a port number, got "abc"')
-  })
-})
+  it("rejects a port that is not a whole number", () => {
+    expect(() => readConfig({ PORT: "abc" })).toThrow('PORT must be a port number, got "abc"');
+  });
+});
