@@ -27,7 +27,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
       gameCode: await newGameCode(),
       state: "lobby",
       hostId: playerId,
-      guestId: null,
+      joinerId: null,
       turns: [],
     };
     await store.save(game);
@@ -40,7 +40,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
     if (await store.findActiveGameByPlayer(playerId)) return { ok: false, reason: "alreadyInActiveGame" };
     const game = await store.findLobbyGameByCode(gameCode);
     if (!game) return { ok: false, reason: "gameCodeNotFound" };
-    game.guestId = playerId;
+    game.joinerId = playerId;
     game.state = "ongoing";
     await store.save(game);
     return { ok: true, game };

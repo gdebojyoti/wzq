@@ -8,8 +8,8 @@ export interface Game {
   gameCode: string;
   state: GameState;
   hostId: string;
-  /** The Player who joined with the Game code; null while the Game is in the lobby. */
-  guestId: string | null;
+  /** The Joiner: the Player who joined with the Game code. Null while the Game is in the lobby. */
+  joinerId: string | null;
   /** Every Turn taken, in order. */
   turns: Cell[];
 }
@@ -31,7 +31,7 @@ export const createMemoryGameStore = (): GameStore => {
     },
     findActiveGameByPlayer: async (playerId) => {
       const game = [...games.values()]
-        .find((game) => isActive(game) && (game.hostId === playerId || game.guestId === playerId));
+        .find((game) => isActive(game) && (game.hostId === playerId || game.joinerId === playerId));
       return game && copy(game);
     },
     findLobbyGameByCode: async (gameCode) => {
