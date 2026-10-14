@@ -6,6 +6,7 @@ import {
   type ClientToServerEvents,
   type GameSnapshot,
   type ServerToClientEvents,
+  type Side,
 } from "@wzq/shared";
 
 import type { Game } from "./game-store.js";
@@ -82,15 +83,14 @@ const sendSnapshots = async (io: GameIo, game: Game) => {
 /** The Game as this Player sees it. Never includes a player ID: the ID is the only proof of who a Player is. */
 const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
   const isHost = game.hostId === playerId;
-  const isYourTurn = isHostsTurn(game.turns) === isHost;
+  // Whose Turn it is once this many Turns have been taken, as this Player sees it.
+  const sideAfter = (turnsTaken: number): Side => (isHostsTurn(turnsTaken) === isHost ? "you" : "opponent");
   return {
     state: game.state,
     gameCode: game.state === "lobby" ? game.gameCode : null,
     isHost,
-    turn: game.state === "ongoing" ? (isYourTurn ? "you" : "opponent") : null,
-    stones: game.turns.map((cell, index) => {
-      const isHostsStone = isHostsTurn(game.turns.slice(0, index));
-      return { ...cell, side: isHostsStone === isHost ? "you" : "opponent" };
-    }),
+    turn: game.state === "ongoing" ? sideAfter(game.turns.length) : null,
+    // Each Stone was placed on the Turn taken after all the Stones before it.
+    stones: game.turns.map((cell, index) => ({ ...cell, side: sideAfter(index) })),
   };
 };

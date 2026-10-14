@@ -33,15 +33,13 @@ describe("taking a Turn", () => {
 
     const reply = await host.takeTurn({ row: 7, column: 8 });
 
+    const hostView = { state: "ongoing", gameCode: null, isHost: true, turn: "opponent" };
+    const joinerView = { state: "ongoing", gameCode: null, isHost: false, turn: "you" };
     expect(reply).toEqual({ ok: true });
-    expect(await host.nextMessage()).toEqual({
-      event: "game",
-      game: { state: "ongoing", gameCode: null, isHost: true, turn: "opponent", stones: [{ row: 7, column: 8, side: "you" }] },
-    });
-    expect(await joiner.nextMessage()).toEqual({
-      event: "game",
-      game: { state: "ongoing", gameCode: null, isHost: false, turn: "you", stones: [{ row: 7, column: 8, side: "opponent" }] },
-    });
+    expect(await host.nextMessage())
+      .toEqual({ event: "game", game: { ...hostView, stones: [{ row: 7, column: 8, side: "you" }] } });
+    expect(await joiner.nextMessage())
+      .toEqual({ event: "game", game: { ...joinerView, stones: [{ row: 7, column: 8, side: "opponent" }] } });
   });
 
   it("alternates between the Players, and sends both every Stone in order", async () => {

@@ -36,7 +36,7 @@ export default function GameScreen({ game, disabled, onTakeTurn }: Props) {
               key={cellKey(cell)}
               type="button"
               className="flex items-center justify-center bg-amber-100 enabled:hover:bg-amber-200"
-              // Free-style: any empty Cell may be played. The server checks it again.
+              // Any empty Cell may be played. The server checks it again.
               disabled={!canTakeTurn || stone !== undefined}
               aria-label={cellLabel(cell, stone, stone === lastStone)}
               onClick={() => onTakeTurn(cell)}

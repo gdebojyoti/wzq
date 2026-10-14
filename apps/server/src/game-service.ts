@@ -60,7 +60,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
     const game = await store.findActiveGameByPlayer(playerId);
     if (!game) return { ok: false, reason: "gameNotFound" };
     if (game.state !== "ongoing") return { ok: false, reason: "gameNotOngoing" };
-    if (isHostsTurn(game.turns) !== (game.hostId === playerId)) return { ok: false, reason: "notYourTurn" };
+    if (isHostsTurn(game.turns.length) !== (game.hostId === playerId)) return { ok: false, reason: "notYourTurn" };
     if (!isOnBoard(cell)) return { ok: false, reason: "cellOffBoard" };
     if (!isEmpty(game.turns, cell)) return { ok: false, reason: "cellOccupied" };
     game.turns.push(cell);

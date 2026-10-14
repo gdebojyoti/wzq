@@ -14,12 +14,15 @@ export interface Cell {
 }
 
 /**
- * Whether it's the Host's Turn, given every Turn taken so far in order: the Host goes first, then the Players
+ * Whether it's the Host's Turn once this many Turns have been taken: the Host goes first, then the Players
  * alternate.
  */
-export const isHostsTurn = (turns: readonly Cell[]): boolean => turns.length % 2 === 0;
+export const isHostsTurn = (turnsTaken: number): boolean => turnsTaken % 2 === 0;
 
-/** Whether the Cell is on the Board. Checks its row and column are whole numbers, as a Cell sent over the wire may not be. */
+/**
+ * Whether the Cell is on the Board. Checks its row and column are whole numbers, as a Cell sent over the wire
+ * may not be.
+ */
 export const isOnBoard = ({ row, column }: Cell): boolean => isInRange(row) && isInRange(column);
 
 /** Whether no Stone has been placed on the Cell yet, given every Turn taken so far. */
