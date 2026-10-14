@@ -19,6 +19,8 @@ export interface Connection {
   nextMessage: () => Promise<Message>;
   createGame: () => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   leaveGame: () => Promise<Acknowledgement>;
+  /** Sends a command without a callback for the reply, as no well-behaved client would. */
+  sendWithoutReply: (event: keyof ClientToServerEvents) => void;
   /** Closes the connection, like closing the tab. */
   close: () => Promise<void>;
 }
@@ -70,7 +72,10 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
         nextMessage: inbox.take,
         createGame: () => socket.emitWithAck("createGame"),
         leaveGame: () => socket.emitWithAck("leaveGame"),
+        sendWithoutReply: (event) => (socket.emit as (event: string) => void)(event),
         close: async () => {
+          // A round trip first, so everything sent before closing has reached the server.
+          await socket.emitWithAck("ping");
           socket.disconnect();
           // Let the server see the disconnect before the test carries on.
           await new Promise((resolve) => setTimeout(resolve, 20));

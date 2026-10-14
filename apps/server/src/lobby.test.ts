@@ -100,6 +100,32 @@ describe("leaving a Game in the lobby", () => {
   });
 });
 
+describe("a command sent without a callback for the reply", () => {
+  it("is ignored when it would create a Game, and the server carries on", async () => {
+    const player = server.createPlayer();
+    const firstVisit = await player.connect();
+
+    firstVisit.sendWithoutReply("ping");
+    firstVisit.sendWithoutReply("createGame");
+    await firstVisit.close();
+
+    const secondVisit = await player.connect();
+    expect(await secondVisit.nextMessage()).toEqual({ event: "noActiveGame" });
+  });
+
+  it("is ignored when it would leave a Game", async () => {
+    const player = server.createPlayer();
+    const firstVisit = await player.connect();
+    await firstVisit.createGame();
+
+    firstVisit.sendWithoutReply("leaveGame");
+    await firstVisit.close();
+
+    const secondVisit = await player.connect();
+    expect(await secondVisit.nextMessage()).toMatchObject({ event: "game", game: { state: "lobby" } });
+  });
+});
+
 describe("rejoining", () => {
   it("gives a Host who comes back the same lobby, with the same Game code", async () => {
     const host = server.createPlayer();

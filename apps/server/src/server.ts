@@ -31,6 +31,11 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
   });
   identifyPlayers(io);
   io.on("connection", (socket) => {
+    // Every command expects a reply. One sent without a callback for it would crash the server when answered,
+    // so it's dropped here instead.
+    socket.use((packet, next) => {
+      if (typeof packet.at(-1) === "function") next();
+    });
     socket.on("ping", (ack) => ack("pong"));
   });
   handleGameSockets(io, createGameService(createMemoryGameStore(), options.randomInt));
