@@ -46,6 +46,17 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
       ack({ ok: true });
     });
 
+    socket.on("takeTurn", async (cell, ack) => {
+      // As with joining, a command sent with no Cell has nothing to reply to.
+      if (typeof ack !== "function") return;
+      if (typeof cell !== "object" || cell === null) return ack({ ok: false, reason: "cellOffBoard" });
+      // Only the row and column are kept, as they're sent on to the opponent. The rules check what they hold.
+      const result = await gameService.takeTurn(playerId, { row: cell.row, column: cell.column });
+      if (!result.ok) return ack(result);
+      await sendSnapshots(io, result.game);
+      ack({ ok: true });
+    });
+
     const game = await gameService.findActiveGame(playerId);
     if (game) {
       socket.join(gameRoom(game));
@@ -77,5 +88,9 @@ const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
     gameCode: game.state === "lobby" ? game.gameCode : null,
     isHost,
     turn: game.state === "ongoing" ? (isYourTurn ? "you" : "opponent") : null,
+    stones: game.turns.map((cell, index) => {
+      const isHostsStone = isHostsTurn(game.turns.slice(0, index));
+      return { ...cell, side: isHostsStone === isHost ? "you" : "opponent" };
+    }),
   };
 };

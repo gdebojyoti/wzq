@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 
 import { NodeWebSocket } from "engine.io-client";
 import { io, type Socket } from "socket.io-client";
-import type { Acknowledgement, ClientToServerEvents, GameSnapshot, ServerToClientEvents } from "@wzq/shared";
+import type { Acknowledgement, Cell, ClientToServerEvents, GameSnapshot, ServerToClientEvents } from "@wzq/shared";
 
 import { playerIdCookieName } from "./identity.js";
 import { createGameServer, type GameServerOptions } from "./server.js";
@@ -21,6 +21,7 @@ export interface Connection {
   createGame: () => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   joinGame: (gameCode: string) => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   leaveGame: () => Promise<Acknowledgement>;
+  takeTurn: (cell: Cell) => Promise<Acknowledgement>;
   /** Sends a command with any arguments, unchecked by the event types, as no well-behaved client would. */
   sendUnchecked: (event: keyof ClientToServerEvents, ...args: unknown[]) => void;
   /** Closes the connection, like closing the tab. */
@@ -77,6 +78,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
         createGame: () => socket.emitWithAck("createGame"),
         joinGame: (gameCode) => socket.emitWithAck("joinGame", gameCode),
         leaveGame: () => socket.emitWithAck("leaveGame"),
+        takeTurn: (cell) => socket.emitWithAck("takeTurn", cell),
         sendUnchecked: (event, ...args) => {
           (socket.emit as (event: string, ...args: unknown[]) => void)(event, ...args);
         },

@@ -28,7 +28,7 @@ describe("creating a Game", () => {
 
     expect(reply).toEqual({
       ok: true,
-      game: { state: "lobby", gameCode: expect.stringMatching(/^\d{6}$/), isHost: true, turn: null },
+      game: { state: "lobby", gameCode: expect.stringMatching(/^\d{6}$/), isHost: true, turn: null, stones: [] },
     });
   });
 
@@ -90,7 +90,7 @@ describe("leaving a Game in the lobby", () => {
 
     expect(reply).toEqual({ ok: true });
     expect(await tab.nextMessage())
-      .toEqual({ event: "game", game: { state: "abandoned", gameCode: null, isHost: true, turn: null } });
+      .toEqual({ event: "game", game: { state: "abandoned", gameCode: null, isHost: true, turn: null, stones: [] } });
   });
 
   it("leaves the Host with no active Game, free to create a new one", async () => {

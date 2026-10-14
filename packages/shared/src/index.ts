@@ -6,5 +6,6 @@ export type {
   RejectionReason,
   ServerToClientEvents,
   Side,
+  Stone,
 } from "./events.js";
-export { boardSize, gameCodeLength, isHostsTurn, type Cell } from "./rules.js";
+export { boardSize, gameCodeLength, isEmpty, isHostsTurn, isOnBoard, type Cell } from "./rules.js";
