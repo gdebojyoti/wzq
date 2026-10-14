@@ -26,7 +26,8 @@ describe("creating a Game", () => {
 
     const reply = await tab.createGame();
 
-    expect(reply).toEqual({ ok: true, game: { state: "lobby", gameCode: expect.stringMatching(/^\d{6}$/), isHost: true } });
+    expect(reply)
+      .toEqual({ ok: true, game: { state: "lobby", gameCode: expect.stringMatching(/^\d{6}$/), isHost: true } });
   });
 
   it("gives each Game in the lobby its own zero-padded Game code", async () => {
@@ -51,6 +52,18 @@ describe("creating a Game", () => {
 
     expect(reply).toEqual({ ok: false, reason: "alreadyInActiveGame" });
   });
+
+  it("takes the Player's other open tabs into the lobby too", async () => {
+    const player = server.createPlayer();
+    const tab = await player.connect();
+    const otherTab = await player.connect();
+    await otherTab.nextMessage();
+
+    const reply = await tab.createGame();
+
+    expect(reply.ok).toBe(true);
+    expect(await otherTab.nextMessage()).toEqual({ event: "game", game: reply.ok && reply.game });
+  });
 });
 
 describe("leaving a Game in the lobby", () => {
@@ -58,11 +71,13 @@ describe("leaving a Game in the lobby", () => {
     const tab = await server.createPlayer().connect();
     await tab.nextMessage();
     await tab.createGame();
+    expect(await tab.nextMessage()).toMatchObject({ event: "game", game: { state: "lobby" } });
 
     const reply = await tab.leaveGame();
 
     expect(reply).toEqual({ ok: true });
-    expect(await tab.nextMessage()).toEqual({ event: "game", game: { state: "abandoned", gameCode: null, isHost: true } });
+    expect(await tab.nextMessage())
+      .toEqual({ event: "game", game: { state: "abandoned", gameCode: null, isHost: true } });
   });
 
   it("leaves the Host with no active Game, free to create a new one", async () => {

@@ -8,19 +8,22 @@ import type { PlayerData } from "./identity.js";
 
 export type GameIo = Server<ClientToServerEvents, ServerToClientEvents, object, PlayerData>;
 
-export const handleGameSockets = (io: GameIo, games: GameService) => {
+export const handleGameSockets = (io: GameIo, gameService: GameService) => {
   io.on("connection", async (socket) => {
     const { playerId } = socket.data;
+    socket.join(playerRoom(playerId));
 
     socket.on("createGame", async (ack) => {
-      const result = await games.createGame(playerId);
+      const result = await gameService.createGame(playerId);
       if (!result.ok) return ack(result);
-      socket.join(gameRoom(result.game));
+      // Every tab the Player has open goes into the lobby, not just the one that asked.
+      io.in(playerRoom(playerId)).socketsJoin(gameRoom(result.game));
+      await sendSnapshots(io, result.game);
       ack({ ok: true, game: toSnapshot(result.game, playerId) });
     });
 
     socket.on("leaveGame", async (ack) => {
-      const result = await games.leaveGame(playerId);
+      const result = await gameService.leaveGame(playerId);
       if (!result.ok) return ack(result);
       await sendSnapshots(io, result.game);
       // The Game has ended, so nothing more is sent to its room.
@@ -28,7 +31,7 @@ export const handleGameSockets = (io: GameIo, games: GameService) => {
       ack({ ok: true });
     });
 
-    const game = await games.findActiveGame(playerId);
+    const game = await gameService.findActiveGame(playerId);
     if (game) {
       socket.join(gameRoom(game));
       socket.emit("game", toSnapshot(game, playerId));
@@ -37,6 +40,9 @@ export const handleGameSockets = (io: GameIo, games: GameService) => {
     }
   });
 };
+
+/** One room per Player, holding every tab they have open. */
+const playerRoom = (playerId: string) => `player:${playerId}`;
 
 /** One room per Game, holding every connection of its Players. */
 const gameRoom = (game: Game) => `game:${game.id}`;
