@@ -1,7 +1,7 @@
 // The authority on every Game: it validates each command from a Player, and changes Games through the store.
 import { randomInt as cryptoRandomInt, randomUUID } from "node:crypto";
 
-import type { RejectionReason } from "@wzq/shared";
+import { gameCodeLength, type RejectionReason } from "@wzq/shared";
 
 import type { Game, GameStore } from "./game-store.js";
 
@@ -15,7 +15,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   const newGameCode = async (): Promise<string> => {
     for (;;) {
-      const gameCode = String(randomInt(1_000_000)).padStart(6, "0");
+      const gameCode = String(randomInt(10 ** gameCodeLength)).padStart(gameCodeLength, "0");
       if (!(await store.findLobbyGameByCode(gameCode))) return gameCode;
     }
   };

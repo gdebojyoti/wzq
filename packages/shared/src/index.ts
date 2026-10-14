@@ -7,4 +7,4 @@ export type {
   ServerToClientEvents,
   Side,
 } from "./events.js";
-export { boardSize, isHostsTurn, type Cell } from "./rules.js";
+export { boardSize, gameCodeLength, isHostsTurn, type Cell } from "./rules.js";

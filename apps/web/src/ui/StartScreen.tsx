@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { gameCodeLength } from "@wzq/shared";
 import Button from "./Button";
 
 interface Props {
@@ -28,13 +29,13 @@ export default function StartScreen({ disabled, onNewGame, onJoinGame }: Props) 
             className="w-36 rounded border border-stone-400 px-3 py-2 text-center font-mono text-xl tracking-widest"
             inputMode="numeric"
             autoComplete="off"
-            maxLength={6}
+            maxLength={gameCodeLength}
             placeholder="000000"
             value={gameCode}
             // Kept as text, digits only, so leading zeros stay.
             onChange={(event) => setGameCode(event.target.value.replace(/\D/g, ""))}
           />
-          <Button type="submit" disabled={disabled || gameCode.length !== 6}>
+          <Button type="submit" disabled={disabled || gameCode.length !== gameCodeLength}>
             Join
           </Button>
         </div>

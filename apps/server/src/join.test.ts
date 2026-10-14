@@ -22,8 +22,8 @@ const hostInLobby = async () => {
   return { host, gameCode: reply.game.gameCode };
 };
 
-/** A visitor with no active Game, with everything sent so far already read. */
-const visitor = async (): Promise<Connection> => {
+/** A Player with no active Game, with everything sent so far already read. */
+const playerWithNoGame = async (): Promise<Connection> => {
   const tab = await server.createPlayer().connect();
   await tab.nextMessage();
   return tab;
@@ -32,7 +32,7 @@ const visitor = async (): Promise<Connection> => {
 describe("joining a Game by Game code", () => {
   it("starts the Game for both Players, with the Host's Turn first", async () => {
     const { host, gameCode } = await hostInLobby();
-    const guest = await visitor();
+    const guest = await playerWithNoGame();
 
     const reply = await guest.joinGame(gameCode);
 
@@ -47,7 +47,7 @@ describe("joining a Game by Game code", () => {
 describe("joining with a Game code that doesn't match a Game in the lobby", () => {
   it("is refused when no Game has that Game code", async () => {
     const { gameCode } = await hostInLobby();
-    const guest = await visitor();
+    const guest = await playerWithNoGame();
     const otherCode = gameCode === "000000" ? "000001" : "000000";
 
     expect(await guest.joinGame(otherCode)).toEqual({ ok: false, reason: "gameCodeNotFound" });
@@ -55,8 +55,8 @@ describe("joining with a Game code that doesn't match a Game in the lobby", () =
 
   it("is refused once the Game code has been used to join, so no third Player can join", async () => {
     const { gameCode } = await hostInLobby();
-    await (await visitor()).joinGame(gameCode);
-    const third = await visitor();
+    await (await playerWithNoGame()).joinGame(gameCode);
+    const third = await playerWithNoGame();
 
     expect(await third.joinGame(gameCode)).toEqual({ ok: false, reason: "gameCodeNotFound" });
   });
@@ -64,7 +64,7 @@ describe("joining with a Game code that doesn't match a Game in the lobby", () =
   it("is refused once the Host has left the lobby", async () => {
     const { host, gameCode } = await hostInLobby();
     await host.leaveGame();
-    const guest = await visitor();
+    const guest = await playerWithNoGame();
 
     expect(await guest.joinGame(gameCode)).toEqual({ ok: false, reason: "gameCodeNotFound" });
   });
@@ -75,7 +75,7 @@ describe("joining while already in an active Game", () => {
     const { host, gameCode } = await hostInLobby();
 
     expect(await host.joinGame(gameCode)).toEqual({ ok: false, reason: "alreadyInActiveGame" });
-    expect(await (await visitor()).joinGame(gameCode)).toMatchObject({ ok: true });
+    expect(await (await playerWithNoGame()).joinGame(gameCode)).toMatchObject({ ok: true });
   });
 
   it("is refused for a Host waiting in their own lobby", async () => {
@@ -87,7 +87,7 @@ describe("joining while already in an active Game", () => {
 
   it("is refused for a Player in an ongoing Game", async () => {
     const { gameCode } = await hostInLobby();
-    const guest = await visitor();
+    const guest = await playerWithNoGame();
     await guest.joinGame(gameCode);
     const { gameCode: otherCode } = await hostInLobby();
 
@@ -98,7 +98,7 @@ describe("joining while already in an active Game", () => {
 describe("creating a Game while in an ongoing Game", () => {
   it("is refused for both Players", async () => {
     const { host, gameCode } = await hostInLobby();
-    const guest = await visitor();
+    const guest = await playerWithNoGame();
     await guest.joinGame(gameCode);
 
     expect(await host.createGame()).toEqual({ ok: false, reason: "alreadyInActiveGame" });
@@ -111,7 +111,7 @@ describe("the Game code", () => {
     await server.close();
     server = await startServer({ randomInt: () => 4213 });
     const { gameCode } = await hostInLobby();
-    const guest = await visitor();
+    const guest = await playerWithNoGame();
 
     expect(gameCode).toBe("004213");
     expect(await guest.joinGame("4213")).toEqual({ ok: false, reason: "gameCodeNotFound" });
