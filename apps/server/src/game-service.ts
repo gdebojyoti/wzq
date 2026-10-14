@@ -1,7 +1,7 @@
 // The authority on every Game: it validates each command from a Player, and changes Games through the store.
 import { randomInt as cryptoRandomInt, randomUUID } from "node:crypto";
 
-import type { RejectionReason } from "@wzq/shared";
+import { gameCodeLength, type RejectionReason } from "@wzq/shared";
 
 import type { Game, GameStore } from "./game-store.js";
 
@@ -15,14 +15,33 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   const newGameCode = async (): Promise<string> => {
     for (;;) {
-      const gameCode = String(randomInt(1_000_000)).padStart(6, "0");
+      const gameCode = String(randomInt(10 ** gameCodeLength)).padStart(gameCodeLength, "0");
       if (!(await store.findLobbyGameByCode(gameCode))) return gameCode;
     }
   };
 
   const createGame = oneAtATime(async (playerId: string): Promise<CommandResult> => {
     if (await store.findActiveGameByPlayer(playerId)) return { ok: false, reason: "alreadyInActiveGame" };
-    const game: Game = { id: randomUUID(), gameCode: await newGameCode(), state: "lobby", hostId: playerId };
+    const game: Game = {
+      id: randomUUID(),
+      gameCode: await newGameCode(),
+      state: "lobby",
+      hostId: playerId,
+      joinerId: null,
+      turns: [],
+    };
+    await store.save(game);
+    return { ok: true, game };
+  });
+
+  /** Joins the Game in the lobby with this Game code, which starts it and retires the Game code. */
+  const joinGame = oneAtATime(async (playerId: string, gameCode: string): Promise<CommandResult> => {
+    // This also stops the Host joining their own Game.
+    if (await store.findActiveGameByPlayer(playerId)) return { ok: false, reason: "alreadyInActiveGame" };
+    const game = await store.findLobbyGameByCode(gameCode);
+    if (!game) return { ok: false, reason: "gameCodeNotFound" };
+    game.joinerId = playerId;
+    game.state = "ongoing";
     await store.save(game);
     return { ok: true, game };
   });
@@ -38,7 +57,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   const findActiveGame = oneAtATime((playerId: string) => store.findActiveGameByPlayer(playerId));
 
-  return { createGame, leaveGame, findActiveGame };
+  return { createGame, joinGame, leaveGame, findActiveGame };
 };
 
 export type GameService = ReturnType<typeof createGameService>;

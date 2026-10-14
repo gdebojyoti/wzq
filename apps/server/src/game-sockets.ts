@@ -1,9 +1,15 @@
 // The socket layer: turns Socket.IO events into game service commands, and sends each Player their snapshot.
 import type { Server } from "socket.io";
-import type { ClientToServerEvents, GameSnapshot, ServerToClientEvents } from "@wzq/shared";
+import {
+  isHostsTurn,
+  type Acknowledgement,
+  type ClientToServerEvents,
+  type GameSnapshot,
+  type ServerToClientEvents,
+} from "@wzq/shared";
 
 import type { Game } from "./game-store.js";
-import type { GameService } from "./game-service.js";
+import type { CommandResult, GameService } from "./game-service.js";
 import type { PlayerData } from "./identity.js";
 
 export type GameIo = Server<ClientToServerEvents, ServerToClientEvents, object, PlayerData>;
@@ -13,13 +19,22 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
     const { playerId } = socket.data;
     socket.join(playerRoom(playerId));
 
-    socket.on("createGame", async (ack) => {
-      const result = await gameService.createGame(playerId);
+    // Answers a command that puts the Player in a Game.
+    const enterGame = async (result: CommandResult, ack: (reply: Acknowledgement<{ game: GameSnapshot }>) => void) => {
       if (!result.ok) return ack(result);
-      // Every tab the Player has open goes into the lobby, not just the one that asked.
+      // Every tab the Player has open goes into the Game, not just the one that asked.
       io.in(playerRoom(playerId)).socketsJoin(gameRoom(result.game));
       await sendSnapshots(io, result.game);
       ack({ ok: true, game: toSnapshot(result.game, playerId) });
+    };
+
+    socket.on("createGame", async (ack) => enterGame(await gameService.createGame(playerId), ack));
+    socket.on("joinGame", async (gameCode, ack) => {
+      // The check in server.ts only looks at the last argument, so a command sent with no Game code arrives
+      // here with its callback as the Game code, and nothing to reply to.
+      if (typeof ack !== "function") return;
+      if (typeof gameCode !== "string") return ack({ ok: false, reason: "gameCodeNotFound" });
+      await enterGame(await gameService.joinGame(playerId, gameCode), ack);
     });
 
     socket.on("leaveGame", async (ack) => {
@@ -54,8 +69,13 @@ const sendSnapshots = async (io: GameIo, game: Game) => {
 };
 
 /** The Game as this Player sees it. Never includes a player ID: the ID is the only proof of who a Player is. */
-const toSnapshot = (game: Game, playerId: string): GameSnapshot => ({
-  state: game.state,
-  gameCode: game.state === "lobby" ? game.gameCode : null,
-  isHost: game.hostId === playerId,
-});
+const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
+  const isHost = game.hostId === playerId;
+  const isYourTurn = isHostsTurn(game.turns) === isHost;
+  return {
+    state: game.state,
+    gameCode: game.state === "lobby" ? game.gameCode : null,
+    isHost,
+    turn: game.state === "ongoing" ? (isYourTurn ? "you" : "opponent") : null,
+  };
+};

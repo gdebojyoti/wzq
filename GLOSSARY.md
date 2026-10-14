@@ -14,6 +14,10 @@ _Avoid_: user, opponent (except relative to another player)
 The **Player** who created a **Game**.
 _Avoid_: owner, creator
 
+**Joiner**:
+The **Player** who joined a **Game** in the **Lobby** with its **Game code**. They stay the Joiner for the rest of the **Game**, including after they **Rejoin**.
+_Avoid_: guest, invitee, challenger, visitor
+
 ### Game lifecycle
 
 **Game**:
@@ -21,11 +25,11 @@ A single match between two **Players**, from creation until it ends.
 _Avoid_: match, room
 
 **Lobby**:
-The stage of a **Game** before the second **Player** has joined.
+The stage of a **Game** before the **Joiner** has joined.
 _Avoid_: waiting room
 
 **Game code**:
-The six-digit code the **Host** shares so another **Player** can join a **Game** in the **Lobby**.
+The six-digit code the **Host** shares, which the **Joiner** enters to join a **Game** in the **Lobby**.
 _Avoid_: room code, invite code
 
 **Rejoin**:

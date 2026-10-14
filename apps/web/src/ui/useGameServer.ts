@@ -6,6 +6,7 @@ export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 const rejectionMessages: Record<RejectionReason, string> = {
   alreadyInActiveGame: "You're already in a game.",
+  gameCodeNotFound: "No game is waiting for a player with that code. Check it with your friend.",
   gameNotFound: "That game no longer exists.",
 };
 
@@ -49,13 +50,18 @@ export const useGameServer = () => {
     }
   };
 
-  const createGame = async () => {
-    const reply = await send((socket) => socket.emitWithAck("createGame"));
+  // Sends a command that puts the Player in a Game, and shows the Game from its reply.
+  const enterGame = async (command: (socket: GameSocket) => Promise<Acknowledgement<{ game: GameSnapshot }>>) => {
+    const reply = await send(command);
     if (reply?.ok) setGame(reply.game);
   };
+
+  const createGame = () => enterGame((socket) => socket.emitWithAck("createGame"));
+
+  const joinGame = (gameCode: string) => enterGame((socket) => socket.emitWithAck("joinGame", gameCode));
 
   // On success the server sends the abandoned Game, which takes the Player back to the start screen.
   const leaveGame = () => send((socket) => socket.emitWithAck("leaveGame"));
 
-  return { status, game, error, busy, createGame, leaveGame };
+  return { status, game, error, busy, createGame, joinGame, leaveGame };
 };
