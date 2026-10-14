@@ -26,8 +26,10 @@ describe("creating a Game", () => {
 
     const reply = await tab.createGame();
 
-    expect(reply)
-      .toEqual({ ok: true, game: { state: "lobby", gameCode: expect.stringMatching(/^\d{6}$/), isHost: true } });
+    expect(reply).toEqual({
+      ok: true,
+      game: { state: "lobby", gameCode: expect.stringMatching(/^\d{6}$/), isHost: true, turn: null },
+    });
   });
 
   it("gives each Game in the lobby its own zero-padded Game code", async () => {
@@ -88,7 +90,7 @@ describe("leaving a Game in the lobby", () => {
 
     expect(reply).toEqual({ ok: true });
     expect(await tab.nextMessage())
-      .toEqual({ event: "game", game: { state: "abandoned", gameCode: null, isHost: true } });
+      .toEqual({ event: "game", game: { state: "abandoned", gameCode: null, isHost: true, turn: null } });
   });
 
   it("leaves the Host with no active Game, free to create a new one", async () => {

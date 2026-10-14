@@ -1,6 +1,6 @@
 // Where Games are kept. The game service only knows this interface, so the in-memory store (ADR-0005)
 // can be swapped for a Postgres one without touching game logic.
-import type { GameState } from "@wzq/shared";
+import type { Cell, GameState } from "@wzq/shared";
 
 export interface Game {
   id: string;
@@ -8,6 +8,10 @@ export interface Game {
   gameCode: string;
   state: GameState;
   hostId: string;
+  /** The Player who joined with the Game code; null while the Game is in the lobby. */
+  guestId: string | null;
+  /** Every Turn taken, in order. */
+  turns: Cell[];
 }
 
 export interface GameStore {
@@ -23,18 +27,21 @@ export const createMemoryGameStore = (): GameStore => {
 
   return {
     save: async (game) => {
-      games.set(game.id, { ...game });
+      games.set(game.id, copy(game));
     },
     findActiveGameByPlayer: async (playerId) => {
-      return copy([...games.values()].find((game) => isActive(game) && game.hostId === playerId));
+      const game = [...games.values()]
+        .find((game) => isActive(game) && (game.hostId === playerId || game.guestId === playerId));
+      return game && copy(game);
     },
     findLobbyGameByCode: async (gameCode) => {
-      return copy([...games.values()].find((game) => game.state === "lobby" && game.gameCode === gameCode));
+      const game = [...games.values()].find((game) => game.state === "lobby" && game.gameCode === gameCode);
+      return game && copy(game);
     },
   };
 };
 
-const isActive = (game: Game) => game.state === "lobby";
+const isActive = (game: Game) => game.state === "lobby" || game.state === "ongoing";
 
 // Hands out copies, so changing a Game only takes effect once it's saved, as with a database.
-const copy = (game: Game | undefined) => game && { ...game };
+const copy = (game: Game): Game => ({ ...game, turns: game.turns.map((cell) => ({ ...cell })) });

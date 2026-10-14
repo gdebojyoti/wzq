@@ -18,6 +18,7 @@ export interface Connection {
   /** Waits for the next message from the server that this connection hasn't read yet. */
   nextMessage: () => Promise<Message>;
   createGame: () => Promise<Acknowledgement<{ game: GameSnapshot }>>;
+  joinGame: (gameCode: string) => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   leaveGame: () => Promise<Acknowledgement>;
   /** Sends a command without a callback for the reply, as no well-behaved client would. */
   sendWithoutReply: (event: keyof ClientToServerEvents) => void;
@@ -29,6 +30,8 @@ export interface Connection {
 export interface Player {
   /** Opens a connection, like loading the page, and resolves once the server has accepted it. */
   connect: () => Promise<Connection>;
+  /** The player ID the server issued in the cookie, once the Player has connected. */
+  playerId: () => string | undefined;
 }
 
 export interface TestServer {
@@ -71,6 +74,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
       return {
         nextMessage: inbox.take,
         createGame: () => socket.emitWithAck("createGame"),
+        joinGame: (gameCode) => socket.emitWithAck("joinGame", gameCode),
         leaveGame: () => socket.emitWithAck("leaveGame"),
         sendWithoutReply: (event) => (socket.emit as (event: string) => void)(event),
         close: async () => {
@@ -83,7 +87,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
       };
     };
 
-    return { connect };
+    return { connect, playerId: () => cookieJar.get("wzq-player-id") };
   };
 
   const close = async () => {

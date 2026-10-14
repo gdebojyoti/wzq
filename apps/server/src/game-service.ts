@@ -22,7 +22,26 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   const createGame = oneAtATime(async (playerId: string): Promise<CommandResult> => {
     if (await store.findActiveGameByPlayer(playerId)) return { ok: false, reason: "alreadyInActiveGame" };
-    const game: Game = { id: randomUUID(), gameCode: await newGameCode(), state: "lobby", hostId: playerId };
+    const game: Game = {
+      id: randomUUID(),
+      gameCode: await newGameCode(),
+      state: "lobby",
+      hostId: playerId,
+      guestId: null,
+      turns: [],
+    };
+    await store.save(game);
+    return { ok: true, game };
+  });
+
+  /** Joins the Game in the lobby with this Game code, which starts it and retires the Game code. */
+  const joinGame = oneAtATime(async (playerId: string, gameCode: string): Promise<CommandResult> => {
+    // This also stops the Host joining their own Game.
+    if (await store.findActiveGameByPlayer(playerId)) return { ok: false, reason: "alreadyInActiveGame" };
+    const game = await store.findLobbyGameByCode(gameCode);
+    if (!game) return { ok: false, reason: "gameCodeNotFound" };
+    game.guestId = playerId;
+    game.state = "ongoing";
     await store.save(game);
     return { ok: true, game };
   });
@@ -38,7 +57,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   const findActiveGame = oneAtATime((playerId: string) => store.findActiveGameByPlayer(playerId));
 
-  return { createGame, leaveGame, findActiveGame };
+  return { createGame, joinGame, leaveGame, findActiveGame };
 };
 
 export type GameService = ReturnType<typeof createGameService>;
