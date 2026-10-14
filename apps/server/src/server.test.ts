@@ -52,6 +52,8 @@ describe("createGameServer", () => {
     const fromElsewhere = await handshake("https://example.com");
 
     expect(fromWebApp.headers.get("access-control-allow-origin")).toBe(webOrigin);
+    // The web app sends the player ID cookie, so the browser must be allowed to send credentials.
+    expect(fromWebApp.headers.get("access-control-allow-credentials")).toBe("true");
     expect(fromHost.headers.get("access-control-allow-origin")).toBe(hostOrigin);
     expect(fromElsewhere.headers.get("access-control-allow-origin")).not.toBe("https://example.com");
   });

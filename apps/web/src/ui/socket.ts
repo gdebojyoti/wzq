@@ -5,4 +5,5 @@ export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 const serverUrl = process.env.SERVER_URL ?? "http://localhost:4000";
 
-export const connectToServer = (): GameSocket => io(serverUrl);
+// With credentials, so the browser sends the player ID cookie the server issued. The web app never reads it.
+export const connectToServer = (): GameSocket => io(serverUrl, { withCredentials: true });
