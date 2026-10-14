@@ -120,7 +120,7 @@ describe("the Game code", () => {
 });
 
 describe("starting a Game", () => {
-  it("takes the joining Player's other open tabs into the Game too", async () => {
+  it("takes the Joiner's other open tabs into the Game too", async () => {
     const { gameCode } = await hostInLobby();
     const joiner = server.createPlayer();
     const tab = await joiner.connect();
@@ -149,5 +149,27 @@ describe("starting a Game", () => {
     expect(joinerPlayer.playerId()).toMatch(/./);
     expect(JSON.stringify(hostReceived)).not.toContain(joinerPlayer.playerId());
     expect(JSON.stringify(joinerReceived)).not.toContain(hostPlayer.playerId());
+  });
+});
+
+describe("a join command a well-behaved client wouldn't send", () => {
+  it("is ignored when it has a callback but no Game code, and the server carries on", async () => {
+    const { gameCode } = await hostInLobby();
+    const tab = await playerWithNoGame();
+
+    tab.sendUnchecked("joinGame", () => {});
+
+    expect(await (await playerWithNoGame()).joinGame(gameCode)).toMatchObject({ ok: true });
+  });
+
+  it("is refused when the Game code isn't text", async () => {
+    await server.close();
+    server = await startServer({ randomInt: () => 4213 });
+    await hostInLobby();
+    const tab = await playerWithNoGame();
+
+    const reply = await new Promise((resolve) => tab.sendUnchecked("joinGame", 4213, resolve));
+
+    expect(reply).toEqual({ ok: false, reason: "gameCodeNotFound" });
   });
 });

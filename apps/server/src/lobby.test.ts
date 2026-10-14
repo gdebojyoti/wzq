@@ -118,8 +118,8 @@ describe("a command sent without a callback for the reply", () => {
     const player = server.createPlayer();
     const firstVisit = await player.connect();
 
-    firstVisit.sendWithoutReply("ping");
-    firstVisit.sendWithoutReply("createGame");
+    firstVisit.sendUnchecked("ping");
+    firstVisit.sendUnchecked("createGame");
     await firstVisit.close();
 
     const secondVisit = await player.connect();
@@ -131,7 +131,7 @@ describe("a command sent without a callback for the reply", () => {
     const firstVisit = await player.connect();
     await firstVisit.createGame();
 
-    firstVisit.sendWithoutReply("leaveGame");
+    firstVisit.sendUnchecked("leaveGame");
     await firstVisit.close();
 
     const secondVisit = await player.connect();

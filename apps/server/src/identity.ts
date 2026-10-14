@@ -5,7 +5,7 @@ import type { TLSSocket } from "node:tls";
 
 import type { Server } from "socket.io";
 
-const cookieName = "wzq-player-id";
+export const playerIdCookieName = "wzq-player-id";
 const oneYearInSeconds = 365 * 24 * 60 * 60;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,14 +41,20 @@ const readCookie = (request: IncomingMessage): string | undefined => {
   const value = request.headers.cookie
     ?.split(";")
     .map((pair) => pair.trim())
-    .find((pair) => pair.startsWith(`${cookieName}=`))
-    ?.slice(cookieName.length + 1);
+    .find((pair) => pair.startsWith(`${playerIdCookieName}=`))
+    ?.slice(playerIdCookieName.length + 1);
   return value && uuid.test(value) ? value : undefined;
 };
 
 // Host-only (no Domain), so the other games on the parent domain never see it.
 const serializeCookie = (playerId: string, secure: boolean): string => {
-  const attributes = [`${cookieName}=${playerId}`, "Path=/", `Max-Age=${oneYearInSeconds}`, "HttpOnly", "SameSite=Lax"];
+  const attributes = [
+    `${playerIdCookieName}=${playerId}`,
+    "Path=/",
+    `Max-Age=${oneYearInSeconds}`,
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
   if (secure) attributes.push("Secure");
   return attributes.join("; ");
 };

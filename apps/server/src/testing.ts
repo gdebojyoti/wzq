@@ -6,6 +6,7 @@ import { NodeWebSocket } from "engine.io-client";
 import { io, type Socket } from "socket.io-client";
 import type { Acknowledgement, ClientToServerEvents, GameSnapshot, ServerToClientEvents } from "@wzq/shared";
 
+import { playerIdCookieName } from "./identity.js";
 import { createGameServer, type GameServerOptions } from "./server.js";
 
 export const webOrigin = "http://localhost:8081";
@@ -20,8 +21,8 @@ export interface Connection {
   createGame: () => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   joinGame: (gameCode: string) => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   leaveGame: () => Promise<Acknowledgement>;
-  /** Sends a command without a callback for the reply, as no well-behaved client would. */
-  sendWithoutReply: (event: keyof ClientToServerEvents) => void;
+  /** Sends a command with any arguments, unchecked by the event types, as no well-behaved client would. */
+  sendUnchecked: (event: keyof ClientToServerEvents, ...args: unknown[]) => void;
   /** Closes the connection, like closing the tab. */
   close: () => Promise<void>;
 }
@@ -76,7 +77,9 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
         createGame: () => socket.emitWithAck("createGame"),
         joinGame: (gameCode) => socket.emitWithAck("joinGame", gameCode),
         leaveGame: () => socket.emitWithAck("leaveGame"),
-        sendWithoutReply: (event) => (socket.emit as (event: string) => void)(event),
+        sendUnchecked: (event, ...args) => {
+          (socket.emit as (event: string, ...args: unknown[]) => void)(event, ...args);
+        },
         close: async () => {
           // A round trip first, so everything sent before closing has reached the server.
           await socket.emitWithAck("ping");
@@ -87,7 +90,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
       };
     };
 
-    return { connect, playerId: () => cookieJar.get("wzq-player-id") };
+    return { connect, playerId: () => cookieJar.get(playerIdCookieName) };
   };
 
   const close = async () => {

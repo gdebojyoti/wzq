@@ -29,7 +29,7 @@ The stage of a **Game** before the **Joiner** has joined.
 _Avoid_: waiting room
 
 **Game code**:
-The six-digit code the **Host** shares so another **Player** can join a **Game** in the **Lobby**.
+The six-digit code the **Host** shares, which the **Joiner** enters to join a **Game** in the **Lobby**.
 _Avoid_: room code, invite code
 
 **Rejoin**:
