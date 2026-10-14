@@ -1,1 +1,8 @@
-export type { ClientToServerEvents, ServerToClientEvents } from "./events.js";
+export type {
+  Acknowledgement,
+  ClientToServerEvents,
+  GameSnapshot,
+  GameState,
+  RejectionReason,
+  ServerToClientEvents,
+} from "./events.js";
