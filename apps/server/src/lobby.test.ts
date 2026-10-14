@@ -53,6 +53,17 @@ describe("creating a Game", () => {
     expect(reply).toEqual({ ok: false, reason: "alreadyInActiveGame" });
   });
 
+  it("is refused the second time when a Player asks twice at once", async () => {
+    const tab = await server.createPlayer().connect();
+
+    const replies = await Promise.all([tab.createGame(), tab.createGame()]);
+
+    expect(replies).toEqual([
+      { ok: true, game: expect.objectContaining({ state: "lobby" }) },
+      { ok: false, reason: "alreadyInActiveGame" },
+    ]);
+  });
+
   it("takes the Player's other open tabs into the lobby too", async () => {
     const player = server.createPlayer();
     const tab = await player.connect();
