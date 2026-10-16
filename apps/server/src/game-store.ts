@@ -7,8 +7,6 @@ export type Game = {
   /** Shared by the Host so another Player can join. Unique among Games in the lobby, and only used there. */
   gameCode: string;
   hostId: string;
-  /** The Joiner: the Player who joined with the Game code. Null while the Game is in the lobby. */
-  joinerId: string | null;
   /** Every Turn taken, in order. */
   turns: Cell[];
 } & Stage;
@@ -19,17 +17,23 @@ export type Game = {
  */
 type Stage = { [State in GameState]: { state: State } & StageDetails[State] }[GameState];
 
-/** What a Game records at each stage, beyond the stage itself: how it ended, once it has. */
+/**
+ * What a Game records at each stage, beyond the stage itself: the Joiner once there is one, and how it ended, once
+ * it has. The Joiner is the Player who joined with the Game code.
+ */
 interface StageDetails {
-  lobby: object;
-  ongoing: object;
+  lobby: { joinerId: null };
+  ongoing: { joinerId: string };
   won: {
+    joinerId: string;
     winnerId: string;
     /** The Cells of the line of Stones that won the Game, in order along it. */
     winningLine: Cell[];
   };
-  draw: object;
+  draw: { joinerId: string };
   abandoned: {
+    /** Null if the Game was abandoned in the lobby, before anyone joined. */
+    joinerId: string | null;
     /** The Player who used Leave game. */
     leaverId: string;
   };
