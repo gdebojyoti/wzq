@@ -179,7 +179,7 @@ describe("after a Game has ended", () => {
       .toMatchObject({ ok: true, game: { state: "ongoing", isHost: false, stones: [], result: null } });
   });
 
-  it("puts a Player who reconnects on the start screen", async () => {
+  it("tells a Player who connects again after the Game ended that they have no active Game", async () => {
     const host = server.createPlayer();
     const tab = await host.connect();
     const created = await tab.createGame();
