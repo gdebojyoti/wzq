@@ -1,7 +1,16 @@
 // The authority on every Game: it validates each command from a Player, and changes Games through the store.
 import { randomInt as cryptoRandomInt, randomUUID } from "node:crypto";
 
-import { gameCodeLength, isCellEmpty, isOnBoard, isPlayersTurn, type Cell, type RejectionReason } from "@wzq/shared";
+import {
+  findWinningLine,
+  gameCodeLength,
+  isCellEmpty,
+  isDraw,
+  isOnBoard,
+  isPlayersTurn,
+  type Cell,
+  type RejectionReason,
+} from "@wzq/shared";
 
 import type { Game, GameStore } from "./game-store.js";
 
@@ -29,6 +38,8 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
       hostId: playerId,
       joinerId: null,
       turns: [],
+      winnerId: null,
+      winningLine: null,
     };
     await store.save(game);
     return { ok: true, game };
@@ -57,13 +68,22 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   /** Takes the Player's Turn by placing their Stone on the Cell. */
   const takeTurn = oneAtATime(async (playerId: string, cell: Cell): Promise<CommandResult> => {
-    const game = await store.findActiveGameByPlayer(playerId);
+    // A Game that has ended is still found, so a Turn on it is refused as the Game not being ongoing.
+    const game = await store.findLastGameByPlayer(playerId);
     if (!game) return { ok: false, reason: "gameNotFound" };
     if (game.state !== "ongoing") return { ok: false, reason: "gameNotOngoing" };
     if (!isPlayersTurn(game.hostId === playerId, game.turns.length)) return { ok: false, reason: "notYourTurn" };
     if (!isOnBoard(cell)) return { ok: false, reason: "cellOffBoard" };
     if (!isCellEmpty(game.turns, cell)) return { ok: false, reason: "cellOccupied" };
     game.turns.push(cell);
+    const winningLine = findWinningLine(game.turns);
+    if (winningLine) {
+      game.state = "won";
+      game.winnerId = playerId;
+      game.winningLine = winningLine;
+    } else if (isDraw(game.turns)) {
+      game.state = "draw";
+    }
     await store.save(game);
     return { ok: true, game };
   });

@@ -31,3 +31,50 @@ export const isCellEmpty = (turns: readonly Cell[], cell: Cell): boolean => {
 };
 
 const isInRange = (index: number) => Number.isInteger(index) && index >= 0 && index < boardSize;
+
+/** A Player has a Win with this many of their Stones in an unbroken line. More also wins. */
+export const winningLength = 5;
+
+/**
+ * The Cells of the line of five or more Stones the last Turn made, if it made one, given every Turn taken so
+ * far. Only the four lines through the last Stone are checked, as any line without it was checked before.
+ */
+export const findWinningLine = (turns: readonly Cell[]): Cell[] | null => {
+  const last = turns.at(-1);
+  if (!last) return null;
+  // The Stones of the Player who took the last Turn: every other Turn, counting back from it.
+  const ownStones = new Set(turns.filter((_, index) => index % 2 === (turns.length - 1) % 2).map(cellKey));
+  // The Player's Stones in an unbroken row after the Cell, going one way along a line. The row stops at the edge
+  // of the Board, as no Turn is taken off it.
+  const ownStonesAfter = (cell: Cell, rowStep: number, columnStep: number) => {
+    const cells: Cell[] = [];
+    for (let next = step(cell, rowStep, columnStep); ownStones.has(cellKey(next));) {
+      cells.push(next);
+      next = step(next, rowStep, columnStep);
+    }
+    return cells;
+  };
+  for (const [rowStep, columnStep] of directions) {
+    const winningLine = [
+      ...ownStonesAfter(last, -rowStep, -columnStep).reverse(),
+      last,
+      ...ownStonesAfter(last, rowStep, columnStep),
+    ];
+    if (winningLine.length >= winningLength) return winningLine;
+  }
+  return null;
+};
+
+/** Whether the Game is a Draw, given every Turn taken so far: every Cell is filled, and the last Turn wasn't a Win. */
+export const isDraw = (turns: readonly Cell[]): boolean => {
+  return turns.length === boardSize * boardSize && !findWinningLine(turns);
+};
+
+/** Horizontal, vertical, and the two diagonals, as the steps (rows, columns) going one way along each. */
+const directions = [[0, 1], [1, 0], [1, 1], [1, -1]] as const;
+
+const step = ({ row, column }: Cell, rowStep: number, columnStep: number): Cell => {
+  return { row: row + rowStep, column: column + columnStep };
+};
+
+const cellKey = ({ row, column }: Cell) => `${row},${column}`;

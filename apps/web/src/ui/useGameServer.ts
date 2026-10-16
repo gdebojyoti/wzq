@@ -70,5 +70,11 @@ export const useGameServer = () => {
   // On success the server sends both Players the Game with the new Stone.
   const takeTurn = (cell: Cell) => send((socket) => socket.emitWithAck("takeTurn", cell));
 
-  return { status, game, error, busy, createGame, joinGame, leaveGame, takeTurn };
+  // Leaves the result screen of a Game that has ended. The server sends nothing more about it.
+  const backToStart = () => {
+    setError(undefined);
+    setGame(null);
+  };
+
+  return { status, game, error, busy, createGame, joinGame, leaveGame, takeTurn, backToStart };
 };

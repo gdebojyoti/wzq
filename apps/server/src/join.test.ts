@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { startServer, type TestServer } from "./testing.js";
+import { noResult, startServer, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -19,11 +19,13 @@ describe("joining a Game by Game code", () => {
 
     const reply = await joiner.joinGame(gameCode);
 
-    const joinerView = { state: "ongoing", gameCode: null, isHost: false, turn: "opponent", stones: [] };
+    const joinerView = { state: "ongoing", gameCode: null, isHost: false, turn: "opponent", stones: [], ...noResult };
     expect(reply).toEqual({ ok: true, game: joinerView });
     expect(await joiner.nextMessage()).toEqual({ event: "game", game: joinerView });
-    expect(await host.nextMessage())
-      .toEqual({ event: "game", game: { state: "ongoing", gameCode: null, isHost: true, turn: "you", stones: [] } });
+    expect(await host.nextMessage()).toEqual({
+      event: "game",
+      game: { state: "ongoing", gameCode: null, isHost: true, turn: "you", stones: [], ...noResult },
+    });
   });
 });
 

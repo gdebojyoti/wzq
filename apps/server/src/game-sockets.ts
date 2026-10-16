@@ -4,12 +4,13 @@ import {
   isPlayersTurn,
   type Acknowledgement,
   type ClientToServerEvents,
+  type GameResult,
   type GameSnapshot,
   type ServerToClientEvents,
   type Side,
 } from "@wzq/shared";
 
-import type { Game } from "./game-store.js";
+import { isActive, type Game } from "./game-store.js";
 import type { CommandResult, GameService } from "./game-service.js";
 import type { PlayerData } from "./identity.js";
 
@@ -42,8 +43,6 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
       const result = await gameService.leaveGame(playerId);
       if (!result.ok) return ack(result);
       await sendSnapshots(io, result.game);
-      // The Game has ended, so nothing more is sent to its room.
-      io.in(gameRoom(result.game)).socketsLeave(gameRoom(result.game));
       ack({ ok: true });
     });
 
@@ -78,6 +77,8 @@ const gameRoom = (game: Game) => `game:${game.id}`;
 const sendSnapshots = async (io: GameIo, game: Game) => {
   const sockets = await io.in(gameRoom(game)).fetchSockets();
   sockets.forEach((socket) => socket.emit("game", toSnapshot(game, socket.data.playerId)));
+  // Once the Game has ended, nothing more is sent to its room.
+  if (!isActive(game)) io.in(gameRoom(game)).socketsLeave(gameRoom(game));
 };
 
 /** The Game as this Player sees it. Never includes a player ID: the ID is the only proof of who a Player is. */
@@ -92,5 +93,14 @@ const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
     turn: game.state === "ongoing" ? sideAfter(game.turns.length) : null,
     // Each Stone was placed on the Turn taken after all the Stones before it.
     stones: game.turns.map((cell, index) => ({ ...cell, side: sideAfter(index) })),
+    result: resultFor(game, playerId),
+    winningLine: game.winningLine,
   };
+};
+
+/** How the Game ended, as this Player sees it, or null if it hasn't been won or drawn. */
+const resultFor = (game: Game, playerId: string): GameResult | null => {
+  if (game.state === "won") return game.winnerId === playerId ? "won" : "lost";
+  if (game.state === "draw") return "draw";
+  return null;
 };

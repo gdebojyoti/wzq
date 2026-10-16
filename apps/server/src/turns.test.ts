@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { startServer, type TestServer } from "./testing.js";
+import { noResult, startServer, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -18,8 +18,8 @@ describe("taking a Turn", () => {
 
     const reply = await host.takeTurn({ row: 7, column: 8 });
 
-    const hostView = { state: "ongoing", gameCode: null, isHost: true, turn: "opponent" };
-    const joinerView = { state: "ongoing", gameCode: null, isHost: false, turn: "you" };
+    const hostView = { state: "ongoing", gameCode: null, isHost: true, turn: "opponent", ...noResult };
+    const joinerView = { state: "ongoing", gameCode: null, isHost: false, turn: "you", ...noResult };
     expect(reply).toEqual({ ok: true });
     expect(await host.nextMessage())
       .toEqual({ event: "game", game: { ...hostView, stones: [{ row: 7, column: 8, side: "you" }] } });
