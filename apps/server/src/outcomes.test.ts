@@ -167,10 +167,10 @@ describe("Leave game during play", () => {
 
       const stones = [{ row: 7, column: 7 }, { row: 8, column: 8 }];
       expect(await game[leaver].nextMessage()).toMatchObject({
-        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leftBy: "you" } },
+        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leaver: "you" } },
       });
       expect(await game[other].nextMessage()).toMatchObject({
-        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leftBy: "opponent" } },
+        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leaver: "opponent" } },
       });
     },
   );

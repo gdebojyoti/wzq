@@ -1,6 +1,6 @@
 // Where Games are kept. The game service only knows this interface, so the in-memory store (ADR-0005)
 // can be swapped for a Postgres one without touching game logic.
-import type { Cell } from "@wzq/shared";
+import type { Cell, GameState } from "@wzq/shared";
 
 export type Game = {
   id: string;
@@ -13,19 +13,27 @@ export type Game = {
   turns: Cell[];
 } & Stage;
 
-/** The stage a Game is at, with how it ended once it has, so a Game can't have a winner unless it's won. */
-type Stage =
-  | { state: "lobby" }
-  | { state: "ongoing" }
-  | {
-    state: "won";
+/**
+ * The stage a Game is at, with what it records there, so a Game can't have a winner unless it's won. There's one
+ * for each Game state: leaving a state out of `StageDetails` doesn't compile.
+ */
+type Stage = { [State in GameState]: { state: State } & StageDetails[State] }[GameState];
+
+/** What a Game records at each stage, beyond the stage itself: how it ended, once it has. */
+interface StageDetails {
+  lobby: object;
+  ongoing: object;
+  won: {
     winnerId: string;
     /** The Cells of the line of Stones that won the Game, in order along it. */
     winningLine: Cell[];
-  }
-  | { state: "draw" }
-  /** The Player who used Leave game. */
-  | { state: "abandoned"; leaverId: string };
+  };
+  draw: object;
+  abandoned: {
+    /** The Player who used Leave game. */
+    leaverId: string;
+  };
+}
 
 export interface GameStore {
   /** Adds the Game, or replaces the one with the same ID. */

@@ -13,7 +13,7 @@ export type GameState = "lobby" | "ongoing" | "won" | "draw" | "abandoned";
 export type GameResult =
   | { outcome: "won" | "lost"; winningLine: Cell[] }
   | { outcome: "draw" }
-  | { outcome: "abandoned"; leftBy: Side };
+  | { outcome: "abandoned"; leaver: Side };
 
 /** A Player as the viewer of a snapshot sees them: themselves, or their opponent. */
 export type Side = "you" | "opponent";

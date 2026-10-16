@@ -107,7 +107,7 @@ const resultFor = (game: Game, playerId: string): GameResult | null => {
     case "abandoned":
       // A Game abandoned in the lobby never started, so it has no result to show.
       if (game.joinerId === null) return null;
-      return { outcome: "abandoned", leftBy: game.leaverId === playerId ? "you" : "opponent" };
+      return { outcome: "abandoned", leaver: game.leaverId === playerId ? "you" : "opponent" };
     default:
       return null;
   }

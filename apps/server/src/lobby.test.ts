@@ -98,14 +98,7 @@ describe("leaving a Game in the lobby", () => {
     expect(reply).toEqual({ ok: true });
     expect(await tab.nextMessage()).toEqual({
       event: "game",
-      game: {
-        state: "abandoned",
-        gameCode: null,
-        isHost: true,
-        turn: null,
-        stones: [],
-        result: null,
-      },
+      game: { state: "abandoned", gameCode: null, isHost: true, turn: null, stones: [], result: null },
     });
   });
 
