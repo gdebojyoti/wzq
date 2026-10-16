@@ -20,8 +20,8 @@ describe("a Win", () => {
 
     const { hostView, joinerView } = await takeTurns(game, { host: winningLine, joiner: scattered });
 
-    expect(hostView).toMatchObject({ state: "won", turn: null, result: "won", winningLine });
-    expect(joinerView).toMatchObject({ state: "won", turn: null, result: "lost", winningLine });
+    expect(hostView).toMatchObject({ state: "won", turn: null, result: { outcome: "won", winningLine } });
+    expect(joinerView).toMatchObject({ state: "won", turn: null, result: { outcome: "lost", winningLine } });
   });
 
   describe.each([
@@ -43,7 +43,7 @@ describe("a Win", () => {
 
       const { hostView } = await takeTurns(game, { host: hostCells, joiner: scattered });
 
-      expect(hostView).toMatchObject({ state: "won", result: "won", winningLine });
+      expect(hostView).toMatchObject({ state: "won", result: { outcome: "won", winningLine } });
     });
   });
 
@@ -56,8 +56,8 @@ describe("a Win", () => {
       joiner: winningLine,
     });
 
-    expect(hostView).toMatchObject({ state: "won", result: "lost", winningLine });
-    expect(joinerView).toMatchObject({ state: "won", result: "won", winningLine });
+    expect(hostView).toMatchObject({ state: "won", result: { outcome: "lost", winningLine } });
+    expect(joinerView).toMatchObject({ state: "won", result: { outcome: "won", winningLine } });
   });
 
   it("is won at the edge of the Board", async () => {
@@ -66,7 +66,7 @@ describe("a Win", () => {
 
     const { hostView } = await takeTurns(game, { host: winningLine, joiner: scattered });
 
-    expect(hostView).toMatchObject({ state: "won", winningLine });
+    expect(hostView).toMatchObject({ state: "won", result: { winningLine } });
   });
 
   it("is won with a line of six or more, which is the winning line", async () => {
@@ -77,7 +77,7 @@ describe("a Win", () => {
 
     const { hostView } = await takeTurns(game, { host: hostCells, joiner: [...scattered, { row: 14, column: 9 }] });
 
-    expect(hostView).toMatchObject({ state: "won", winningLine });
+    expect(hostView).toMatchObject({ state: "won", result: { winningLine } });
   });
 });
 
@@ -89,7 +89,7 @@ describe("a line that isn't a Win", () => {
 
     const { hostView } = await takeTurns(game, { host: fourInARow, joiner: scattered.slice(0, 3) });
 
-    expect(hostView).toMatchObject({ state: "ongoing", turn: "opponent", result: null, winningLine: null });
+    expect(hostView).toMatchObject({ state: "ongoing", turn: "opponent", result: null });
   });
 
   it("doesn't end the Game when five Stones in a line are broken by the opponent's Stone", async () => {
@@ -102,7 +102,7 @@ describe("a line that isn't a Win", () => {
       joiner: [opponentStone, ...scattered.slice(0, 3)],
     });
 
-    expect(hostView).toMatchObject({ state: "ongoing", result: null, winningLine: null });
+    expect(hostView).toMatchObject({ state: "ongoing", result: null });
   });
 
   it("doesn't count the opponent's Stones as the Player's own", async () => {
@@ -115,7 +115,7 @@ describe("a line that isn't a Win", () => {
       joiner: [cells[1], cells[3]] as Cell[],
     });
 
-    expect(joinerView).toMatchObject({ state: "ongoing", result: null, winningLine: null });
+    expect(joinerView).toMatchObject({ state: "ongoing", result: null });
   });
 });
 
@@ -125,8 +125,8 @@ describe("a Draw", () => {
 
     const { hostView, joinerView } = await takeTurns(game, drawnBoard());
 
-    expect(hostView).toMatchObject({ state: "draw", turn: null, result: "draw", winningLine: null });
-    expect(joinerView).toMatchObject({ state: "draw", turn: null, result: "draw", winningLine: null });
+    expect(hostView).toMatchObject({ state: "draw", turn: null, result: { outcome: "draw" } });
+    expect(joinerView).toMatchObject({ state: "draw", turn: null, result: { outcome: "draw" } });
     expect(hostView.stones).toHaveLength(boardSize * boardSize);
   });
 
@@ -149,8 +149,8 @@ describe("a Draw", () => {
     });
 
     const winningLine = line({ row: 0, column: 2 }, [0, 1], 6);
-    expect(joinerView).toMatchObject({ state: "won", result: "won", winningLine });
-    expect(hostView).toMatchObject({ state: "won", result: "lost", winningLine });
+    expect(joinerView).toMatchObject({ state: "won", result: { outcome: "won", winningLine } });
+    expect(hostView).toMatchObject({ state: "won", result: { outcome: "lost", winningLine } });
     expect(hostView.stones).toHaveLength(boardSize * boardSize);
   });
 });

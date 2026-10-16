@@ -1,22 +1,30 @@
 // Where Games are kept. The game service only knows this interface, so the in-memory store (ADR-0005)
 // can be swapped for a Postgres one without touching game logic.
-import type { Cell, GameState } from "@wzq/shared";
+import type { Cell } from "@wzq/shared";
 
-export interface Game {
+export type Game = {
   id: string;
   /** Shared by the Host so another Player can join. Unique among Games in the lobby, and only used there. */
   gameCode: string;
-  state: GameState;
   hostId: string;
   /** The Joiner: the Player who joined with the Game code. Null while the Game is in the lobby. */
   joinerId: string | null;
   /** Every Turn taken, in order. */
   turns: Cell[];
-  /** The Player who won, once the Game is won; otherwise null. */
-  winnerId: string | null;
-  /** The Cells of the line of Stones that won the Game, once it's won; otherwise null. */
-  winningLine: Cell[] | null;
-}
+} & Stage;
+
+/** The stage a Game is at, with how it ended once it has, so a Game can't have a winner unless it's won. */
+type Stage =
+  | { state: "lobby" }
+  | { state: "ongoing" }
+  | {
+    state: "won";
+    winnerId: string;
+    /** The Cells of the line of Stones that won the Game, in order along it. */
+    winningLine: Cell[];
+  }
+  | { state: "draw" }
+  | { state: "abandoned" };
 
 export interface GameStore {
   /** Adds the Game, or replaces the one with the same ID. */
@@ -58,10 +66,4 @@ export const isActive = (game: Game) => game.state === "lobby" || game.state ===
 const isPlayerIn = (game: Game, playerId: string) => game.hostId === playerId || game.joinerId === playerId;
 
 // Hands out copies, so changing a Game only takes effect once it's saved, as with a database.
-const copy = (game: Game): Game => ({
-  ...game,
-  turns: copyCells(game.turns),
-  winningLine: game.winningLine && copyCells(game.winningLine),
-});
-
-const copyCells = (cells: Cell[]) => cells.map((cell) => ({ ...cell }));
+const copy = (game: Game): Game => structuredClone(game);

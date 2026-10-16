@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { noResult, startServer, type TestServer } from "./testing.js";
+import { startServer, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -34,7 +34,7 @@ describe("creating a Game", () => {
         isHost: true,
         turn: null,
         stones: [],
-        ...noResult,
+        result: null,
       },
     });
   });
@@ -98,7 +98,7 @@ describe("leaving a Game in the lobby", () => {
     expect(reply).toEqual({ ok: true });
     expect(await tab.nextMessage()).toEqual({
       event: "game",
-      game: { state: "abandoned", gameCode: null, isHost: true, turn: null, stones: [], ...noResult },
+      game: { state: "abandoned", gameCode: null, isHost: true, turn: null, stones: [], result: null },
     });
   });
 

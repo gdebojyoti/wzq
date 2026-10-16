@@ -16,8 +16,8 @@ export default function Wzq() {
     if (game === undefined) return null;
     if (game?.state === "lobby") return <LobbyScreen game={game} disabled={disabled} onLeaveGame={leaveGame} />;
     if (game?.state === "ongoing") return <GameScreen game={game} disabled={disabled} onTakeTurn={takeTurn} />;
-    if (game?.state === "won" || game?.state === "draw") {
-      return <ResultScreen game={game} onBackToStart={backToStart} />;
+    if (game?.result) {
+      return <ResultScreen result={game.result} stones={game.stones} onBackToStart={backToStart} />;
     }
     // An abandoned Game goes back to the start screen.
     return <StartScreen disabled={disabled} onNewGame={createGame} onJoinGame={joinGame} />;

@@ -94,13 +94,17 @@ const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
     // Each Stone was placed on the Turn taken after all the Stones before it.
     stones: game.turns.map((cell, index) => ({ ...cell, side: sideAfter(index) })),
     result: resultFor(game, playerId),
-    winningLine: game.winningLine,
   };
 };
 
 /** How the Game ended, as this Player sees it, or null if it hasn't been won or drawn. */
 const resultFor = (game: Game, playerId: string): GameResult | null => {
-  if (game.state === "won") return game.winnerId === playerId ? "won" : "lost";
-  if (game.state === "draw") return "draw";
-  return null;
+  switch (game.state) {
+    case "won":
+      return { outcome: game.winnerId === playerId ? "won" : "lost", winningLine: game.winningLine };
+    case "draw":
+      return { outcome: "draw" };
+    default:
+      return null;
+  }
 };
