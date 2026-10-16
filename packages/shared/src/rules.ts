@@ -33,7 +33,7 @@ export const isCellEmpty = (turns: readonly Cell[], cell: Cell): boolean => {
 const isInRange = (index: number) => Number.isInteger(index) && index >= 0 && index < boardSize;
 
 /** A Player has a Win with this many of their Stones in an unbroken line. More also wins. */
-export const winningLength = 5;
+const winningLength = 5;
 
 /**
  * The Cells of the line of five or more Stones the last Turn made, if it made one, given every Turn taken so
@@ -42,23 +42,25 @@ export const winningLength = 5;
 export const findWinningLine = (turns: readonly Cell[]): Cell[] | null => {
   const last = turns.at(-1);
   if (!last) return null;
-  // The Stones of the Player who took the last Turn: every other Turn, counting back from it.
-  const ownStones = new Set(turns.filter((_, index) => index % 2 === (turns.length - 1) % 2).map(cellKey));
-  // The Player's Stones in an unbroken row after the Cell, going one way along a line. The row stops at the edge
-  // of the Board, as no Turn is taken off it.
-  const ownStonesAfter = (cell: Cell, rowStep: number, columnStep: number) => {
+  // The Stones of the Player who took the last Turn.
+  const lastIsHosts = isPlayersTurn(true, turns.length - 1);
+  const ownStones = new Set(turns.filter((_, index) => isPlayersTurn(lastIsHosts, index)).map(cellKey));
+  // The Player's Stones in an unbroken line after the Cell, going one way. The line stops at the edge of the
+  // Board, as no Turn is taken off it.
+  const ownStonesAfter = (cell: Cell, direction: Direction) => {
     const cells: Cell[] = [];
-    for (let next = step(cell, rowStep, columnStep); ownStones.has(cellKey(next));) {
+    let next = step(cell, direction);
+    while (ownStones.has(cellKey(next))) {
       cells.push(next);
-      next = step(next, rowStep, columnStep);
+      next = step(next, direction);
     }
     return cells;
   };
   for (const [rowStep, columnStep] of directions) {
     const winningLine = [
-      ...ownStonesAfter(last, -rowStep, -columnStep).reverse(),
+      ...ownStonesAfter(last, [-rowStep, -columnStep]).reverse(),
       last,
-      ...ownStonesAfter(last, rowStep, columnStep),
+      ...ownStonesAfter(last, [rowStep, columnStep]),
     ];
     if (winningLine.length >= winningLength) return winningLine;
   }
@@ -70,10 +72,13 @@ export const isDraw = (turns: readonly Cell[]): boolean => {
   return turns.length === boardSize * boardSize && !findWinningLine(turns);
 };
 
-/** Horizontal, vertical, and the two diagonals, as the steps (rows, columns) going one way along each. */
-const directions = [[0, 1], [1, 0], [1, 1], [1, -1]] as const;
+/** A way to go along a line: how many rows and columns each step moves. */
+type Direction = readonly [rowStep: number, columnStep: number];
 
-const step = ({ row, column }: Cell, rowStep: number, columnStep: number): Cell => {
+/** Horizontal, vertical, and the two diagonals, each going one way along its line. */
+const directions: Direction[] = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+const step = ({ row, column }: Cell, [rowStep, columnStep]: Direction): Cell => {
   return { row: row + rowStep, column: column + columnStep };
 };
 

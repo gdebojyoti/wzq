@@ -73,7 +73,7 @@ const playerRoom = (playerId: string) => `player:${playerId}`;
 /** One room per Game, holding every connection of its Players. */
 const gameRoom = (game: Game) => `game:${game.id}`;
 
-/** Sends every connection in the Game's room the Game as its Player sees it. */
+/** Sends every connection in the Game's room the Game as its Player sees it, and empties the room if it has ended. */
 const sendSnapshots = async (io: GameIo, game: Game) => {
   const sockets = await io.in(gameRoom(game)).fetchSockets();
   sockets.forEach((socket) => socket.emit("game", toSnapshot(game, socket.data.playerId)));

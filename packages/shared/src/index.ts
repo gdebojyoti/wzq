@@ -17,6 +17,5 @@ export {
   isDraw,
   isOnBoard,
   isPlayersTurn,
-  winningLength,
   type Cell,
 } from "./rules.js";

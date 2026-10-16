@@ -23,7 +23,7 @@ export interface GameStore {
   save: (game: Game) => Promise<void>;
   /** The Game the Player is in, if it's active: a Player is in at most one active Game. */
   findActiveGameByPlayer: (playerId: string) => Promise<Game | undefined>;
-  /** The Game the Player was last in: their active Game if they have one, otherwise the ended one that started last. */
+  /** The Game the Player is in if it's active, otherwise the one they were in that was created last, if any. */
   findLastGameByPlayer: (playerId: string) => Promise<Game | undefined>;
   findLobbyGameByCode: (gameCode: string) => Promise<Game | undefined>;
 }

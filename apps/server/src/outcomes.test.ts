@@ -32,7 +32,9 @@ describe("a Win", () => {
   ])("in a $direction line", ({ winningLine }) => {
     it.each([
       { position: "first", index: 0 },
+      { position: "second", index: 1 },
       { position: "middle", index: 2 },
+      { position: "fourth", index: 3 },
       { position: "last", index: 4 },
     ])("is won when the $position Stone in the line is placed last", async ({ index }) => {
       const game = await server.ongoingGame();
@@ -199,8 +201,8 @@ const drawnBoard = () => {
   const cells: { host: Cell[]; joiner: Cell[] } = { host: [], joiner: [] };
   for (let row = 0; row < boardSize; row++) {
     for (let column = 0; column < boardSize; column++) {
-      const isHosts = Math.floor((column + 2 * row) / 2) % 2 === 0;
-      (isHosts ? cells.host : cells.joiner).push({ row, column });
+      const isHostsCell = Math.floor((column + 2 * row) / 2) % 2 === 0;
+      (isHostsCell ? cells.host : cells.joiner).push({ row, column });
     }
   }
   return cells;
