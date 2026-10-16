@@ -43,8 +43,11 @@ export interface TestServer {
   playerWithNoGame: () => Promise<Connection>;
   /** A new Host waiting in the lobby, with everything sent so far already read. */
   hostInLobby: () => Promise<{ host: Connection; gameCode: string }>;
-  /** A new ongoing Game with no Turns taken yet, with everything sent to either Player so far already read. */
-  ongoingGame: () => Promise<{ host: Connection; joiner: Connection }>;
+  /**
+   * A new ongoing Game with no Turns taken yet, with everything sent to either Player so far already read. Each
+   * Player has one tab open, and `players` can open more, or open one again after it closes.
+   */
+  ongoingGame: () => Promise<{ host: Connection; joiner: Connection; players: { host: Player; joiner: Player } }>;
   close: () => Promise<void>;
 }
 
@@ -101,14 +104,14 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     return { connect, playerId: () => cookieJar.get(playerIdCookieName) };
   };
 
-  const playerWithNoGame = async () => {
-    const tab = await createPlayer().connect();
+  const playerWithNoGame = async (player = createPlayer()) => {
+    const tab = await player.connect();
     await tab.nextMessage();
     return tab;
   };
 
-  const hostInLobby = async () => {
-    const host = await playerWithNoGame();
+  const hostInLobby = async (player = createPlayer()) => {
+    const host = await playerWithNoGame(player);
     const reply = await host.createGame();
     if (!reply.ok || !reply.game.gameCode) throw new Error("The Game wasn't created");
     await host.nextMessage();
@@ -116,12 +119,13 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
   };
 
   const ongoingGame = async () => {
-    const { host, gameCode } = await hostInLobby();
-    const joiner = await playerWithNoGame();
+    const players = { host: createPlayer(), joiner: createPlayer() };
+    const { host, gameCode } = await hostInLobby(players.host);
+    const joiner = await playerWithNoGame(players.joiner);
     await joiner.joinGame(gameCode);
     await host.nextMessage();
     await joiner.nextMessage();
-    return { host, joiner };
+    return { host, joiner, players };
   };
 
   const close = async () => {
