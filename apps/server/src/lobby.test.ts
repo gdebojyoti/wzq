@@ -98,7 +98,14 @@ describe("leaving a Game in the lobby", () => {
     expect(reply).toEqual({ ok: true });
     expect(await tab.nextMessage()).toEqual({
       event: "game",
-      game: { state: "abandoned", gameCode: null, isHost: true, turn: null, stones: [], result: null },
+      game: {
+        state: "abandoned",
+        gameCode: null,
+        isHost: true,
+        turn: null,
+        stones: [],
+        result: { outcome: "abandoned", leftBy: "you" },
+      },
     });
   });
 
@@ -115,7 +122,7 @@ describe("leaving a Game in the lobby", () => {
     expect(await secondVisit.createGame()).toMatchObject({ ok: true, game: { state: "lobby", isHost: true } });
   });
 
-  it("is refused for a Player with no active Game", async () => {
+  it("is refused for a Player who has never been in a Game", async () => {
     const tab = await server.createPlayer().connect();
 
     expect(await tab.leaveGame()).toEqual({ ok: false, reason: "gameNotFound" });

@@ -24,7 +24,8 @@ type Stage =
     winningLine: Cell[];
   }
   | { state: "draw" }
-  | { state: "abandoned" };
+  /** The Player who used Leave game. */
+  | { state: "abandoned"; leaverId: string };
 
 export interface GameStore {
   /** Adds the Game, or replaces the one with the same ID. */

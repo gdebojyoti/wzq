@@ -97,13 +97,15 @@ const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
   };
 };
 
-/** How the Game ended, as this Player sees it, or null if it hasn't been won or drawn. */
+/** How the Game ended, as this Player sees it, or null if it hasn't. */
 const resultFor = (game: Game, playerId: string): GameResult | null => {
   switch (game.state) {
     case "won":
       return { outcome: game.winnerId === playerId ? "won" : "lost", winningLine: game.winningLine };
     case "draw":
       return { outcome: "draw" };
+    case "abandoned":
+      return { outcome: "abandoned", leftBy: game.leaverId === playerId ? "you" : "opponent" };
     default:
       return null;
   }

@@ -32,7 +32,10 @@ export const useGameServer = () => {
     });
     socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("disconnected"));
-    socket.on("game", setGame);
+    socket.on("game", (next) => {
+      // A Game abandoned in the lobby never started, so there's no result to show: back to the start screen.
+      setGame((shown) => (shown?.state === "lobby" && next.state === "abandoned" ? null : next));
+    });
     socket.on("noActiveGame", () => setGame(null));
     return () => {
       socket.disconnect();
@@ -64,7 +67,8 @@ export const useGameServer = () => {
 
   const joinGame = (gameCode: string) => enterGame((socket) => socket.emitWithAck("joinGame", gameCode));
 
-  // On success the server sends the abandoned Game, which takes the Player back to the start screen.
+  // On success the server sends the abandoned Game. From the lobby, the Host goes back to the start screen; during
+  // play, both Players see the result screen.
   const leaveGame = () => send((socket) => socket.emitWithAck("leaveGame"));
 
   // On success the server sends both Players the Game with the new Stone.

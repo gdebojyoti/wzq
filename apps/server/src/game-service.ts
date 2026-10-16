@@ -12,7 +12,7 @@ import {
   type RejectionReason,
 } from "@wzq/shared";
 
-import type { Game, GameStore } from "./game-store.js";
+import { isActive, type Game, type GameStore } from "./game-store.js";
 
 export type CommandResult = { ok: true; game: Game } | { ok: false; reason: RejectionReason };
 
@@ -56,9 +56,11 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   /** Leave game: ends the Player's active Game as abandoned, with no winner. */
   const leaveGame = oneAtATime(async (playerId: string): Promise<CommandResult> => {
-    const game = await store.findActiveGameByPlayer(playerId);
+    // As with a Turn, a Game that has ended is still found, so leaving it is refused as it not being ongoing.
+    const game = await store.findLastGameByPlayer(playerId);
     if (!game) return { ok: false, reason: "gameNotFound" };
-    const abandoned: Game = { ...game, state: "abandoned" };
+    if (!isActive(game)) return { ok: false, reason: "gameNotOngoing" };
+    const abandoned: Game = { ...game, state: "abandoned", leaverId: playerId };
     await store.save(abandoned);
     return { ok: true, game: abandoned };
   });

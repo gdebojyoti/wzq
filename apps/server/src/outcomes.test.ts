@@ -155,21 +155,62 @@ describe("a Draw", () => {
   });
 });
 
+describe("Leave game during play", () => {
+  it.each(["host", "joiner"] as const)(
+    "ends the Game as abandoned when the %s leaves, and tells the other Player their opponent left",
+    async (leaver) => {
+      const game = await server.ongoingGame();
+      await takeTurns(game, { host: [{ row: 7, column: 7 }], joiner: [{ row: 8, column: 8 }] });
+      const other = leaver === "host" ? "joiner" : "host";
+
+      expect(await game[leaver].leaveGame()).toEqual({ ok: true });
+
+      const stones = [{ row: 7, column: 7 }, { row: 8, column: 8 }];
+      expect(await game[leaver].nextMessage()).toMatchObject({
+        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leftBy: "you" } },
+      });
+      expect(await game[other].nextMessage()).toMatchObject({
+        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leftBy: "opponent" } },
+      });
+    },
+  );
+});
+
 describe("after a Game has ended", () => {
-  it.each([
-    { outcome: "a Win", cells: () => ({ host: line({ row: 7, column: 3 }, [0, 1], 5), joiner: scattered }) },
-    { outcome: "a Draw", cells: drawnBoard },
-  ])("refuses a Turn from either Player after $outcome, as the Game isn't ongoing", async ({ cells }) => {
+  const endings = [
+    {
+      outcome: "a Win",
+      end: (game: Players) => takeTurns(game, { host: line({ row: 7, column: 3 }, [0, 1], 5), joiner: scattered }),
+    },
+    { outcome: "a Draw", end: (game: Players) => takeTurns(game, drawnBoard()) },
+    {
+      outcome: "Leave game",
+      end: async (game: Players) => {
+        await game.host.takeTurn({ row: 7, column: 7 });
+        await game.joiner.leaveGame();
+      },
+    },
+  ];
+
+  it.each(endings)("refuses a Turn from either Player after $outcome, as the Game isn't ongoing", async ({ end }) => {
     const game = await server.ongoingGame();
-    await takeTurns(game, cells());
+    await end(game);
 
     expect(await game.host.takeTurn({ row: 9, column: 9 })).toEqual({ ok: false, reason: "gameNotOngoing" });
     expect(await game.joiner.takeTurn({ row: 9, column: 9 })).toEqual({ ok: false, reason: "gameNotOngoing" });
   });
 
-  it("lets both Players start or join a new Game", async () => {
+  it.each(endings)("refuses Leave game from either Player after $outcome, as it isn't ongoing", async ({ end }) => {
     const game = await server.ongoingGame();
-    await takeTurns(game, { host: line({ row: 7, column: 3 }, [0, 1], 5), joiner: scattered });
+    await end(game);
+
+    expect(await game.host.leaveGame()).toEqual({ ok: false, reason: "gameNotOngoing" });
+    expect(await game.joiner.leaveGame()).toEqual({ ok: false, reason: "gameNotOngoing" });
+  });
+
+  it.each(endings)("lets both Players start or join a new Game after $outcome", async ({ end }) => {
+    const game = await server.ongoingGame();
+    await end(game);
 
     const created = await game.joiner.createGame();
     if (!created.ok || !created.game.gameCode) throw new Error("The Game wasn't created");
@@ -219,6 +260,9 @@ const scattered: Cell[] = [
   { row: 15, column: 6 },
 ];
 
+/** Both Players of an ongoing Game. */
+type Players = { host: Connection; joiner: Connection };
+
 /** `length` Cells in a line from `start`, each one `step` (rows, columns) on from the last. */
 const line = (start: Cell, [rowStep, columnStep]: [number, number], length: number): Cell[] => {
   return Array.from({ length }, (_, index) => ({
@@ -232,7 +276,7 @@ const line = (start: Cell, [rowStep, columnStep]: [number, number], length: numb
  * snapshot each Player was sent.
  */
 const takeTurns = async (
-  { host, joiner }: { host: Connection; joiner: Connection },
+  { host, joiner }: Players,
   cells: { host: Cell[]; joiner: Cell[] },
 ) => {
   const turns = cells.host.length + cells.joiner.length;
