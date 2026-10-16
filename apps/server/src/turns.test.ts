@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { startServer, type Connection, type TestServer } from "./testing.js";
+import { startServer, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -12,24 +12,9 @@ afterEach(async () => {
   await server.close();
 });
 
-/** An ongoing Game with no Turns taken yet, with everything sent to either Player so far already read. */
-const ongoingGame = async (): Promise<{ host: Connection; joiner: Connection }> => {
-  const host = await server.createPlayer().connect();
-  await host.nextMessage();
-  const created = await host.createGame();
-  if (!created.ok || !created.game.gameCode) throw new Error("The Game wasn't created");
-  await host.nextMessage();
-  const joiner = await server.createPlayer().connect();
-  await joiner.nextMessage();
-  await joiner.joinGame(created.game.gameCode);
-  await host.nextMessage();
-  await joiner.nextMessage();
-  return { host, joiner };
-};
-
 describe("taking a Turn", () => {
   it("places the Host's Stone for both Players, and passes the Turn to the Joiner", async () => {
-    const { host, joiner } = await ongoingGame();
+    const { host, joiner } = await server.ongoingGame();
 
     const reply = await host.takeTurn({ row: 7, column: 8 });
 
@@ -43,14 +28,19 @@ describe("taking a Turn", () => {
   });
 
   it("alternates between the Players, and sends both every Stone in order", async () => {
-    const { host, joiner } = await ongoingGame();
+    const { host, joiner } = await server.ongoingGame();
 
     await host.takeTurn({ row: 0, column: 0 });
     await joiner.takeTurn({ row: 15, column: 15 });
     await host.takeTurn({ row: 0, column: 1 });
 
-    const hostView = (await host.nextMessage(), await host.nextMessage(), await host.nextMessage());
-    const joinerView = (await joiner.nextMessage(), await joiner.nextMessage(), await joiner.nextMessage());
+    // Skip the snapshots after the first two Turns.
+    await host.nextMessage();
+    await host.nextMessage();
+    await joiner.nextMessage();
+    await joiner.nextMessage();
+    const hostView = await host.nextMessage();
+    const joinerView = await joiner.nextMessage();
     expect(hostView).toMatchObject({
       game: {
         turn: "opponent",
@@ -91,7 +81,7 @@ describe("taking a Turn outside an ongoing Game", () => {
 
 describe("taking a Turn on a Cell that isn't free", () => {
   it("is refused when the Cell already has a Stone, which stays the opponent's", async () => {
-    const { host, joiner } = await ongoingGame();
+    const { host, joiner } = await server.ongoingGame();
     await host.takeTurn({ row: 3, column: 4 });
 
     expect(await joiner.takeTurn({ row: 3, column: 4 })).toEqual({ ok: false, reason: "cellOccupied" });
@@ -108,7 +98,7 @@ describe("taking a Turn on a Cell that isn't free", () => {
     { row: 16, column: 15 },
     { row: 0.5, column: 2 },
   ])("is refused when the Cell is off the Board: %o", async (cell) => {
-    const { host } = await ongoingGame();
+    const { host } = await server.ongoingGame();
 
     expect(await host.takeTurn(cell)).toEqual({ ok: false, reason: "cellOffBoard" });
   });
@@ -116,13 +106,13 @@ describe("taking a Turn on a Cell that isn't free", () => {
 
 describe("taking a Turn out of order", () => {
   it("is refused for the Joiner before the Host's first Turn", async () => {
-    const { joiner } = await ongoingGame();
+    const { joiner } = await server.ongoingGame();
 
     expect(await joiner.takeTurn({ row: 0, column: 0 })).toEqual({ ok: false, reason: "notYourTurn" });
   });
 
   it("is refused for a Player taking two Turns in a row, and places no Stone", async () => {
-    const { host, joiner } = await ongoingGame();
+    const { host, joiner } = await server.ongoingGame();
     await host.takeTurn({ row: 0, column: 0 });
 
     expect(await host.takeTurn({ row: 0, column: 1 })).toEqual({ ok: false, reason: "notYourTurn" });
@@ -136,7 +126,7 @@ describe("taking a Turn out of order", () => {
 
 describe("a take turn command a well-behaved client wouldn't send", () => {
   it("is ignored when it has a callback but no Cell, and the server carries on", async () => {
-    const { host } = await ongoingGame();
+    const { host } = await server.ongoingGame();
 
     host.sendUnchecked("takeTurn", () => {});
 
@@ -144,7 +134,7 @@ describe("a take turn command a well-behaved client wouldn't send", () => {
   });
 
   it.each([null, "7,8", 78, { row: "7", column: "8" }, {}])("is refused when the Cell is %o", async (cell) => {
-    const { host } = await ongoingGame();
+    const { host } = await server.ongoingGame();
 
     const reply = await new Promise((resolve) => host.sendUnchecked("takeTurn", cell, resolve));
 
@@ -152,7 +142,7 @@ describe("a take turn command a well-behaved client wouldn't send", () => {
   });
 
   it("keeps only the Cell's row and column, so nothing else reaches the opponent", async () => {
-    const { host, joiner } = await ongoingGame();
+    const { host, joiner } = await server.ongoingGame();
 
     await new Promise((resolve) => host.sendUnchecked("takeTurn", { row: 2, column: 3, note: "hi" }, resolve));
 

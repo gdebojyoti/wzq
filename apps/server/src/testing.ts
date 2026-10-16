@@ -39,6 +39,12 @@ export interface Player {
 export interface TestServer {
   url: string;
   createPlayer: () => Player;
+  /** A new Player with no active Game, with everything sent so far already read. */
+  playerWithNoGame: () => Promise<Connection>;
+  /** A new Host waiting in the lobby, with everything sent so far already read. */
+  hostInLobby: () => Promise<{ host: Connection; gameCode: string }>;
+  /** A new ongoing Game with no Turns taken yet, with everything sent to either Player so far already read. */
+  ongoingGame: () => Promise<{ host: Connection; joiner: Connection }>;
   close: () => Promise<void>;
 }
 
@@ -95,12 +101,35 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     return { connect, playerId: () => cookieJar.get(playerIdCookieName) };
   };
 
+  const playerWithNoGame = async () => {
+    const tab = await createPlayer().connect();
+    await tab.nextMessage();
+    return tab;
+  };
+
+  const hostInLobby = async () => {
+    const host = await playerWithNoGame();
+    const reply = await host.createGame();
+    if (!reply.ok || !reply.game.gameCode) throw new Error("The Game wasn't created");
+    await host.nextMessage();
+    return { host, gameCode: reply.game.gameCode };
+  };
+
+  const ongoingGame = async () => {
+    const { host, gameCode } = await hostInLobby();
+    const joiner = await playerWithNoGame();
+    await joiner.joinGame(gameCode);
+    await host.nextMessage();
+    await joiner.nextMessage();
+    return { host, joiner };
+  };
+
   const close = async () => {
     sockets.forEach((socket) => socket.disconnect());
     await server.io.close();
   };
 
-  return { url, createPlayer, close };
+  return { url, createPlayer, playerWithNoGame, hostInLobby, ongoingGame, close };
 };
 
 /** Sends a Socket.IO handshake over plain HTTP, the first request a browser makes, so tests can read its headers. */

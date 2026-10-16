@@ -1,7 +1,7 @@
 // The socket layer: turns Socket.IO events into game service commands, and sends each Player their snapshot.
 import type { Server } from "socket.io";
 import {
-  isHostsTurn,
+  isPlayersTurn,
   type Acknowledgement,
   type ClientToServerEvents,
   type GameSnapshot,
@@ -84,7 +84,7 @@ const sendSnapshots = async (io: GameIo, game: Game) => {
 const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
   const isHost = game.hostId === playerId;
   // Whose Turn it is once this many Turns have been taken, as this Player sees it.
-  const sideAfter = (turnsTaken: number): Side => (isHostsTurn(turnsTaken) === isHost ? "you" : "opponent");
+  const sideAfter = (turnsTaken: number): Side => (isPlayersTurn(isHost, turnsTaken) ? "you" : "opponent");
   return {
     state: game.state,
     gameCode: game.state === "lobby" ? game.gameCode : null,

@@ -8,4 +8,4 @@ export type {
   Side,
   Stone,
 } from "./events.js";
-export { boardSize, gameCodeLength, isEmpty, isHostsTurn, isOnBoard, type Cell } from "./rules.js";
+export { boardSize, gameCodeLength, isCellEmpty, isOnBoard, isPlayersTurn, type Cell } from "./rules.js";
