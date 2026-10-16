@@ -179,12 +179,12 @@ describe("Leave game during play", () => {
 describe("after a Game has ended", () => {
   const endings = [
     {
-      outcome: "a Win",
+      ending: "a Win",
       end: (game: Players) => takeTurns(game, { host: line({ row: 7, column: 3 }, [0, 1], 5), joiner: scattered }),
     },
-    { outcome: "a Draw", end: (game: Players) => takeTurns(game, drawnBoard()) },
+    { ending: "a Draw", end: (game: Players) => takeTurns(game, drawnBoard()) },
     {
-      outcome: "Leave game",
+      ending: "Leave game",
       end: async (game: Players) => {
         await game.host.takeTurn({ row: 7, column: 7 });
         await game.joiner.leaveGame();
@@ -192,7 +192,7 @@ describe("after a Game has ended", () => {
     },
   ];
 
-  it.each(endings)("refuses a Turn from either Player after $outcome, as the Game isn't ongoing", async ({ end }) => {
+  it.each(endings)("refuses a Turn from either Player after $ending, as the Game isn't ongoing", async ({ end }) => {
     const game = await server.ongoingGame();
     await end(game);
 
@@ -200,7 +200,7 @@ describe("after a Game has ended", () => {
     expect(await game.joiner.takeTurn({ row: 9, column: 9 })).toEqual({ ok: false, reason: "gameNotOngoing" });
   });
 
-  it.each(endings)("refuses Leave game from either Player after $outcome, as it isn't ongoing", async ({ end }) => {
+  it.each(endings)("refuses Leave game from either Player after $ending, as it isn't ongoing", async ({ end }) => {
     const game = await server.ongoingGame();
     await end(game);
 
@@ -208,7 +208,7 @@ describe("after a Game has ended", () => {
     expect(await game.joiner.leaveGame()).toEqual({ ok: false, reason: "gameNotOngoing" });
   });
 
-  it.each(endings)("lets both Players start or join a new Game after $outcome", async ({ end }) => {
+  it.each(endings)("lets both Players start or join a new Game after $ending", async ({ end }) => {
     const game = await server.ongoingGame();
     await end(game);
 

@@ -56,7 +56,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
 
   /** Leave game: ends the Player's active Game as abandoned, with no winner. */
   const leaveGame = oneAtATime(async (playerId: string): Promise<CommandResult> => {
-    // As with a Turn, a Game that has ended is still found, so leaving it is refused as it not being ongoing.
+    // As with a Turn, a Game that has ended is still found, so leaving it is refused because it isn't ongoing.
     const game = await store.findLastGameByPlayer(playerId);
     if (!game) return { ok: false, reason: "gameNotFound" };
     if (!isActive(game)) return { ok: false, reason: "gameNotOngoing" };

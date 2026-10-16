@@ -29,7 +29,7 @@ export interface GameSnapshot {
   turn: Side | null;
   /** Every Stone placed, in the order the Turns were taken, so the last is the most recent. */
   stones: Stone[];
-  /** How the Game ended, once it has; otherwise null. */
+  /** How the Game ended, once it has; otherwise null, as it is for a Game abandoned in the lobby. */
   result: GameResult | null;
 }
 

@@ -87,7 +87,7 @@ describe("creating a Game", () => {
 });
 
 describe("leaving a Game in the lobby", () => {
-  it("ends the Game as abandoned", async () => {
+  it("ends the Game as abandoned, with no result as it never started", async () => {
     const tab = await server.createPlayer().connect();
     await tab.nextMessage();
     await tab.createGame();
@@ -104,7 +104,7 @@ describe("leaving a Game in the lobby", () => {
         isHost: true,
         turn: null,
         stones: [],
-        result: { outcome: "abandoned", leftBy: "you" },
+        result: null,
       },
     });
   });

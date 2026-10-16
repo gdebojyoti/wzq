@@ -14,11 +14,15 @@ export default function ResultScreen({ result, stones, onBackToStart }: Props) {
       <p className="text-2xl font-semibold" role="status">
         {heading(result)}
       </p>
-      <Board stones={stones} winningLine={"winningLine" in result ? result.winningLine : null} />
+      <Board stones={stones} winningLine={winningLine(result)} />
       <Button onClick={onBackToStart}>Back to start</Button>
     </section>
   );
 }
+
+const winningLine = (result: GameResult) => {
+  return result.outcome === "won" || result.outcome === "lost" ? result.winningLine : null;
+};
 
 const heading = (result: GameResult) => {
   switch (result.outcome) {
