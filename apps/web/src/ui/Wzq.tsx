@@ -1,5 +1,6 @@
 import GameScreen from "./GameScreen";
 import LobbyScreen from "./LobbyScreen";
+import ResultScreen from "./ResultScreen";
 import ServerStatus from "./ServerStatus";
 import StartScreen from "./StartScreen";
 import { useGameServer } from "./useGameServer";
@@ -7,7 +8,7 @@ import "./wzq.css";
 
 // The whole game, as one component: run standalone by ../bootstrap.tsx, and exposed to a host as `wzq/Wzq`.
 export default function Wzq() {
-  const { status, game, error, busy, createGame, joinGame, leaveGame, takeTurn } = useGameServer();
+  const { status, game, error, busy, createGame, joinGame, leaveGame, takeTurn, backToStart } = useGameServer();
   const disabled = busy || status !== "connected";
 
   const screen = () => {
@@ -15,7 +16,10 @@ export default function Wzq() {
     if (game === undefined) return null;
     if (game?.state === "lobby") return <LobbyScreen game={game} disabled={disabled} onLeaveGame={leaveGame} />;
     if (game?.state === "ongoing") return <GameScreen game={game} disabled={disabled} onTakeTurn={takeTurn} />;
-    // An abandoned Game goes back to the start screen. The result screen comes with play.
+    if (game?.state === "won" || game?.state === "draw") {
+      return <ResultScreen game={game} onBackToStart={backToStart} />;
+    }
+    // An abandoned Game goes back to the start screen.
     return <StartScreen disabled={disabled} onNewGame={createGame} onJoinGame={joinGame} />;
   };
 

@@ -1,6 +1,7 @@
 export type {
   Acknowledgement,
   ClientToServerEvents,
+  GameResult,
   GameSnapshot,
   GameState,
   RejectionReason,
@@ -8,4 +9,14 @@ export type {
   Side,
   Stone,
 } from "./events.js";
-export { boardSize, gameCodeLength, isCellEmpty, isOnBoard, isPlayersTurn, type Cell } from "./rules.js";
+export {
+  boardSize,
+  cellKey,
+  findWinningLine,
+  gameCodeLength,
+  isCellEmpty,
+  isDraw,
+  isOnBoard,
+  isPlayersTurn,
+  type Cell,
+} from "./rules.js";

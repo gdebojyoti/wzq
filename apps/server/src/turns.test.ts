@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { startServer, type TestServer } from "./testing.js";
+import { noResult, startServer, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -18,8 +18,8 @@ describe("taking a Turn", () => {
 
     const reply = await host.takeTurn({ row: 7, column: 8 });
 
-    const hostView = { state: "ongoing", gameCode: null, isHost: true, turn: "opponent" };
-    const joinerView = { state: "ongoing", gameCode: null, isHost: false, turn: "you" };
+    const hostView = { state: "ongoing", gameCode: null, isHost: true, turn: "opponent", ...noResult };
+    const joinerView = { state: "ongoing", gameCode: null, isHost: false, turn: "you", ...noResult };
     expect(reply).toEqual({ ok: true });
     expect(await host.nextMessage())
       .toEqual({ event: "game", game: { ...hostView, stones: [{ row: 7, column: 8, side: "you" }] } });
@@ -72,7 +72,14 @@ describe("taking a Turn outside an ongoing Game", () => {
     expect(await host.takeTurn({ row: 0, column: 0 })).toEqual({ ok: false, reason: "gameNotOngoing" });
   });
 
-  it("is refused for a Player with no active Game", async () => {
+  it("is refused for a Host who used Leave game in the lobby, as the Game was abandoned", async () => {
+    const { host } = await server.hostInLobby();
+    await host.leaveGame();
+
+    expect(await host.takeTurn({ row: 0, column: 0 })).toEqual({ ok: false, reason: "gameNotOngoing" });
+  });
+
+  it("is refused for a Player who has never been in a Game", async () => {
     const tab = await server.createPlayer().connect();
 
     expect(await tab.takeTurn({ row: 0, column: 0 })).toEqual({ ok: false, reason: "gameNotFound" });
