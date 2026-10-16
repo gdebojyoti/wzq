@@ -1,7 +1,7 @@
 // The authority on every Game: it validates each command from a Player, and changes Games through the store.
 import { randomInt as cryptoRandomInt, randomUUID } from "node:crypto";
 
-import { gameCodeLength, type RejectionReason } from "@wzq/shared";
+import { gameCodeLength, isCellEmpty, isOnBoard, isPlayersTurn, type Cell, type RejectionReason } from "@wzq/shared";
 
 import type { Game, GameStore } from "./game-store.js";
 
@@ -55,9 +55,22 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
     return { ok: true, game };
   });
 
+  /** Takes the Player's Turn by placing their Stone on the Cell. */
+  const takeTurn = oneAtATime(async (playerId: string, cell: Cell): Promise<CommandResult> => {
+    const game = await store.findActiveGameByPlayer(playerId);
+    if (!game) return { ok: false, reason: "gameNotFound" };
+    if (game.state !== "ongoing") return { ok: false, reason: "gameNotOngoing" };
+    if (!isPlayersTurn(game.hostId === playerId, game.turns.length)) return { ok: false, reason: "notYourTurn" };
+    if (!isOnBoard(cell)) return { ok: false, reason: "cellOffBoard" };
+    if (!isCellEmpty(game.turns, cell)) return { ok: false, reason: "cellOccupied" };
+    game.turns.push(cell);
+    await store.save(game);
+    return { ok: true, game };
+  });
+
   const findActiveGame = oneAtATime((playerId: string) => store.findActiveGameByPlayer(playerId));
 
-  return { createGame, joinGame, leaveGame, findActiveGame };
+  return { createGame, joinGame, leaveGame, takeTurn, findActiveGame };
 };
 
 export type GameService = ReturnType<typeof createGameService>;

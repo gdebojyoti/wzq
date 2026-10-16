@@ -1,11 +1,12 @@
 // The socket layer: turns Socket.IO events into game service commands, and sends each Player their snapshot.
 import type { Server } from "socket.io";
 import {
-  isHostsTurn,
+  isPlayersTurn,
   type Acknowledgement,
   type ClientToServerEvents,
   type GameSnapshot,
   type ServerToClientEvents,
+  type Side,
 } from "@wzq/shared";
 
 import type { Game } from "./game-store.js";
@@ -46,6 +47,17 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
       ack({ ok: true });
     });
 
+    socket.on("takeTurn", async (cell, ack) => {
+      // As with joining, a command sent with no Cell has nothing to reply to.
+      if (typeof ack !== "function") return;
+      if (typeof cell !== "object" || cell === null) return ack({ ok: false, reason: "cellOffBoard" });
+      // Only the row and column are kept, as they're sent on to the opponent. The rules check what they hold.
+      const result = await gameService.takeTurn(playerId, { row: cell.row, column: cell.column });
+      if (!result.ok) return ack(result);
+      await sendSnapshots(io, result.game);
+      ack({ ok: true });
+    });
+
     const game = await gameService.findActiveGame(playerId);
     if (game) {
       socket.join(gameRoom(game));
@@ -71,11 +83,14 @@ const sendSnapshots = async (io: GameIo, game: Game) => {
 /** The Game as this Player sees it. Never includes a player ID: the ID is the only proof of who a Player is. */
 const toSnapshot = (game: Game, playerId: string): GameSnapshot => {
   const isHost = game.hostId === playerId;
-  const isYourTurn = isHostsTurn(game.turns) === isHost;
+  // Whose Turn it is once this many Turns have been taken, as this Player sees it.
+  const sideAfter = (turnsTaken: number): Side => (isPlayersTurn(isHost, turnsTaken) ? "you" : "opponent");
   return {
     state: game.state,
     gameCode: game.state === "lobby" ? game.gameCode : null,
     isHost,
-    turn: game.state === "ongoing" ? (isYourTurn ? "you" : "opponent") : null,
+    turn: game.state === "ongoing" ? sideAfter(game.turns.length) : null,
+    // Each Stone was placed on the Turn taken after all the Stones before it.
+    stones: game.turns.map((cell, index) => ({ ...cell, side: sideAfter(index) })),
   };
 };

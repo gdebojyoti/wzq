@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Acknowledgement, GameSnapshot, RejectionReason } from "@wzq/shared";
+import type { Acknowledgement, Cell, GameSnapshot, RejectionReason } from "@wzq/shared";
 import { connectToServer, type GameSocket } from "./socket";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
@@ -8,6 +8,10 @@ const rejectionMessages: Record<RejectionReason, string> = {
   alreadyInActiveGame: "You're already in a game.",
   gameCodeNotFound: "No game is waiting for a player with that code. Check it with your friend.",
   gameNotFound: "That game no longer exists.",
+  gameNotOngoing: "The game isn't being played.",
+  notYourTurn: "It's not your turn.",
+  cellOffBoard: "That's not on the board.",
+  cellOccupied: "There's already a stone there.",
 };
 
 // The connection to the server, and the latest snapshot of the Player's Game. The web app holds no game logic:
@@ -63,5 +67,8 @@ export const useGameServer = () => {
   // On success the server sends the abandoned Game, which takes the Player back to the start screen.
   const leaveGame = () => send((socket) => socket.emitWithAck("leaveGame"));
 
-  return { status, game, error, busy, createGame, joinGame, leaveGame };
+  // On success the server sends both Players the Game with the new Stone.
+  const takeTurn = (cell: Cell) => send((socket) => socket.emitWithAck("takeTurn", cell));
+
+  return { status, game, error, busy, createGame, joinGame, leaveGame, takeTurn };
 };

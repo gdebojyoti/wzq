@@ -1,5 +1,6 @@
 // The Socket.IO event contract between the web app and the server.
 // Both sides type their sockets with these, so a change here is checked on both.
+import type { Cell } from "./rules.js";
 
 /** Stages a Game goes through. A Game in the lobby or ongoing is active; an abandoned one has ended. */
 export type GameState = "lobby" | "ongoing" | "abandoned";
@@ -16,10 +17,24 @@ export interface GameSnapshot {
   isHost: boolean;
   /** Whose Turn it is, while the Game is ongoing; otherwise null. */
   turn: Side | null;
+  /** Every Stone placed, in the order the Turns were taken, so the last is the most recent. */
+  stones: Stone[];
+}
+
+/** A Stone on the Board, marked by whose it is as the viewer sees it. */
+export interface Stone extends Cell {
+  side: Side;
 }
 
 /** Why the server refused a command. */
-export type RejectionReason = "alreadyInActiveGame" | "gameCodeNotFound" | "gameNotFound";
+export type RejectionReason =
+  | "alreadyInActiveGame"
+  | "gameCodeNotFound"
+  | "gameNotFound"
+  | "gameNotOngoing"
+  | "notYourTurn"
+  | "cellOffBoard"
+  | "cellOccupied";
 
 /** The server's answer to a command: success with its result, or a refusal with the reason. */
 export type Acknowledgement<Result extends object = object> =
@@ -39,6 +54,11 @@ export interface ClientToServerEvents {
   joinGame: (gameCode: string, ack: (reply: Acknowledgement<{ game: GameSnapshot }>) => void) => void;
   /** Ends the Player's active Game as abandoned. Refused if the Player has no active Game. */
   leaveGame: (ack: (reply: Acknowledgement) => void) => void;
+  /**
+   * Takes the Player's Turn by placing their Stone on this Cell. Refused unless the Game is ongoing, it's the
+   * Player's Turn, and the Cell is on the Board and empty.
+   */
+  takeTurn: (cell: Cell, ack: (reply: Acknowledgement) => void) => void;
 }
 
 /** Events the server sends to the web app. */

@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 
 import { NodeWebSocket } from "engine.io-client";
 import { io, type Socket } from "socket.io-client";
-import type { Acknowledgement, ClientToServerEvents, GameSnapshot, ServerToClientEvents } from "@wzq/shared";
+import type { Acknowledgement, Cell, ClientToServerEvents, GameSnapshot, ServerToClientEvents } from "@wzq/shared";
 
 import { playerIdCookieName } from "./identity.js";
 import { createGameServer, type GameServerOptions } from "./server.js";
@@ -21,6 +21,7 @@ export interface Connection {
   createGame: () => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   joinGame: (gameCode: string) => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   leaveGame: () => Promise<Acknowledgement>;
+  takeTurn: (cell: Cell) => Promise<Acknowledgement>;
   /** Sends a command with any arguments, unchecked by the event types, as no well-behaved client would. */
   sendUnchecked: (event: keyof ClientToServerEvents, ...args: unknown[]) => void;
   /** Closes the connection, like closing the tab. */
@@ -38,6 +39,12 @@ export interface Player {
 export interface TestServer {
   url: string;
   createPlayer: () => Player;
+  /** A new Player with no active Game, with everything sent so far already read. */
+  playerWithNoGame: () => Promise<Connection>;
+  /** A new Host waiting in the lobby, with everything sent so far already read. */
+  hostInLobby: () => Promise<{ host: Connection; gameCode: string }>;
+  /** A new ongoing Game with no Turns taken yet, with everything sent to either Player so far already read. */
+  ongoingGame: () => Promise<{ host: Connection; joiner: Connection }>;
   close: () => Promise<void>;
 }
 
@@ -77,6 +84,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
         createGame: () => socket.emitWithAck("createGame"),
         joinGame: (gameCode) => socket.emitWithAck("joinGame", gameCode),
         leaveGame: () => socket.emitWithAck("leaveGame"),
+        takeTurn: (cell) => socket.emitWithAck("takeTurn", cell),
         sendUnchecked: (event, ...args) => {
           (socket.emit as (event: string, ...args: unknown[]) => void)(event, ...args);
         },
@@ -93,12 +101,35 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     return { connect, playerId: () => cookieJar.get(playerIdCookieName) };
   };
 
+  const playerWithNoGame = async () => {
+    const tab = await createPlayer().connect();
+    await tab.nextMessage();
+    return tab;
+  };
+
+  const hostInLobby = async () => {
+    const host = await playerWithNoGame();
+    const reply = await host.createGame();
+    if (!reply.ok || !reply.game.gameCode) throw new Error("The Game wasn't created");
+    await host.nextMessage();
+    return { host, gameCode: reply.game.gameCode };
+  };
+
+  const ongoingGame = async () => {
+    const { host, gameCode } = await hostInLobby();
+    const joiner = await playerWithNoGame();
+    await joiner.joinGame(gameCode);
+    await host.nextMessage();
+    await joiner.nextMessage();
+    return { host, joiner };
+  };
+
   const close = async () => {
     sockets.forEach((socket) => socket.disconnect());
     await server.io.close();
   };
 
-  return { url, createPlayer, close };
+  return { url, createPlayer, playerWithNoGame, hostInLobby, ongoingGame, close };
 };
 
 /** Sends a Socket.IO handshake over plain HTTP, the first request a browser makes, so tests can read its headers. */
