@@ -44,7 +44,7 @@ export const useGameServer = () => {
       // A Game was being played or waited for, and the server no longer has it: the opponent used Leave game
       // while this Player was away, or the server restarted.
       const shown = shownGameRef.current;
-      if (shown && !shown.result) setError(gameGoneMessage);
+      if (shown?.state === "lobby" || shown?.state === "ongoing") setError(gameGoneMessage);
       setGame(null);
     });
     return () => {

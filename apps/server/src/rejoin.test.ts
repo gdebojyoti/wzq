@@ -90,6 +90,16 @@ describe("a Player who Rejoins during play", () => {
     expect(await rejoined.takeTurn({ row: 8, column: 9 })).toEqual({ ok: true });
   });
 
+  it("is seen by their opponent even when two of their tabs come back at once", async () => {
+    const { host, joiner, players } = await server.ongoingGame();
+    await joiner.close();
+    await host.nextMessage();
+
+    await Promise.all([players.joiner.connect(), players.joiner.connect()]);
+
+    expect(await host.nextMessage()).toMatchObject({ game: { opponentConnected: true } });
+  });
+
   it("lands on the start screen if their opponent used Leave game while they were away", async () => {
     const { host, joiner, players } = await server.ongoingGame();
     await joiner.close();

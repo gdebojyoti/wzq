@@ -19,6 +19,9 @@ export type GameIo = Server<ClientToServerEvents, ServerToClientEvents, object, 
 export const handleGameSockets = (io: GameIo, gameService: GameService) => {
   io.on("connection", async (socket) => {
     const { playerId } = socket.data;
+    // Counted before anything is awaited, so two tabs opening together can't both see the other and miss that
+    // the Player has come back.
+    const isFirstTab = openTabs(io, playerId) === 0;
     socket.join(playerRoom(playerId));
 
     // Answers a command that puts the Player in a Game.
@@ -27,7 +30,7 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
       // Every tab the Player has open goes into the Game, not just the one that asked.
       io.in(playerRoom(playerId)).socketsJoin(gameRoom(result.game));
       await sendSnapshots(io, result.game);
-      ack({ ok: true, game: toSnapshot(result.game, playerId, await connectedPlayers(io, result.game)) });
+      ack({ ok: true, game: await snapshotFor(io, result.game, playerId) });
     };
 
     socket.on("createGame", async (ack) => enterGame(await gameService.createGame(playerId), ack));
@@ -59,7 +62,7 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
 
     socket.on("disconnect", async () => {
       // The opponent only sees a change once the Player's last tab has closed.
-      if (await isConnected(io, playerId)) return;
+      if (openTabs(io, playerId) > 0) return;
       const game = await gameService.findActiveGame(playerId);
       if (game) await sendSnapshots(io, game);
     });
@@ -68,9 +71,8 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
     if (!game) return socket.emit("noActiveGame");
     socket.join(gameRoom(game));
     // A Player's first tab is a Rejoin, which the opponent sees. Another tab changes nothing for them.
-    const tabs = await io.in(playerRoom(playerId)).fetchSockets();
-    if (tabs.length === 1) await sendSnapshots(io, game);
-    else socket.emit("game", toSnapshot(game, playerId, await connectedPlayers(io, game)));
+    if (isFirstTab) await sendSnapshots(io, game);
+    else socket.emit("game", await snapshotFor(io, game, playerId));
   });
 };
 
@@ -88,9 +90,12 @@ const sendSnapshots = async (io: GameIo, game: Game) => {
   if (!isActive(game)) io.in(gameRoom(game)).socketsLeave(gameRoom(game));
 };
 
-/** Whether the Player has a tab open. */
-const isConnected = async (io: GameIo, playerId: string) => {
-  return (await io.in(playerRoom(playerId)).fetchSockets()).length > 0;
+/** How many tabs the Player has open on this server. Games are kept in memory on one server (ADR-0005). */
+const openTabs = (io: GameIo, playerId: string) => io.of("/").adapter.rooms.get(playerRoom(playerId))?.size ?? 0;
+
+/** The Game as this Player sees it, as it is right now. */
+const snapshotFor = async (io: GameIo, game: Game, playerId: string) => {
+  return toSnapshot(game, playerId, await connectedPlayers(io, game));
 };
 
 /** The IDs of the Game's Players who have a tab open. */
