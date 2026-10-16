@@ -69,5 +69,5 @@ The result when every **Cell** is filled and no **Player** has a **Win**.
 _Avoid_: stalemate, tie
 
 **Abandoned**:
-The result of a **Game** ended by **Leave game**. There is no winner, and it is not a **Draw**.
+How a **Game** ends after **Leave game**: there is no winner, and it is not a **Draw**. A **Game** abandoned in the **Lobby** never started, so it has no result.
 _Avoid_: cancelled, forfeited
