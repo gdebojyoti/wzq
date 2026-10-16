@@ -5,8 +5,15 @@ import type { Cell } from "./rules.js";
 /** Stages a Game goes through. A Game in the lobby or ongoing is active; the others have ended. */
 export type GameState = "lobby" | "ongoing" | "won" | "draw" | "abandoned";
 
-/** How a Game ended, as the viewer of a snapshot sees it: they won, their opponent won, or a Draw. */
-export type GameResult = "won" | "lost" | "draw";
+/**
+ * How a Game ended, as the viewer of a snapshot sees it: they won, their opponent won, a Draw, or abandoned by
+ * Leave game. A Win comes with the Cells of the line of Stones that won it, in order along the line, and an
+ * abandoned Game with which of the Players used Leave game.
+ */
+export type GameResult =
+  | { outcome: "won" | "lost"; winningLine: Cell[] }
+  | { outcome: "draw" }
+  | { outcome: "abandoned"; leaver: Side };
 
 /** A Player as the viewer of a snapshot sees them: themselves, or their opponent. */
 export type Side = "you" | "opponent";
@@ -22,10 +29,8 @@ export interface GameSnapshot {
   turn: Side | null;
   /** Every Stone placed, in the order the Turns were taken, so the last is the most recent. */
   stones: Stone[];
-  /** How the Game ended, once it has been won or drawn; otherwise null. */
+  /** How the Game ended, once it has; otherwise null, as it is for a Game abandoned in the lobby. */
   result: GameResult | null;
-  /** The Cells of the line of Stones that won the Game, in order along the line, once it's won; otherwise null. */
-  winningLine: Cell[] | null;
 }
 
 /** A Stone on the Board, marked by whose it is as the viewer sees it. */

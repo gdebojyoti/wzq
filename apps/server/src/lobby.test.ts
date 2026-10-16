@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { noResult, startServer, type TestServer } from "./testing.js";
+import { startServer, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -34,7 +34,7 @@ describe("creating a Game", () => {
         isHost: true,
         turn: null,
         stones: [],
-        ...noResult,
+        result: null,
       },
     });
   });
@@ -87,7 +87,7 @@ describe("creating a Game", () => {
 });
 
 describe("leaving a Game in the lobby", () => {
-  it("ends the Game as abandoned", async () => {
+  it("ends the Game as abandoned, with no result as it never started", async () => {
     const tab = await server.createPlayer().connect();
     await tab.nextMessage();
     await tab.createGame();
@@ -98,7 +98,7 @@ describe("leaving a Game in the lobby", () => {
     expect(reply).toEqual({ ok: true });
     expect(await tab.nextMessage()).toEqual({
       event: "game",
-      game: { state: "abandoned", gameCode: null, isHost: true, turn: null, stones: [], ...noResult },
+      game: { state: "abandoned", gameCode: null, isHost: true, turn: null, stones: [], result: null },
     });
   });
 
@@ -115,10 +115,17 @@ describe("leaving a Game in the lobby", () => {
     expect(await secondVisit.createGame()).toMatchObject({ ok: true, game: { state: "lobby", isHost: true } });
   });
 
-  it("is refused for a Player with no active Game", async () => {
+  it("is refused for a Player who has never been in a Game", async () => {
     const tab = await server.createPlayer().connect();
 
     expect(await tab.leaveGame()).toEqual({ ok: false, reason: "gameNotFound" });
+  });
+
+  it("is refused a second time, as the Game has ended", async () => {
+    const { host } = await server.hostInLobby();
+    await host.leaveGame();
+
+    expect(await host.leaveGame()).toEqual({ ok: false, reason: "gameNotOngoing" });
   });
 });
 

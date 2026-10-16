@@ -20,8 +20,8 @@ describe("a Win", () => {
 
     const { hostView, joinerView } = await takeTurns(game, { host: winningLine, joiner: scattered });
 
-    expect(hostView).toMatchObject({ state: "won", turn: null, result: "won", winningLine });
-    expect(joinerView).toMatchObject({ state: "won", turn: null, result: "lost", winningLine });
+    expect(hostView).toMatchObject({ state: "won", turn: null, result: { outcome: "won", winningLine } });
+    expect(joinerView).toMatchObject({ state: "won", turn: null, result: { outcome: "lost", winningLine } });
   });
 
   describe.each([
@@ -43,7 +43,7 @@ describe("a Win", () => {
 
       const { hostView } = await takeTurns(game, { host: hostCells, joiner: scattered });
 
-      expect(hostView).toMatchObject({ state: "won", result: "won", winningLine });
+      expect(hostView).toMatchObject({ state: "won", result: { outcome: "won", winningLine } });
     });
   });
 
@@ -56,8 +56,8 @@ describe("a Win", () => {
       joiner: winningLine,
     });
 
-    expect(hostView).toMatchObject({ state: "won", result: "lost", winningLine });
-    expect(joinerView).toMatchObject({ state: "won", result: "won", winningLine });
+    expect(hostView).toMatchObject({ state: "won", result: { outcome: "lost", winningLine } });
+    expect(joinerView).toMatchObject({ state: "won", result: { outcome: "won", winningLine } });
   });
 
   it("is won at the edge of the Board", async () => {
@@ -66,7 +66,7 @@ describe("a Win", () => {
 
     const { hostView } = await takeTurns(game, { host: winningLine, joiner: scattered });
 
-    expect(hostView).toMatchObject({ state: "won", winningLine });
+    expect(hostView).toMatchObject({ state: "won", result: { winningLine } });
   });
 
   it("is won with a line of six or more, which is the winning line", async () => {
@@ -77,7 +77,7 @@ describe("a Win", () => {
 
     const { hostView } = await takeTurns(game, { host: hostCells, joiner: [...scattered, { row: 14, column: 9 }] });
 
-    expect(hostView).toMatchObject({ state: "won", winningLine });
+    expect(hostView).toMatchObject({ state: "won", result: { winningLine } });
   });
 });
 
@@ -89,7 +89,7 @@ describe("a line that isn't a Win", () => {
 
     const { hostView } = await takeTurns(game, { host: fourInARow, joiner: scattered.slice(0, 3) });
 
-    expect(hostView).toMatchObject({ state: "ongoing", turn: "opponent", result: null, winningLine: null });
+    expect(hostView).toMatchObject({ state: "ongoing", turn: "opponent", result: null });
   });
 
   it("doesn't end the Game when five Stones in a line are broken by the opponent's Stone", async () => {
@@ -102,7 +102,7 @@ describe("a line that isn't a Win", () => {
       joiner: [opponentStone, ...scattered.slice(0, 3)],
     });
 
-    expect(hostView).toMatchObject({ state: "ongoing", result: null, winningLine: null });
+    expect(hostView).toMatchObject({ state: "ongoing", result: null });
   });
 
   it("doesn't count the opponent's Stones as the Player's own", async () => {
@@ -115,7 +115,7 @@ describe("a line that isn't a Win", () => {
       joiner: [cells[1], cells[3]] as Cell[],
     });
 
-    expect(joinerView).toMatchObject({ state: "ongoing", result: null, winningLine: null });
+    expect(joinerView).toMatchObject({ state: "ongoing", result: null });
   });
 });
 
@@ -125,8 +125,8 @@ describe("a Draw", () => {
 
     const { hostView, joinerView } = await takeTurns(game, drawnBoard());
 
-    expect(hostView).toMatchObject({ state: "draw", turn: null, result: "draw", winningLine: null });
-    expect(joinerView).toMatchObject({ state: "draw", turn: null, result: "draw", winningLine: null });
+    expect(hostView).toMatchObject({ state: "draw", turn: null, result: { outcome: "draw" } });
+    expect(joinerView).toMatchObject({ state: "draw", turn: null, result: { outcome: "draw" } });
     expect(hostView.stones).toHaveLength(boardSize * boardSize);
   });
 
@@ -149,27 +149,68 @@ describe("a Draw", () => {
     });
 
     const winningLine = line({ row: 0, column: 2 }, [0, 1], 6);
-    expect(joinerView).toMatchObject({ state: "won", result: "won", winningLine });
-    expect(hostView).toMatchObject({ state: "won", result: "lost", winningLine });
+    expect(joinerView).toMatchObject({ state: "won", result: { outcome: "won", winningLine } });
+    expect(hostView).toMatchObject({ state: "won", result: { outcome: "lost", winningLine } });
     expect(hostView.stones).toHaveLength(boardSize * boardSize);
   });
 });
 
+describe("Leave game during play", () => {
+  it.each(["host", "joiner"] as const)(
+    "ends the Game as abandoned when the %s leaves, and tells the other Player their opponent left",
+    async (leaver) => {
+      const game = await server.ongoingGame();
+      await takeTurns(game, { host: [{ row: 7, column: 7 }], joiner: [{ row: 8, column: 8 }] });
+      const other = leaver === "host" ? "joiner" : "host";
+
+      expect(await game[leaver].leaveGame()).toEqual({ ok: true });
+
+      const stones = [{ row: 7, column: 7 }, { row: 8, column: 8 }];
+      expect(await game[leaver].nextMessage()).toMatchObject({
+        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leaver: "you" } },
+      });
+      expect(await game[other].nextMessage()).toMatchObject({
+        game: { state: "abandoned", turn: null, stones, result: { outcome: "abandoned", leaver: "opponent" } },
+      });
+    },
+  );
+});
+
 describe("after a Game has ended", () => {
-  it.each([
-    { outcome: "a Win", cells: () => ({ host: line({ row: 7, column: 3 }, [0, 1], 5), joiner: scattered }) },
-    { outcome: "a Draw", cells: drawnBoard },
-  ])("refuses a Turn from either Player after $outcome, as the Game isn't ongoing", async ({ cells }) => {
+  const endings = [
+    {
+      ending: "a Win",
+      end: (game: Players) => takeTurns(game, { host: line({ row: 7, column: 3 }, [0, 1], 5), joiner: scattered }),
+    },
+    { ending: "a Draw", end: (game: Players) => takeTurns(game, drawnBoard()) },
+    {
+      ending: "Leave game",
+      end: async (game: Players) => {
+        await game.host.takeTurn({ row: 7, column: 7 });
+        await game.joiner.leaveGame();
+      },
+    },
+  ];
+
+  it.each(endings)("refuses a Turn from either Player after $ending, as the Game isn't ongoing", async ({ end }) => {
     const game = await server.ongoingGame();
-    await takeTurns(game, cells());
+    await end(game);
 
     expect(await game.host.takeTurn({ row: 9, column: 9 })).toEqual({ ok: false, reason: "gameNotOngoing" });
     expect(await game.joiner.takeTurn({ row: 9, column: 9 })).toEqual({ ok: false, reason: "gameNotOngoing" });
   });
 
-  it("lets both Players start or join a new Game", async () => {
+  it.each(endings)("refuses Leave game from either Player after $ending, as it isn't ongoing", async ({ end }) => {
     const game = await server.ongoingGame();
-    await takeTurns(game, { host: line({ row: 7, column: 3 }, [0, 1], 5), joiner: scattered });
+    await end(game);
+
+    expect(await game.host.leaveGame()).toEqual({ ok: false, reason: "gameNotOngoing" });
+    expect(await game.joiner.leaveGame()).toEqual({ ok: false, reason: "gameNotOngoing" });
+  });
+
+  it.each(endings)("lets both Players start or join a new Game after $ending", async ({ end }) => {
+    const game = await server.ongoingGame();
+    await end(game);
 
     const created = await game.joiner.createGame();
     if (!created.ok || !created.game.gameCode) throw new Error("The Game wasn't created");
@@ -219,6 +260,9 @@ const scattered: Cell[] = [
   { row: 15, column: 6 },
 ];
 
+/** Both Players of an ongoing Game. */
+type Players = { host: Connection; joiner: Connection };
+
 /** `length` Cells in a line from `start`, each one `step` (rows, columns) on from the last. */
 const line = (start: Cell, [rowStep, columnStep]: [number, number], length: number): Cell[] => {
   return Array.from({ length }, (_, index) => ({
@@ -232,7 +276,7 @@ const line = (start: Cell, [rowStep, columnStep]: [number, number], length: numb
  * snapshot each Player was sent.
  */
 const takeTurns = async (
-  { host, joiner }: { host: Connection; joiner: Connection },
+  { host, joiner }: Players,
   cells: { host: Cell[]; joiner: Cell[] },
 ) => {
   const turns = cells.host.length + cells.joiner.length;

@@ -64,7 +64,8 @@ export const useGameServer = () => {
 
   const joinGame = (gameCode: string) => enterGame((socket) => socket.emitWithAck("joinGame", gameCode));
 
-  // On success the server sends the abandoned Game, which takes the Player back to the start screen.
+  // On success the server sends the abandoned Game. From the lobby, the Host goes back to the start screen; during
+  // play, both Players see the result screen.
   const leaveGame = () => send((socket) => socket.emitWithAck("leaveGame"));
 
   // On success the server sends both Players the Game with the new Stone.

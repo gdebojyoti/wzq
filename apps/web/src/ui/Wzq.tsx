@@ -15,11 +15,13 @@ export default function Wzq() {
     // Nothing to show until the server says whether the Player has an active Game.
     if (game === undefined) return null;
     if (game?.state === "lobby") return <LobbyScreen game={game} disabled={disabled} onLeaveGame={leaveGame} />;
-    if (game?.state === "ongoing") return <GameScreen game={game} disabled={disabled} onTakeTurn={takeTurn} />;
-    if (game?.state === "won" || game?.state === "draw") {
-      return <ResultScreen game={game} onBackToStart={backToStart} />;
+    if (game?.state === "ongoing") {
+      return <GameScreen game={game} disabled={disabled} onTakeTurn={takeTurn} onLeaveGame={leaveGame} />;
     }
-    // An abandoned Game goes back to the start screen.
+    if (game?.result) {
+      return <ResultScreen result={game.result} stones={game.stones} onBackToStart={backToStart} />;
+    }
+    // No active Game, or one abandoned in the lobby.
     return <StartScreen disabled={disabled} onNewGame={createGame} onJoinGame={joinGame} />;
   };
 

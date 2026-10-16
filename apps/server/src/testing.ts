@@ -11,9 +11,6 @@ import { createGameServer, type GameServerOptions } from "./server.js";
 
 export const webOrigin = "http://localhost:8081";
 
-/** How a snapshot shows a Game that hasn't been won or drawn. */
-export const noResult = { result: null, winningLine: null } as const;
-
 /** What the server sent a connection, in the order it arrived. */
 type Message = { event: "game"; game: GameSnapshot } | { event: "noActiveGame" };
 
