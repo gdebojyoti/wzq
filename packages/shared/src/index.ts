@@ -11,6 +11,7 @@ export type {
 } from "./events.js";
 export {
   boardSize,
+  cellKey,
   findWinningLine,
   gameCodeLength,
   isCellEmpty,

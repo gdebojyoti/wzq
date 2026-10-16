@@ -1,4 +1,4 @@
-import { boardSize, type Cell, type Stone } from "@wzq/shared";
+import { boardSize, cellKey, type Cell, type Stone } from "@wzq/shared";
 import StoneMark from "./StoneMark";
 
 interface Props {
@@ -14,8 +14,6 @@ const cells: Cell[] = Array.from({ length: boardSize * boardSize }, (_, index) =
   row: Math.floor(index / boardSize),
   column: index % boardSize,
 }));
-
-const cellKey = ({ row, column }: Cell) => `${row},${column}`;
 
 export default function Board({ stones, winningLine, canTakeTurn = false, onTakeTurn }: Props) {
   const stonesByCell = new Map(stones.map((stone) => [cellKey(stone), stone]));

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { boardSize, type Cell } from "@wzq/shared";
+import { boardSize, cellKey, type Cell } from "@wzq/shared";
 
 import { startServer, type Connection, type TestServer } from "./testing.js";
 
@@ -138,7 +138,10 @@ describe("a Draw", () => {
     // on the bottom row in exchange. The Joiner takes the last Turn, which completes the six and fills the Board.
     const toJoiner = [{ row: 0, column: 4 }, { row: 0, column: 5 }];
     const toHost = [{ row: 15, column: 0 }, { row: 15, column: 1 }];
-    const without = (cells: Cell[], removed: Cell[]) => cells.filter((cell) => !removed.some(isSameCell(cell)));
+    const without = (cells: Cell[], removed: Cell[]) => {
+      const removedCells = new Set(removed.map(cellKey));
+      return cells.filter((cell) => !removedCells.has(cellKey(cell)));
+    };
 
     const { hostView, joinerView } = await takeTurns(game, {
       host: [...without(board.host, toJoiner), ...toHost],
@@ -207,8 +210,6 @@ const drawnBoard = () => {
   }
   return cells;
 };
-
-const isSameCell = (cell: Cell) => (other: Cell) => cell.row === other.row && cell.column === other.column;
 
 /** Cells for the other Player's Turns, far from any line under test and never in a line of their own. */
 const scattered: Cell[] = [

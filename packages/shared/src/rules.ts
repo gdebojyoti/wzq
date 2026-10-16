@@ -82,4 +82,5 @@ const step = ({ row, column }: Cell, [rowStep, columnStep]: Direction): Cell => 
   return { row: row + rowStep, column: column + columnStep };
 };
 
-const cellKey = ({ row, column }: Cell) => `${row},${column}`;
+/** The Cell as text, the same for any two Cells in the same position, so it can be a key in a Set or Map. */
+export const cellKey = ({ row, column }: Cell): string => `${row},${column}`;

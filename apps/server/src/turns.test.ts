@@ -72,7 +72,14 @@ describe("taking a Turn outside an ongoing Game", () => {
     expect(await host.takeTurn({ row: 0, column: 0 })).toEqual({ ok: false, reason: "gameNotOngoing" });
   });
 
-  it("is refused for a Player with no active Game", async () => {
+  it("is refused for a Host who used Leave game in the lobby, as the Game was abandoned", async () => {
+    const { host } = await server.hostInLobby();
+    await host.leaveGame();
+
+    expect(await host.takeTurn({ row: 0, column: 0 })).toEqual({ ok: false, reason: "gameNotOngoing" });
+  });
+
+  it("is refused for a Player who has never been in a Game", async () => {
     const tab = await server.createPlayer().connect();
 
     expect(await tab.takeTurn({ row: 0, column: 0 })).toEqual({ ok: false, reason: "gameNotFound" });
