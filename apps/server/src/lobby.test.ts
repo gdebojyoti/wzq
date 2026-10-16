@@ -120,6 +120,13 @@ describe("leaving a Game in the lobby", () => {
 
     expect(await tab.leaveGame()).toEqual({ ok: false, reason: "gameNotFound" });
   });
+
+  it("is refused a second time, as the Game has ended", async () => {
+    const { host } = await server.hostInLobby();
+    await host.leaveGame();
+
+    expect(await host.leaveGame()).toEqual({ ok: false, reason: "gameNotOngoing" });
+  });
 });
 
 describe("a command sent without a callback for the reply", () => {
