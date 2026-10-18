@@ -21,7 +21,7 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
     const { playerId } = socket.data;
     // Counted before anything is awaited, so two tabs opening together can't both see the other and miss that
     // the Player has come back.
-    const isFirstTab = openTabs(io, playerId) === 0;
+    const isFirstTab = openTabCount(io, playerId) === 0;
     socket.join(playerRoom(playerId));
 
     // Answers a command that puts the Player in a Game.
@@ -62,7 +62,7 @@ export const handleGameSockets = (io: GameIo, gameService: GameService) => {
 
     socket.on("disconnect", async () => {
       // The opponent only sees a change once the Player's last tab has closed.
-      if (openTabs(io, playerId) > 0) return;
+      if (openTabCount(io, playerId) > 0) return;
       const game = await gameService.findActiveGame(playerId);
       if (game) await sendSnapshots(io, game);
     });
@@ -84,22 +84,21 @@ const gameRoom = (game: Game) => `game:${game.id}`;
 
 /** Sends every connection in the Game's room the Game as its Player sees it, and empties the room if it has ended. */
 const sendSnapshots = async (io: GameIo, game: Game) => {
-  const [sockets, connected] = await Promise.all([io.in(gameRoom(game)).fetchSockets(), connectedPlayers(io, game)]);
+  const [sockets, connected] = await Promise.all([io.in(gameRoom(game)).fetchSockets(), connectedPlayerIds(io, game)]);
   sockets.forEach((socket) => socket.emit("game", toSnapshot(game, socket.data.playerId, connected)));
   // Once the Game has ended, nothing more is sent to its room.
   if (!isActive(game)) io.in(gameRoom(game)).socketsLeave(gameRoom(game));
 };
 
 /** How many tabs the Player has open on this server. Games are kept in memory on one server (ADR-0005). */
-const openTabs = (io: GameIo, playerId: string) => io.of("/").adapter.rooms.get(playerRoom(playerId))?.size ?? 0;
+const openTabCount = (io: GameIo, playerId: string) => io.of("/").adapter.rooms.get(playerRoom(playerId))?.size ?? 0;
 
 /** The Game as this Player sees it, as it is right now. */
-const snapshotFor = async (io: GameIo, game: Game, playerId: string) => {
-  return toSnapshot(game, playerId, await connectedPlayers(io, game));
-};
+const snapshotFor = async (io: GameIo, game: Game, playerId: string) =>
+  toSnapshot(game, playerId, await connectedPlayerIds(io, game));
 
 /** The IDs of the Game's Players who have a tab open. */
-const connectedPlayers = async (io: GameIo, game: Game): Promise<Set<string>> => {
+const connectedPlayerIds = async (io: GameIo, game: Game): Promise<Set<string>> => {
   const players = game.joinerId === null ? [game.hostId] : [game.hostId, game.joinerId];
   const sockets = await io.in(players.map(playerRoom)).fetchSockets();
   return new Set(sockets.map((socket) => socket.data.playerId));
@@ -109,7 +108,7 @@ const connectedPlayers = async (io: GameIo, game: Game): Promise<Set<string>> =>
  * The Game as this Player sees it, given which of its Players have a tab open. Never includes a player ID: the ID
  * is the only proof of who a Player is.
  */
-const toSnapshot = (game: Game, playerId: string, connected: Set<string>): GameSnapshot => {
+const toSnapshot = (game: Game, playerId: string, connectedPlayerIds: Set<string>): GameSnapshot => {
   const isHost = game.hostId === playerId;
   const opponentId = isHost ? game.joinerId : game.hostId;
   // Whose Turn it is once this many Turns have been taken, as this Player sees it.
@@ -122,7 +121,7 @@ const toSnapshot = (game: Game, playerId: string, connected: Set<string>): GameS
     // Each Stone was placed on the Turn taken after all the Stones before it.
     stones: game.turns.map((cell, index) => ({ ...cell, side: sideAfter(index) })),
     result: resultFor(game, playerId),
-    opponentConnected: opponentId !== null && connected.has(opponentId),
+    opponentConnected: opponentId !== null && connectedPlayerIds.has(opponentId),
   };
 };
 

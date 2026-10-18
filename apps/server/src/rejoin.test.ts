@@ -60,7 +60,7 @@ describe("a Player disconnecting during play", () => {
 
 describe("a Player who Rejoins during play", () => {
   it("gets the whole Game back as it was, and their opponent sees they're connected again", async () => {
-    const { host, joiner, players } = await server.ongoingGame();
+    const { host, joiner, browsers } = await server.ongoingGame();
     await host.takeTurn({ row: 7, column: 7 });
     await joiner.takeTurn({ row: 8, column: 8 });
     await host.takeTurn({ row: 7, column: 8 });
@@ -68,7 +68,7 @@ describe("a Player who Rejoins during play", () => {
     await joiner.close();
     expect(await host.nextMessage()).toMatchObject({ game: { opponentConnected: false } });
 
-    const rejoined = await players.joiner.connect();
+    const rejoined = await browsers.joiner.connect();
 
     expect(await rejoined.nextMessage()).toEqual({
       event: "game",
@@ -91,28 +91,28 @@ describe("a Player who Rejoins during play", () => {
   });
 
   it("is seen by their opponent even when two of their tabs come back at once", async () => {
-    const { host, joiner, players } = await server.ongoingGame();
+    const { host, joiner, browsers } = await server.ongoingGame();
     await joiner.close();
     await host.nextMessage();
 
-    await Promise.all([players.joiner.connect(), players.joiner.connect()]);
+    await Promise.all([browsers.joiner.connect(), browsers.joiner.connect()]);
 
     expect(await host.nextMessage()).toMatchObject({ game: { opponentConnected: true } });
   });
 
   it("lands on the start screen if their opponent used Leave game while they were away", async () => {
-    const { host, joiner, players } = await server.ongoingGame();
+    const { host, joiner, browsers } = await server.ongoingGame();
     await joiner.close();
     await host.leaveGame();
 
-    expect(await (await players.joiner.connect()).nextMessage()).toEqual({ event: "noActiveGame" });
+    expect(await (await browsers.joiner.connect()).nextMessage()).toEqual({ event: "noActiveGame" });
   });
 });
 
 describe("a Player with more than one tab open", () => {
   it("stays connected while any tab is open, so another opening or closing is no news to their opponent", async () => {
-    const { host, players } = await server.ongoingGame();
-    const secondTab = await players.joiner.connect();
+    const { host, browsers } = await server.ongoingGame();
+    const secondTab = await browsers.joiner.connect();
     expect(await secondTab.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: true } });
 
     await secondTab.close();

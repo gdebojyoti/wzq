@@ -45,9 +45,9 @@ export interface TestServer {
   hostInLobby: () => Promise<{ host: Connection; gameCode: string }>;
   /**
    * A new ongoing Game with no Turns taken yet, with everything sent to either Player so far already read. Each
-   * Player has one tab open, and `players` can open more, or open one again after it closes.
+   * Player has one tab open, and `browsers` can open more, or open one again after it closes.
    */
-  ongoingGame: () => Promise<{ host: Connection; joiner: Connection; players: { host: Player; joiner: Player } }>;
+  ongoingGame: () => Promise<{ host: Connection; joiner: Connection; browsers: { host: Player; joiner: Player } }>;
   close: () => Promise<void>;
 }
 
@@ -119,13 +119,13 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
   };
 
   const ongoingGame = async () => {
-    const players = { host: createPlayer(), joiner: createPlayer() };
-    const { host, gameCode } = await hostInLobby(players.host);
-    const joiner = await playerWithNoGame(players.joiner);
+    const browsers = { host: createPlayer(), joiner: createPlayer() };
+    const { host, gameCode } = await hostInLobby(browsers.host);
+    const joiner = await playerWithNoGame(browsers.joiner);
     await joiner.joinGame(gameCode);
     await host.nextMessage();
     await joiner.nextMessage();
-    return { host, joiner, players };
+    return { host, joiner, browsers };
   };
 
   const close = async () => {
