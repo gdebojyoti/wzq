@@ -14,6 +14,8 @@ const rejectionMessages: Record<RejectionReason, string> = {
   cellOccupied: "There's already a stone there.",
 };
 
+const gameGoneMessage = "Your game no longer exists. It may have ended while you were away, or the server restarted.";
+
 // The connection to the server, and the latest snapshot of the Player's Game. The web app holds no game logic:
 // it shows what the server last sent, and sends commands.
 export const useGameServer = () => {
@@ -23,6 +25,11 @@ export const useGameServer = () => {
   const [game, setGame] = useState<GameSnapshot | null>();
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  // The Game on screen, for the socket's handlers, which are set up once.
+  const shownGameRef = useRef(game);
+  useEffect(() => {
+    shownGameRef.current = game;
+  }, [game]);
 
   useEffect(() => {
     const socket = connectToServer();
@@ -33,7 +40,13 @@ export const useGameServer = () => {
     socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("disconnected"));
     socket.on("game", setGame);
-    socket.on("noActiveGame", () => setGame(null));
+    socket.on("noActiveGame", () => {
+      // A Game was being played or waited for, and the server no longer has it: the opponent used Leave game
+      // while this Player was away, or the server restarted.
+      const shown = shownGameRef.current;
+      if (shown?.state === "lobby" || shown?.state === "ongoing") setError(gameGoneMessage);
+      setGame(null);
+    });
     return () => {
       socket.disconnect();
       socketRef.current = null;

@@ -31,6 +31,8 @@ export interface GameSnapshot {
   stones: Stone[];
   /** How the Game ended, once it has; otherwise null, as it is for a Game abandoned in the lobby. */
   result: GameResult | null;
+  /** Whether the opponent has the Game open right now. False while the Host waits in the lobby, with no opponent. */
+  opponentConnected: boolean;
 }
 
 /** A Stone on the Board, marked by whose it is as the viewer sees it. */

@@ -15,6 +15,11 @@ export default function GameScreen({ game, disabled, onTakeTurn, onLeaveGame }: 
       <p className="text-lg" role="status">
         {game.turn === "you" ? "Your turn" : "Your opponent's turn"}
       </p>
+      <p className={game.opponentConnected ? "text-sm text-stone-500" : "text-sm text-rose-700"} role="status">
+        {game.opponentConnected
+          ? "Your opponent is connected"
+          : "Your opponent is disconnected. You can wait for them to come back, or leave the game."}
+      </p>
       <Board stones={game.stones} canTakeTurn={!disabled && game.turn === "you"} onTakeTurn={onTakeTurn} />
       <Button disabled={disabled} onClick={onLeaveGame}>
         Leave game
