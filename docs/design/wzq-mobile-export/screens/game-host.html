@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WZQ · Game (Neubrutalist)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Archivo:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#111111}a:hover{color:#111111}
+.e-btn{transition:transform .08s ease, box-shadow .08s ease}
+.e-btn:hover{transform:translate(-1px,-1px)!important;box-shadow:6px 6px 0 #111111!important}
+.e-btn:active{transform:translate(4px,4px)!important;box-shadow:0 0 0 #111111!important}
+.e-btn:focus-visible{outline:3px solid #111111;outline-offset:4px}
+.e-cell{cursor:default}
+.e-cell.is-open{cursor:pointer}
+.e-cell.is-open:hover{background:#fff4b0!important}
+.e-cell.is-open.is-me:hover::after{content:'';position:absolute;width:72%;height:72%;border-radius:50%;background:rgba(17,17,17,.28)}
+.e-cell.is-open.is-opp:hover::after{content:'';position:absolute;width:72%;height:72%;box-sizing:border-box;border-radius:50%;border:2.5px dashed #111111}
+.e-cell:focus-visible{outline:3px solid #111111;outline-offset:-3px}
+.e-side{transition:opacity .2s ease}
+.e-side.is-idle{opacity:.4}
+</style>
+<style>
+/* Preview frame only: centres the 390×844 phone screen on a neutral page. Not part of the design. */
+html,body{min-height:100%}
+body{background:#d9d9d9;display:flex;justify-content:center;align-items:flex-start;padding:24px 0}
+#app>*{box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.embed body{padding:0;background:none;display:block}
+.embed #app>*{box-shadow:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Screen markup (template syntax explained in wzq-lite.js) -->
+<template id="screen">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #ffe45e; color: #111111; font-family: 'Archivo', system-ui, sans-serif; padding: 16px 14px 24px 12px; display: flex; flex-direction: column; gap: 16px">
+<header style="height: 44px; padding: 0 2px; display: flex; align-items: center; justify-content: space-between">
+<span style="font-family: 'Archivo Black', sans-serif; font-size: 28px">WZQ</span>
+<sc-if value="{{playing}}" hint-placeholder-val="{{true}}">
+<a class="e-btn" href="start.html" style="height: 44px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; background: #ffffff; border: 3px solid #111111; box-shadow: 4px 4px 0 #111111; color: #111111; text-decoration: none; font-family: 'Archivo Black', sans-serif; font-size: 13px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M10 20H4V4h6"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>
+<span>LEAVE GAME</span>
+</a>
+</sc-if>
+</header>
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 2px 0">
+<div class="e-side {{meCls}}" style="flex: 1; display: flex; align-items: center; gap: 10px">
+<span aria-hidden="true" style="flex: none; width: 26px; height: 26px; border-radius: 50%; background: #111111"></span>
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 3px">
+<sc-if value="{{myTurn}}" hint-placeholder-val="{{true}}"><span style="font-family: 'Archivo Black', sans-serif; font-size: 16px; line-height: 1.1; background: linear-gradient(transparent 45%, #ff8ac4 45%)">YOU</span></sc-if>
+<sc-if value="{{notMyTurn}}" hint-placeholder-val="{{false}}"><span style="font-family: 'Archivo Black', sans-serif; font-size: 16px; line-height: 1.1">YOU</span></sc-if>
+<span style="font-size: 12px; font-weight: 600">Host · plays first</span>
+</div>
+</div>
+<span aria-hidden="true" style="font-family: 'Archivo Black', sans-serif; font-size: 13px">VS</span>
+<div class="e-side {{oppCls}}" style="flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 10px; text-align: right">
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px">
+<sc-if value="{{theirTurn}}" hint-placeholder-val="{{false}}"><span style="font-family: 'Archivo Black', sans-serif; font-size: 16px; line-height: 1.1; background: linear-gradient(transparent 45%, #8ab4ff 45%)">OPPONENT</span></sc-if>
+<sc-if value="{{notTheirTurn}}" hint-placeholder-val="{{true}}"><span style="font-family: 'Archivo Black', sans-serif; font-size: 16px; line-height: 1.1">OPPONENT</span></sc-if>
+<span style="font-size: 12px; font-weight: 600">{{oppStatus}}</span>
+</div>
+<span aria-hidden="true" style="flex: none; width: 26px; height: 26px; box-sizing: border-box; border-radius: 50%; background: #ffffff; border: 3px solid #111111"></span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 6px 2px 0; border-top: 3px solid #111111">
+<h1 aria-live="polite" style="margin: 0; font-family: 'Archivo Black', sans-serif; font-size: 34px; line-height: 1.05">{{headline}}</h1>
+<sc-if value="{{playing}}" hint-placeholder-val="{{true}}">
+<span style="font-size: 14px; font-weight: 600">{{hint}}</span>
+</sc-if>
+<sc-if value="{{offline}}" hint-placeholder-val="{{false}}">
+<div role="status" style="display: flex; align-items: flex-start; gap: 8px; margin-top: 2px; font-size: 14px; font-weight: 700; line-height: 1.45">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16v.5"></path></svg>
+<span>Your opponent is disconnected. The game will wait for them to rejoin, with no time limit.</span>
+</div>
+</sc-if>
+</div>
+<div style="flex: none; background: #ffffff; border: 3px solid #111111">
+<div style="display: grid; grid-template-columns: repeat(13, minmax(0, 1fr))">
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="13">
+<button class="e-cell {{c.cls}}" type="button" aria-label="{{c.label}}" aria-disabled="{{c.locked}}" onClick="{{c.place}}" style="position: relative; aspect-ratio: 1 / 1; min-width: 0; margin: 0; padding: 0; background: #ffffff; border: 0; box-shadow: inset -1px -1px 0 #111111; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{c.last}}" hint-placeholder-val="{{false}}"><span style="position: absolute; top: 0; left: 0; right: 1px; bottom: 1px; background: #ffe45e"></span></sc-if>
+<sc-if value="{{c.win}}" hint-placeholder-val="{{false}}"><span style="position: absolute; top: 0; left: 0; right: 1px; bottom: 1px; background: #ff8ac4"></span></sc-if>
+<sc-if value="{{c.mine}}" hint-placeholder-val="{{false}}"><span style="position: relative; width: 72%; height: 72%; border-radius: 50%; background: #111111"></span></sc-if>
+<sc-if value="{{c.opp}}" hint-placeholder-val="{{false}}"><span style="position: relative; width: 72%; height: 72%; box-sizing: border-box; border-radius: 50%; background: #ffffff; border: 2.5px solid #111111"></span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{over}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 16px; padding: 0 2px">
+<p style="margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; text-wrap: pretty">{{resultLine}}</p>
+<a class="e-btn" href="start.html" style="height: 60px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 12px; background: #ff8ac4; border: 3px solid #111111; box-shadow: 6px 6px 0 #111111; color: #111111; text-decoration: none; font-family: 'Archivo Black', sans-serif; font-size: 18px">
+<span>NEW GAME</span>
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M4 12h15"></path><path d="m13 6 6 6-6 6"></path></svg>
+</a>
+</div>
+</sc-if>
+<div style="flex: 1"></div>
+<div role="status" aria-live="polite" style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: .02em; opacity: .75">
+<sc-if value="{{selfConnected}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #1fae5b; border: 2px solid #111111"></span></sc-if>
+<sc-if value="{{selfConnecting}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #f5b700; border: 2px solid #111111"></span></sc-if>
+<sc-if value="{{selfOffline}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #e5383b; border: 2px solid #111111"></span></sc-if>
+<span>{{connLabel}}</span>
+</div>
+</div>
+</template>
+
+<!-- Tweakable props (defaults). Override with URL query params, e.g. ?connection=offline -->
+<script>window.WZQ_PROPS = {"connection":{"editor":"enum","options":["connected","connecting","offline"],"default":"offline"},"scene":{"editor":"enum","options":["playing","won","lost","abandoned"],"default":"playing"},"opponentOnline":{"editor":"boolean","default":true},"$preview":{"width":390,"height":844}};</script>
+<script src="wzq-lite.js"></script>
+<script>
+var N = 13;
+var CONN_LABELS = { connected: 'Connected to server', connecting: 'Connecting to server…', offline: 'Not connected to server · retrying' };
+var SEEDS = {
+  playing: [[7,7],[7,8],[8,8],[6,6],[9,9],[10,10],[8,7],[8,6],[6,8],[9,7],[7,9],[6,9]],
+  won: [[7,7],[7,6],[7,8],[6,7],[8,9],[6,8],[7,9],[6,9],[7,10],[6,10],[7,11]],
+  lost: [[7,8],[7,7],[6,8],[8,8],[5,8],[6,6],[4,8],[3,8],[9,9],[5,5],[5,7],[4,4]],
+  abandoned: [[7,7],[7,8],[8,8],[6,6],[9,9],[10,10],[8,7],[8,6],[6,8],[9,7],[7,9],[6,9]]
+};
+var HEADLINES = { won: 'YOU WON!', lost: 'YOU LOST', abandoned: 'GAME ABANDONED', draw: 'DRAW' };
+var RESULT_LINES = {
+  won: 'Five in a row. The winning line is marked in pink.',
+  lost: 'Your opponent got five in a row. Their line is marked in pink.',
+  abandoned: 'Your opponent left the game. There is no winner.',
+  draw: 'The board is full and nobody got five in a row.'
+};
+function findLine(moves) {
+  if (!moves.length) return null;
+  var grid = {};
+  moves.forEach(function (m, i) { grid[m[0] + ',' + m[1]] = i % 2; });
+  var last = moves[moves.length - 1];
+  var who = (moves.length - 1) % 2;
+  var dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  for (var d = 0; d < dirs.length; d++) {
+    var line = [last];
+    for (var s = -1; s <= 1; s += 2) {
+      var r = last[0] + dirs[d][0] * s, c = last[1] + dirs[d][1] * s;
+      while (r >= 0 && r < N && c >= 0 && c < N && grid[r + ',' + c] === who) {
+        line.push([r, c]);
+        r += dirs[d][0] * s;
+        c += dirs[d][1] * s;
+      }
+    }
+    if (line.length >= 5) return line;
+  }
+  return null;
+}
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var scene = this.props.scene ?? 'playing';
+    var online = this.props.opponentOnline ?? true;
+    var conn = this.props.connection ?? 'offline';
+    var st = this.state || {};
+    var extra = st.forScene === scene && st.extra ? st.extra : [];
+    var moves = (SEEDS[scene] || SEEDS.playing).concat(extra);
+    var line = scene === 'abandoned' ? null : findLine(moves);
+    var result = scene === 'abandoned' ? 'abandoned' : line ? ((moves.length - 1) % 2 === 0 ? 'won' : 'lost') : (moves.length >= N * N ? 'draw' : null);
+    var playing = !result;
+    var myTurn = playing && moves.length % 2 === 0;
+    var theirTurn = playing && !myTurn;
+    var owner = {};
+    moves.forEach(function (m, i) { owner[m[0] + ',' + m[1]] = i % 2 === 0 ? 'me' : 'opp'; });
+    var winSet = {};
+    (line || []).forEach(function (m) { winSet[m[0] + ',' + m[1]] = true; });
+    var lastMove = moves[moves.length - 1];
+    var lastKey = lastMove ? lastMove[0] + ',' + lastMove[1] : '';
+    var cells = [];
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        (function (r, c) {
+          var k = r + ',' + c;
+          var who = owner[k];
+          var win = !!winSet[k];
+          var open = playing && !who;
+          cells.push({
+            mine: who === 'me',
+            opp: who === 'opp',
+            win: win,
+            last: k === lastKey && !win,
+            cls: open ? (myTurn ? 'is-open is-me' : 'is-open is-opp') : '',
+            locked: open ? 'false' : 'true',
+            label: 'Row ' + (r + 1) + ', column ' + (c + 1) + (who === 'me' ? ', your stone' : who === 'opp' ? ', opponent stone' : ', empty'),
+            place: function () {
+              if (result || owner[k]) return;
+              self.setState({ forScene: scene, extra: extra.concat([[r, c]]) });
+            }
+          });
+        })(r, c);
+      }
+    }
+    return {
+      cells: cells,
+      playing: playing,
+      over: !playing,
+      myTurn: myTurn,
+      notMyTurn: !myTurn,
+      theirTurn: theirTurn,
+      notTheirTurn: !theirTurn,
+      meCls: playing ? (myTurn ? 'is-active' : 'is-idle') : '',
+      oppCls: playing ? (theirTurn ? 'is-active' : 'is-idle') : '',
+      offline: !online && playing,
+      oppStatus: online ? 'Online' : 'Disconnected',
+      headline: result ? HEADLINES[result] : myTurn ? 'YOUR TURN' : 'THEIR TURN',
+      hint: myTurn ? 'Tap any empty cell to place your stone.' : 'Waiting for your opponent to play.',
+      resultLine: result ? RESULT_LINES[result] : '',
+      selfConnected: conn === 'connected',
+      selfConnecting: conn === 'connecting',
+      selfOffline: conn === 'offline',
+      connLabel: CONN_LABELS[conn] || CONN_LABELS.connected
+    };
+  }
+}
+WZQ_MOUNT(Component);
+</script>
+</body>
+</html>

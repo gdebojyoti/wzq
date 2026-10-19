@@ -6,7 +6,7 @@ const webFiles = ["apps/web/src/**/*.{ts,tsx}"];
 
 export default [
   {
-    ignores: ["**/dist/"],
+    ignores: ["**/dist/", "docs/design/"],
   },
   ...neostandard({ ts: true, semi: true }),
   // tactris's style, where it differs from standard's.

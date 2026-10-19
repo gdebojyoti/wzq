@@ -8,6 +8,10 @@
     {
       "source": "/(.*\\.[0-9a-f]{20}\\.js)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/([0-9a-f]{20}\\.woff2?)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     }
   ]
 }

@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+/* Design tokens from docs/design/wzq-mobile-export/README.md. */
+@theme {
+  --color-ink: #111111;
+  --color-background: #ffe45e;
+  --color-surface: #ffffff;
+  --color-pink: #ff8ac4;
+  --color-blue: #8ab4ff;
+  --color-last-move: #ffe45e;
+  --color-cell-hover: #fff4b0;
+  --color-input-focus: #fffbe0;
+  --color-placeholder: #9a9a9a;
+  --color-error: #9b0020;
+  --color-conn-ok: #1fae5b;
+  --color-conn-wait: #f5b700;
+  --color-conn-down: #e5383b;
+
+  --font-body: "Archivo", system-ui, sans-serif;
+  --font-display: "Archivo Black", sans-serif;
+
+  --animate-marquee: marquee 12s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
