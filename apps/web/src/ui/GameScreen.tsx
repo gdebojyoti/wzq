@@ -33,11 +33,17 @@ export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveG
           <StoneMark side="you" className="size-6.5 flex-none border-3" />
           <div className="flex flex-col items-start gap-0.75">
             <PlayerName highlight={turn === "you" ? "pink" : undefined}>{gameMessages.you}</PlayerName>
-            <span className="text-xs font-semibold">{game.isHost ? gameMessages.hostRole : gameMessages.joinerRole}</span>
+            <span className="text-xs font-semibold">
+              {game.isHost ? gameMessages.hostRole : gameMessages.joinerRole}
+            </span>
           </div>
         </div>
         <span aria-hidden className="font-display text-[13px]">{gameMessages.versus}</span>
-        <div className={`flex flex-1 items-center justify-end gap-2.5 text-right ${sideOpacity(playing, turn === "opponent")}`}>
+        <div
+          className={
+            `flex flex-1 items-center justify-end gap-2.5 text-right ${sideOpacity(playing, turn === "opponent")}`
+          }
+        >
           <div className="flex flex-col items-end gap-0.75">
             <PlayerName highlight={turn === "opponent" ? "blue" : undefined}>{gameMessages.opponent}</PlayerName>
             <span className="text-xs font-semibold">
@@ -60,8 +66,9 @@ export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveG
         canTakeTurn={playing && !disabled && turn === "you"}
         onTakeTurn={onTakeTurn}
       />
-      {/* Everything that comes and goes sits under the Board, so the Board never moves. */}
-      {error && <Notice tone="error" className="px-0.5">{error}</Notice>}
+      {/* Everything that comes and goes sits under the Board, so the Board never moves. An error shows only in play:
+          one left from a command just before the end would be stale beside the result. */}
+      {playing && error && <Notice tone="error" className="px-0.5">{error}</Notice>}
       {playing && !game.opponentConnected && (
         <Notice className="px-0.5 opacity-40">{gameMessages.opponentDisconnectedNotice}</Notice>
       )}

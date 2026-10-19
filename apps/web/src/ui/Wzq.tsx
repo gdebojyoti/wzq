@@ -17,7 +17,9 @@ export default function Wzq() {
   const screen = () => {
     // Nothing to show until the server says whether the Player has an active Game.
     if (game === undefined) return <div className="flex-1" />;
-    if (game?.state === "lobby") return <LobbyScreen game={game} disabled={busy} error={error} onLeaveGame={leaveGame} />;
+    if (game?.state === "lobby") {
+      return <LobbyScreen game={game} disabled={busy} error={error} onLeaveGame={leaveGame} />;
+    }
     if (game?.state === "ongoing" || game?.result) {
       return (
         <GameScreen
@@ -31,7 +33,9 @@ export default function Wzq() {
       );
     }
     // No active Game, or one abandoned in the lobby.
-    return <StartScreen disabled={busy} gameGone={gameGone} error={error} onNewGame={createGame} onJoinGame={joinGame} />;
+    return (
+      <StartScreen disabled={busy} gameGone={gameGone} error={error} onNewGame={createGame} onJoinGame={joinGame} />
+    );
   };
 
   // The mobile layout, centred on wider screens. The colours sit on this element, not the page, so a host's page

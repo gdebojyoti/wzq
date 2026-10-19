@@ -54,7 +54,8 @@ export const gameMessages = {
   opponentDisconnected: "Disconnected",
   // Shown before the opponent's connection status when the opponent is the Host.
   hostPrefix: "Host · ",
-  opponentDisconnectedNotice: "Your opponent is disconnected. The game will wait for them to rejoin, with no time limit.",
+  opponentDisconnectedNotice:
+    "Your opponent is disconnected. The game will wait for them to rejoin, with no time limit.",
   headlines: {
     yourTurn: "Your turn",
     theirTurn: "Their turn",

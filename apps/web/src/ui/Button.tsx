@@ -30,8 +30,8 @@ export default function Button({ variant, shadow, className = "", ...props }: Pr
         "flex cursor-pointer items-center justify-center border-3 border-ink font-display text-ink uppercase " +
         "transition-[translate,box-shadow] duration-75 enabled:hover:-translate-x-px enabled:hover:-translate-y-px " +
         "enabled:active:shadow-none focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-ink " +
-        `disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none ${variants[variant]} ${shadows[shadow]} ` +
-        className
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none " +
+        `${variants[variant]} ${shadows[shadow]} ${className}`
       }
       {...props}
     />

@@ -101,7 +101,7 @@ Each screen's markup is in its `<template id="screen">` and its logic in the `Co
 | Game headline | YOUR TURN · THEIR TURN · YOU WON! · YOU LOST · GAME ABANDONED · DRAW |
 | Game hint | "Tap any empty cell to place your stone." / "Waiting for your opponent to play." / joined, empty board: "The host places the first stone." |
 | Won | "Five in a row. The winning line is marked in pink." |
-| Lost | "Your opponent got five in a row. Their line is marked in pink." |
+| Lost | "Your opponent got five in a row. Their line is marked in blue." |
 | Abandoned | "Your opponent left the game. There is no winner." |
 | Draw | "The board is full and nobody got five in a row." |
 
@@ -123,7 +123,7 @@ These settle the open points the designs left, and the cases they didn't cover.
 - **Abandoned, seen by the Player who left:** the same GAME ABANDONED screen, with "You left the game. There is no winner."
 - **New game is labelled "Back to Home":** it goes to Start, where the Player can start a game or join a friend's, so it no longer promises a new Game.
 - **Buttons while not connected:** stay enabled, as the connection indicator is informational only. Socket.IO holds commands until it reconnects. Buttons are disabled only while a command waits for the server's reply, shown at 50% opacity with no shadow.
-- **Other server errors** (not your turn, Cell taken, already in a game, and so on): the same flat notice in the error colour, under the headline on Game and under the join row on Start.
+- **Other server errors** (not your turn, Cell taken, already in a game, and so on): the same flat notice in the error colour, under the Board on Game and under the join row on Start.
 
 - **Winning line colour:** the winner's colour as the viewer sees them, like the turn highlight. It's pink when you won and blue when your opponent won, and the Lost text says "Their line is marked in blue."
 - **Nothing moves when messages come and go:**

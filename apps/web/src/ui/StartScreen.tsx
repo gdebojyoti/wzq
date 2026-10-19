@@ -30,7 +30,10 @@ export default function StartScreen({ disabled, gameGone, error, onNewGame, onJo
         <p className="m-0 mt-2.5 text-[17px] leading-[1.45] font-semibold text-pretty">{startMessages.tagline}</p>
         <span
           aria-hidden
-          className="absolute -top-4.5 -right-2.5 rotate-8 border-3 border-ink bg-pink px-3 py-2 font-display text-sm tracking-[.02em] uppercase"
+          className={
+            "absolute -top-4.5 -right-2.5 rotate-8 border-3 border-ink bg-pink px-3 py-2 font-display text-sm " +
+            "tracking-[.02em] uppercase"
+          }
         >
           {startMessages.sticker}
         </span>
@@ -43,7 +46,13 @@ export default function StartScreen({ disabled, gameGone, error, onNewGame, onJo
       </div>
       <div className="flex-1" />
       <div className="flex flex-col gap-6.5">
-        <Button variant="primary" shadow="large" className="h-15.5 gap-3 text-[19px] tracking-[.02em]" disabled={disabled} onClick={onNewGame}>
+        <Button
+          variant="primary"
+          shadow="large"
+          className="h-15.5 gap-3 text-[19px] tracking-[.02em]"
+          disabled={disabled}
+          onClick={onNewGame}
+        >
           <span>{startMessages.startGame}</span>
           <Icon name="arrow" size={22} />
         </Button>

@@ -62,7 +62,10 @@ export default function LobbyScreen({ game, disabled, error, onLeaveGame }: Prop
         <span className="sr-only">{lobbyMessages.waitingForScreenReaders}</span>
         <div
           aria-hidden
-          className="inline-flex animate-marquee gap-6 text-[15px] font-bold tracking-[.06em] uppercase motion-reduce:animate-none"
+          className={
+            "inline-flex animate-marquee gap-6 text-[15px] font-bold tracking-[.06em] uppercase " +
+            "motion-reduce:animate-none"
+          }
         >
           {Array.from({ length: 6 }, (_, index) => (
             <span key={index}>{lobbyMessages.waiting} ●</span>

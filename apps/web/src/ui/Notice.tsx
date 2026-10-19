@@ -19,7 +19,10 @@ export default function Notice({ children, tone = "info", size = "small", classN
   return (
     <p
       role={tone === "error" ? "alert" : "status"}
-      className={`m-0 flex items-start leading-[1.45] ${sizes[size].text} ${tone === "error" ? "text-error" : ""} ${className}`}
+      className={
+        `m-0 flex items-start leading-[1.45] ${sizes[size].text} ${tone === "error" ? "text-error" : ""} ` +
+        className
+      }
     >
       <Icon name="info" size={sizes[size].icon} strokeWidth={2.5} className="mt-px flex-none" />
       <span>{children}</span>

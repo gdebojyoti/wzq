@@ -13,7 +13,13 @@ export default function Header({ disabled, onLeaveGame }: Props) {
     <header className="flex h-11 items-center justify-between">
       <span className="font-display text-[28px]">{commonMessages.wordmark}</span>
       {onLeaveGame && (
-        <Button variant="secondary" shadow="small" className="h-11 gap-2 px-3 text-[13px]" disabled={disabled} onClick={onLeaveGame}>
+        <Button
+          variant="secondary"
+          shadow="small"
+          className="h-11 gap-2 px-3 text-[13px]"
+          disabled={disabled}
+          onClick={onLeaveGame}
+        >
           <Icon name="leave" size={16} />
           <span>{commonMessages.leaveGame}</span>
         </Button>

@@ -46,8 +46,9 @@ export default function Board({ stones, winningLine, canTakeTurn, onTakeTurn }: 
             key={cellKey(cell)}
             type="button"
             className={
-              "relative flex aspect-square min-w-0 items-center justify-center shadow-[inset_-1px_-1px_0_var(--color-ink)] " +
-              `focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-ink ${background} ${playableCell}`
+              "relative flex aspect-square min-w-0 items-center justify-center " +
+              "shadow-[inset_-1px_-1px_0_var(--color-ink)] focus-visible:outline-3 focus-visible:-outline-offset-3 " +
+              `focus-visible:outline-ink ${background} ${playableCell}`
             }
             // Any empty Cell may be played. The server checks it again.
             disabled={!canTakeTurn || stone !== undefined}
