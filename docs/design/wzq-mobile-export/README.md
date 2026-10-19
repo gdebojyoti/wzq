@@ -121,7 +121,7 @@ These settle the open points the designs left, and the cases they didn't cover.
 - **Copy code:** shows "Copied" with a check icon for about 2 seconds.
 - **Leave game:** asks for no confirmation.
 - **Abandoned, seen by the Player who left:** the same GAME ABANDONED screen, with "You left the game. There is no winner."
-- **New game:** goes to Start, where the Player can start a game or join a friend's.
+- **New game is labelled "Back to Home":** it goes to Start, where the Player can start a game or join a friend's, so it no longer promises a new Game.
 - **Buttons while not connected:** stay enabled, as the connection indicator is informational only. Socket.IO holds commands until it reconnects. Buttons are disabled only while a command waits for the server's reply, shown at 50% opacity with no shadow.
 - **Other server errors** (not your turn, Cell taken, already in a game, and so on): the same flat notice in the error colour, under the headline on Game and under the join row on Start.
 

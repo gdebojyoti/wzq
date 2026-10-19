@@ -26,7 +26,7 @@ export default function Wzq() {
           error={error}
           onTakeTurn={takeTurn}
           onLeaveGame={leaveGame}
-          onNewGame={backToStart}
+          onBackToStart={backToStart}
         />
       );
     }

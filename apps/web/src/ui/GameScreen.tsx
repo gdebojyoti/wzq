@@ -14,11 +14,11 @@ interface Props {
   error: string | undefined;
   onTakeTurn: (cell: Cell) => void;
   onLeaveGame: () => void;
-  onNewGame: () => void;
+  onBackToStart: () => void;
 }
 
 // A Game being played, or one that has ended, which shows its result on the same screen.
-export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveGame, onNewGame }: Props) {
+export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveGame, onBackToStart }: Props) {
   const { turn, result } = game;
   const playing = game.state === "ongoing";
   const winningLine = result?.outcome === "won" || result?.outcome === "lost" ? result.winningLine : null;
@@ -68,8 +68,8 @@ export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveG
       {result && (
         <div className="flex flex-col gap-4 px-0.5">
           <p className="m-0 text-[15px] leading-normal font-semibold text-pretty">{resultLine(result)}</p>
-          <Button variant="primary" shadow="large" className="h-15 gap-3 text-lg" onClick={onNewGame}>
-            <span>{gameMessages.newGame}</span>
+          <Button variant="primary" shadow="large" className="h-15 gap-3 text-lg" onClick={onBackToStart}>
+            <span>{gameMessages.backToStart}</span>
             <Icon name="arrow" size={22} />
           </Button>
         </div>

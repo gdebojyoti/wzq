@@ -77,7 +77,7 @@ export const gameMessages = {
     youLeft: "You left the game. There is no winner.",
     opponentLeft: "Your opponent left the game. There is no winner.",
   },
-  newGame: "New game",
+  backToStart: "Back to Home",
 };
 
 export const boardMessages = {
