@@ -67,6 +67,8 @@ export const gameMessages = {
     yourTurn: "Tap any empty cell to place your stone.",
     theirTurn: "Waiting for your opponent to play.",
     hostPlaysFirst: "The host places the first stone.",
+    // Keep this to one line: it fills the hint's place once the Game has ended, so the Board doesn't move.
+    gameOver: "Game over.",
   },
   results: {
     won: "Five in a row. The winning line is marked in pink.",

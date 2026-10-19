@@ -52,11 +52,7 @@ export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveG
         <h1 aria-live="polite" className="m-0 font-display text-[34px] leading-[1.05] uppercase">
           {headline(game)}
         </h1>
-        {playing && <span className="text-sm font-semibold">{hint(game)}</span>}
-        {playing && !game.opponentConnected && (
-          <Notice className="mt-0.5">{gameMessages.opponentDisconnectedNotice}</Notice>
-        )}
-        {error && <Notice tone="error" className="mt-0.5">{error}</Notice>}
+        <span className="text-sm font-semibold">{playing ? hint(game) : gameMessages.hints.gameOver}</span>
       </div>
       <Board
         stones={game.stones}
@@ -64,6 +60,11 @@ export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveG
         canTakeTurn={playing && !disabled && turn === "you"}
         onTakeTurn={onTakeTurn}
       />
+      {/* Everything that comes and goes sits under the Board, so the Board never moves. */}
+      {error && <Notice tone="error" className="px-0.5">{error}</Notice>}
+      {playing && !game.opponentConnected && (
+        <Notice className="px-0.5 opacity-40">{gameMessages.opponentDisconnectedNotice}</Notice>
+      )}
       {result && (
         <div className="flex flex-col gap-4 px-0.5">
           <p className="m-0 text-[15px] leading-normal font-semibold text-pretty">{resultLine(result)}</p>

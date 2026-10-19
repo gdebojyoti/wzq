@@ -55,7 +55,8 @@ export default function LobbyScreen({ game, disabled, error, onLeaveGame }: Prop
           <Icon name={copied ? "check" : "copy"} size={20} strokeWidth={2.8} />
           <span aria-live="polite">{copied ? lobbyMessages.copied : lobbyMessages.copyCode}</span>
         </Button>
-        {error && <Notice tone="error">{error}</Notice>}
+        {/* Room for a two-line error is kept, so the code and buttons don't move when one appears. */}
+        <div className="min-h-[2.9em] text-sm">{error && <Notice tone="error">{error}</Notice>}</div>
       </div>
       <div role="status" className="-mx-6 overflow-hidden border-y-3 border-ink py-3 whitespace-nowrap">
         <span className="sr-only">{lobbyMessages.waitingForScreenReaders}</span>

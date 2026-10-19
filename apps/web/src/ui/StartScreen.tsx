@@ -78,7 +78,8 @@ export default function StartScreen({ disabled, gameGone, error, onNewGame, onJo
               <Icon name="arrow" size={18} />
             </Button>
           </div>
-          {error && <Notice tone="error">{error}</Notice>}
+          {/* Room for a two-line error is kept, so the buttons don't move when one appears. */}
+          <div className="min-h-[2.9em] text-sm">{error && <Notice tone="error">{error}</Notice>}</div>
         </form>
       </div>
     </section>
