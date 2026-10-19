@@ -72,7 +72,7 @@ export const gameMessages = {
   },
   results: {
     won: "Five in a row. The winning line is marked in pink.",
-    lost: "Your opponent got five in a row. Their line is marked in pink.",
+    lost: "Your opponent got five in a row. Their line is marked in blue.",
     draw: "The board is full and nobody got five in a row.",
     youLeft: "You left the game. There is no winner.",
     opponentLeft: "Your opponent left the game. There is no winner.",

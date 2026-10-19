@@ -24,6 +24,9 @@ const playableCell =
 export default function Board({ stones, winningLine, canTakeTurn, onTakeTurn }: Props) {
   const stonesByCell = new Map(stones.map((stone) => [cellKey(stone), stone]));
   const winningCells = new Set(winningLine?.map(cellKey));
+  // The winning line is in the winner's colour, as the viewer sees it: pink for them, blue for their opponent.
+  const winner = winningLine?.[0] && stonesByCell.get(cellKey(winningLine[0]))?.side;
+  const winningBackground = winner === "opponent" ? "bg-blue" : "bg-pink";
   const lastStone = stones.at(-1);
 
   return (
@@ -36,8 +39,8 @@ export default function Board({ stones, winningLine, canTakeTurn, onTakeTurn }: 
         const stone = stonesByCell.get(cellKey(cell));
         const isLast = stone !== undefined && stone === lastStone;
         const isWinning = winningCells.has(cellKey(cell));
-        // A winning Cell is pink even when it holds the most recent Stone.
-        const background = isWinning ? "bg-pink" : isLast ? "bg-last-move" : "bg-surface";
+        // A winning Cell keeps the winner's colour even when it holds the most recent Stone.
+        const background = isWinning ? winningBackground : isLast ? "bg-last-move" : "bg-surface";
         return (
           <button
             key={cellKey(cell)}

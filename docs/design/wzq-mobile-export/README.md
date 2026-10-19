@@ -125,6 +125,7 @@ These settle the open points the designs left, and the cases they didn't cover.
 - **Buttons while not connected:** stay enabled, as the connection indicator is informational only. Socket.IO holds commands until it reconnects. Buttons are disabled only while a command waits for the server's reply, shown at 50% opacity with no shadow.
 - **Other server errors** (not your turn, Cell taken, already in a game, and so on): the same flat notice in the error colour, under the headline on Game and under the join row on Start.
 
+- **Winning line colour:** the winner's colour as the viewer sees them, like the turn highlight. It's pink when you won and blue when your opponent won, and the Lost text says "Their line is marked in blue."
 - **Nothing moves when messages come and go:**
   - On Game, only the headline and one hint line sit above the Board. The hint becomes "Game over." once the Game ends.
   - Errors and the opponent-disconnected notice go under the Board. The notice shows at 40% opacity.
