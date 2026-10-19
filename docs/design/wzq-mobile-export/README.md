@@ -112,9 +112,17 @@ Each screen's markup is in its `<template id="screen">` and its logic in the `Co
 - `wzq-lite.js`, the grey preview background, and the `embed` query param.
 - Links between screens (Start a game → Lobby, Join → Game) only move between mocks; the real flow is driven by game snapshots from the server.
 
-## Open points
+## Decisions made while building it (#30)
 
-- **Board size:** these designs use **13×13**, but issue #17 still says 16×16 (Solution and the Rules module). Update one or the other.
-- **Copy code:** the button has no copied/confirmation state yet.
+These settle the open points the designs left, and the cases they didn't cover.
+
+- **Board size:** the app keeps the rules' **16×16** Board, so no rules change. The board is built to the design at that size.
+- **Desktop:** the mobile layout, as a centred column about 430px wide on the full-width yellow background. The three desktop layouts on the design canvas are not used for v1.
+- **Copy code:** shows "Copied" with a check icon for about 2 seconds.
 - **Leave game:** asks for no confirmation.
-- **Desktop:** three desktop layouts exist on the design canvas (Sidebar, Face-off, Scoreboard); none has been chosen yet.
+- **Abandoned, seen by the Player who left:** the same GAME ABANDONED screen, with "You left the game. There is no winner."
+- **New game:** goes to Start, where the Player can start a game or join a friend's.
+- **Buttons while not connected:** stay enabled, as the connection indicator is informational only. Socket.IO holds commands until it reconnects. Buttons are disabled only while a command waits for the server's reply, shown at 50% opacity with no shadow.
+- **Other server errors** (not your turn, Cell taken, already in a game, and so on): the same flat notice in the error colour, under the headline on Game and under the join row on Start.
+
+All of the app's text lives in `apps/web/src/ui/messages.ts`.

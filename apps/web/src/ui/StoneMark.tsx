@@ -1,8 +1,7 @@
-import type { Stone } from "@wzq/shared";
+import type { Side } from "@wzq/shared";
 
-// The viewer's Stones are dark and their opponent's light, whichever of them is the Host.
-export default function StoneMark({ stone, isLast }: { stone: Stone; isLast: boolean }) {
-  const colour = stone.side === "you" ? "bg-stone-900" : "border border-stone-500 bg-white";
-  const highlight = isLast ? "ring-2 ring-rose-500" : "";
-  return <span className={`size-4/5 rounded-full ${colour} ${highlight}`} />;
+// The viewer's Stones are always black and their opponent's white, whichever of them is the Host.
+export default function StoneMark({ side, className = "" }: { side: Side; className?: string }) {
+  const colour = side === "you" ? "bg-ink" : "border-ink bg-surface";
+  return <span aria-hidden className={`rounded-full ${colour} ${className}`} />;
 }

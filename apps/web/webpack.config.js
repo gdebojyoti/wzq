@@ -5,7 +5,7 @@ import pkg from "./package.json" with { type: "json" };
 
 export default {
   entry: "./src/index.ts",
-  // Hashed names can be cached forever (vercel.json). remoteEntry.js keeps its name: hosts load it by URL.
+  // Hashed names, fonts included, can be cached forever (vercel.json). remoteEntry.js keeps its name: hosts load it by URL.
   output: { filename: "[name].[contenthash].js", publicPath: "auto", clean: true },
   devServer: {
     port: 8081,
