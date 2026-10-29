@@ -6,7 +6,13 @@ import pkg from "./package.json" with { type: "json" };
 export default {
   entry: "./src/index.ts",
   // Hashed names, fonts included, can be cached forever (vercel.json). remoteEntry.js keeps its name: hosts load it by URL.
-  output: { filename: "[name].[contenthash].js", publicPath: "auto", clean: true },
+  output: {
+    filename: "wzq/[name].[contenthash].js",
+    chunkFilename: "wzq/[id].[contenthash].js",
+    assetModuleFilename: "wzq/[hash][ext][query]",
+    publicPath: "/",
+    clean: true,
+  },
   devServer: {
     port: 8081,
     // Mirrors the routes in vercel.json.
@@ -45,7 +51,7 @@ export default {
   plugins: [
     new webpack.container.ModuleFederationPlugin({
       name: "wzq",
-      filename: "remoteEntry.js",
+      filename: "wzq/remoteEntry.js",
       exposes: { "./Wzq": "./src/ui/Wzq.tsx" },
       shared: {
         react: { singleton: true, requiredVersion: pkg.dependencies.react },
