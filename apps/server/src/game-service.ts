@@ -98,7 +98,9 @@ export const createGameService = (
 
   const findActiveGame = oneAtATime((playerId: string) => store.findActiveGameByPlayer(playerId));
 
-  return { createGame, joinGame, leaveGame, takeTurn, findActiveGame };
+  const findLastGame = oneAtATime((playerId: string) => store.findLastGameByPlayer(playerId));
+
+  return { createGame, joinGame, leaveGame, takeTurn, findActiveGame, findLastGame };
 };
 
 export type GameService = ReturnType<typeof createGameService>;

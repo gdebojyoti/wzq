@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { boardSize, cellKey, type Cell } from "@wzq/shared";
 
-import { startServer, type Connection, type TestServer } from "./testing.js";
+import { drawnBoard, startServer, type Connection, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -236,21 +236,6 @@ describe("after a Game has ended", () => {
     expect(await (await host.connect()).nextMessage()).toEqual({ event: "noActiveGame" });
   });
 });
-
-/**
- * Every Cell on the Board, shared between the Players with no five in a row: going along each row, two Cells
- * are the Host's then two are the Joiner's, and each row starts two Cells further on than the one above.
- */
-const drawnBoard = () => {
-  const cells: { host: Cell[]; joiner: Cell[] } = { host: [], joiner: [] };
-  for (let row = 0; row < boardSize; row++) {
-    for (let column = 0; column < boardSize; column++) {
-      const isHostsCell = Math.floor((column + 2 * row) / 2) % 2 === 0;
-      (isHostsCell ? cells.host : cells.joiner).push({ row, column });
-    }
-  }
-  return cells;
-};
 
 /** Cells for the other Player's Turns, far from any line under test and never in a line of their own. */
 const scattered: Cell[] = [

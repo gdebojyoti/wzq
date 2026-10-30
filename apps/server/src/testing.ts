@@ -1,10 +1,20 @@
-// Test helper: starts the real server in-process, and connects Players to it the way the web app does.
+// Test helper: starts the real server in-process, and connects Players to it the way the web app does, or the way
+// an AI client does over MCP.
 import type { IncomingMessage } from "node:http";
 import type { AddressInfo } from "node:net";
 
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { NodeWebSocket } from "engine.io-client";
 import { io, type Socket } from "socket.io-client";
-import type { Acknowledgement, Cell, ClientToServerEvents, GameSnapshot, ServerToClientEvents } from "@wzq/shared";
+import {
+  boardSize,
+  type Acknowledgement,
+  type Cell,
+  type ClientToServerEvents,
+  type GameSnapshot,
+  type ServerToClientEvents,
+} from "@wzq/shared";
 
 import { playerIdCookieName } from "./identity.js";
 import { createGameServer, type GameServerOptions } from "./server.js";
@@ -36,9 +46,34 @@ export interface Player {
   playerId: () => string | undefined;
 }
 
+/** What an MCP tool returned: its text, and whether it's a tool error. */
+export interface ToolResult {
+  text: string;
+  isError: boolean;
+}
+
+/** An AI client connected to `/mcp` through the MCP SDK: one MCP session, so one Player. */
+export interface AiPlayer {
+  joinGame: (gameCode: string) => Promise<ToolResult>;
+  waitForTurn: () => Promise<ToolResult>;
+  takeTurn: (cell: Cell) => Promise<ToolResult>;
+  leaveGame: () => Promise<ToolResult>;
+  /** Calls a tool with any arguments, unchecked by the tool's schema, as no well-behaved client would. */
+  callUnchecked: (tool: string, args: Record<string, unknown>) => Promise<ToolResult>;
+  /** Ends the MCP session, as a client does when its chat closes. */
+  close: () => Promise<void>;
+}
+
 export interface TestServer {
   url: string;
   createPlayer: () => Player;
+  /** Starts an MCP session, as an AI client does when it's given the server's `/mcp` URL. */
+  connectAi: () => Promise<AiPlayer>;
+  /**
+   * A new ongoing Game between a Host in a browser and an AI Player who joined it, with no Turns taken yet and
+   * everything sent to the Host so far already read.
+   */
+  aiGame: () => Promise<{ host: Connection; ai: AiPlayer; browser: Player }>;
   /** A new Player with no active Game, with everything sent so far already read. */
   playerWithNoGame: () => Promise<Connection>;
   /** A new Host waiting in the lobby, with everything sent so far already read. */
@@ -57,6 +92,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
   const { port } = server.httpServer.address() as AddressInfo;
   const url = `http://localhost:${port}`;
   const sockets: Socket[] = [];
+  const aiClosers: Array<() => Promise<void>> = [];
 
   const createPlayer = (): Player => {
     const cookieJar = new Map<string, string>();
@@ -128,12 +164,68 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     return { host, joiner, browsers };
   };
 
+  const connectAi = async (): Promise<AiPlayer> => {
+    const client = new Client({ name: "wzq-test-ai", version: "1.0.0" });
+    const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`));
+    await client.connect(transport);
+
+    const callUnchecked = async (tool: string, args: Record<string, unknown> = {}): Promise<ToolResult> => {
+      const result = await client.callTool({ name: tool, arguments: args });
+      const content = result.content as Array<{ type: string; text?: string }>;
+      return { text: content.map((part) => part.text ?? "").join("\n"), isError: result.isError === true };
+    };
+
+    let isOpen = true;
+    const close = async () => {
+      if (!isOpen) return;
+      isOpen = false;
+      await transport.terminateSession();
+      await client.close();
+    };
+    aiClosers.push(close);
+
+    return {
+      joinGame: (gameCode) => callUnchecked("join_game", { gameCode }),
+      waitForTurn: () => callUnchecked("wait_for_turn"),
+      takeTurn: ({ row, column }) => callUnchecked("take_turn", { row, column }),
+      leaveGame: () => callUnchecked("leave_game"),
+      callUnchecked,
+      close,
+    };
+  };
+
+  const aiGame = async () => {
+    const browser = createPlayer();
+    const { host, gameCode } = await hostInLobby(browser);
+    const ai = await connectAi();
+    const reply = await ai.joinGame(gameCode);
+    if (reply.isError) throw new Error(`The AI didn't join: ${reply.text}`);
+    await host.nextMessage();
+    return { host, ai, browser };
+  };
+
   const close = async () => {
+    await Promise.all(aiClosers.map((closeAi) => closeAi()));
     sockets.forEach((socket) => socket.disconnect());
     await server.io.close();
   };
 
-  return { url, createPlayer, playerWithNoGame, hostInLobby, ongoingGame, close };
+  return { url, createPlayer, connectAi, aiGame, playerWithNoGame, hostInLobby, ongoingGame, close };
+};
+
+/**
+ * Every Cell on the Board, shared between the Players with no five in a row: going along each row, two Cells
+ * are the Host's then two are the Joiner's, and each row starts two Cells further on than the one above.
+ */
+export const drawnBoard = () => {
+  const cells: { host: Cell[]; joiner: Cell[] } = { host: [], joiner: [] };
+  for (let row = 0; row < boardSize; row++) {
+    for (let column = 0; column < boardSize; column++) {
+      const isHostsCell = Math.floor((column + 2 * row) / 2) % 2 === 0;
+      (isHostsCell ? cells.host : cells.joiner).push({ row, column });
+    }
+  }
+  return cells;
 };
 
 /** Sends a Socket.IO handshake over plain HTTP, the first request a browser makes, so tests can read its headers. */

@@ -9,6 +9,7 @@ import { createGameService, type RandomInt } from "./game-service.js";
 import { handleGameSockets, type GameIo } from "./game-sockets.js";
 import { createMemoryGameStore } from "./game-store.js";
 import { identifyPlayers } from "./identity.js";
+import { handleGameMcp } from "./mcp/game-mcp.js";
 import { createPresence } from "./presence.js";
 
 export interface GameServer {
@@ -19,6 +20,8 @@ export interface GameServer {
 export interface GameServerOptions {
   /** Picks Game codes. Tests replace it to make codes predictable. */
   randomInt?: RandomInt;
+  /** How long, in milliseconds, an AI Player's `wait_for_turn` waits before saying to call it again. */
+  waitForTurnTimeout?: number;
 }
 
 export const createGameServer = (config: Config, options: GameServerOptions = {}): GameServer => {
@@ -42,7 +45,9 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
   });
   const notifier = createGameNotifier();
   const gameService = createGameService(createMemoryGameStore(), notifier, options.randomInt);
-  handleGameSockets(io, gameService, notifier, createPresence(gameService, notifier));
+  const presence = createPresence(gameService, notifier);
+  handleGameSockets(io, gameService, notifier, presence);
+  handleGameMcp(app, gameService, notifier, presence, options.waitForTurnTimeout ?? 30_000);
 
   return { httpServer, io };
 };
