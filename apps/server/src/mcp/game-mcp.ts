@@ -124,6 +124,22 @@ const createAiPlayer = (
   };
 
   server.registerTool(
+    "create_game",
+    {
+      description: "Creates a Game with you as its Host, and returns its Game code, which you give the Player you're " +
+        `playing so they can join it on the web app. ${rules} ${playLoop}`,
+    },
+    async () => {
+      const result = await gameService.createGame(playerId);
+      if (!result.ok) return refusal(result.reason);
+      const created = `You created a Game. Tell the Player you're playing to open ${webAppUrl}, choose to join a ` +
+        `Game, and enter the Game code ${result.game.gameCode}. You're the Host, so you go first once they've ` +
+        "joined: call wait_for_turn to wait for them.";
+      return viewOf(result.game, created);
+    },
+  );
+
+  server.registerTool(
     "join_game",
     {
       description: "Joins the Game with this Game code as the Joiner, which starts it, and returns the Board. " +
@@ -162,7 +178,11 @@ const createAiPlayer = (
         if (isReady(game)) return viewOf(game);
         const ready = await woken;
         if (ready) return viewOf(ready);
-        return text("Still waiting for your opponent's Turn: call wait_for_turn again.");
+        // The Game is as it was when looked up, or the wait would have woken.
+        const waitingFor = game.state === "lobby"
+          ? `someone to join with Game code ${game.gameCode}`
+          : "your opponent's Turn";
+        return text(`Still waiting for ${waitingFor}: call wait_for_turn again.`);
       } finally {
         unsubscribe();
       }
@@ -183,6 +203,11 @@ const createAiPlayer = (
     },
     async ({ row, column }) => {
       const result = await gameService.takeTurn(playerId, { row, column });
+      // The game service refuses a Turn in the Lobby as the Game not being ongoing, which the AI would take as ended.
+      const isInLobby = async () => (await gameService.findLastGame(playerId))?.state === "lobby";
+      if (!result.ok && result.reason === "gameNotOngoing" && await isInLobby()) {
+        return toolError("No one has joined your Game yet. Call wait_for_turn, which returns once they have.");
+      }
       if (result.ok && result.game.state === "won") return answer(result, "Your Turn made a Win!");
       if (result.ok && result.game.state === "draw") return answer(result, "Your Turn filled the Board.");
       return answer(result, "Your Stone is placed. Call wait_for_turn to wait for your opponent's Turn.");
@@ -198,22 +223,26 @@ const createAiPlayer = (
   return server;
 };
 
+/** Where a Player plays WZQ in a browser. Always production's, even from a server run locally. */
+const webAppUrl = "https://tablehop.games/wzq";
+
 const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Board. The Players take Turns placing ` +
   "one Stone on an empty Cell, and the first with five or more Stones in an unbroken horizontal, vertical or " +
-  "diagonal line wins. If every Cell is filled with no Win, it's a Draw. The Host goes first, so you, as the Joiner, go second.";
+  "diagonal line wins. If every Cell is filled with no Win, it's a Draw. The Host, who created the Game, goes " +
+  "first, and the Joiner goes second.";
 
-const playLoop = "To play: call join_game with the Game code the Host gives you, then wait_for_turn, then take_turn, " +
-  "then wait_for_turn again, and so on until the Game ends.";
+const playLoop = "To play: call create_game to host a Game, or join_game with the Game code a Host gives you. Then " +
+  "call wait_for_turn, then take_turn, then wait_for_turn again, and so on until the Game ends.";
 
 /** What each refusal means to the AI, and what to do next. */
 const explanations: Record<RejectionReason, string> = {
   alreadyInActiveGame: "You're already in a Game that hasn't ended, and you can only be in one at a time. Play it " +
-    "to the end, or call leave_game, before joining another.",
+    "to the end, or call leave_game, before creating or joining another.",
   gameCodeNotFound: "No Game is waiting for a Joiner with that Game code. Check the six-digit code with the Host: a " +
     "Game code stops working once someone has joined.",
-  gameNotFound: "You're not in a Game. Ask the Host for their Game code, and call join_game with it.",
+  gameNotFound: "You're not in a Game. Call create_game to host one, or join_game with a Host's Game code.",
   gameNotOngoing: "Your Game has ended, so no more Turns can be taken, and there's nothing to leave. Call " +
-    "wait_for_turn to see how it ended, or join_game to join another.",
+    "wait_for_turn to see how it ended, or create_game or join_game to play another.",
   notYourTurn: "It's not your Turn. Call wait_for_turn, which returns once your opponent has taken theirs.",
   cellOffBoard: `That Cell isn't on the Board: row and column must each be a whole number from 0 to ${boardSize - 1}.`,
   cellOccupied: "There's already a Stone on that Cell. Choose an empty one, shown as \".\" on the Board.",
@@ -221,6 +250,8 @@ const explanations: Record<RejectionReason, string> = {
 
 const text = (message: string): CallToolResult => ({ content: [{ type: "text", text: message }] });
 
-const refusal = (reason: RejectionReason): CallToolResult => ({ ...text(explanations[reason]), isError: true });
+const toolError = (message: string): CallToolResult => ({ ...text(message), isError: true });
+
+const refusal = (reason: RejectionReason): CallToolResult => toolError(explanations[reason]);
 
 const jsonRpcError = (message: string) => ({ jsonrpc: "2.0", error: { code: -32000, message }, id: null });

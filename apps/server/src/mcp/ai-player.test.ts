@@ -55,6 +55,85 @@ describe("an AI Player joining a Game", () => {
   });
 });
 
+describe("an AI Player hosting a Game", () => {
+  /** The Game code in what `create_game` returned. */
+  const gameCodeIn = (reply: { text: string }) => /Game code (\d{6})/.exec(reply.text)?.[1] ?? "";
+
+  it("creates a Game in the Lobby, and tells the AI the web app's address and the Game code", async () => {
+    const ai = await server.connectAi();
+
+    const reply = await ai.createGame();
+
+    expect(reply.isError).toBe(false);
+    expect(reply.text).toContain("https://tablehop.games/wzq");
+    expect(reply.text)
+      .toContain(`The Game is in the Lobby, waiting for someone to join with Game code ${gameCodeIn(reply)}.`);
+  });
+
+  it("starts the Game once a Player in a browser joins with the Game code, and wakes the waiting AI", async () => {
+    const ai = await server.connectAi();
+    const gameCode = gameCodeIn(await ai.createGame());
+    const joiner = await server.playerWithNoGame();
+
+    const waiting = ai.waitForTurn();
+    const reply = await joiner.joinGame(gameCode);
+
+    expect(reply).toMatchObject({
+      ok: true,
+      game: { state: "ongoing", isHost: false, turn: "opponent", opponentConnected: true },
+    });
+    expect((await waiting).text).toContain("It's your Turn.");
+  });
+
+  it("says to call again once waiting in the Lobby times out", async () => {
+    const ai = await server.connectAi();
+    const gameCode = gameCodeIn(await ai.createGame());
+
+    expect(await ai.waitForTurn()).toEqual({
+      isError: false,
+      text: `Still waiting for someone to join with Game code ${gameCode}: call wait_for_turn again.`,
+    });
+  });
+
+  it("refuses a Turn before anyone has joined, saying to wait for them", async () => {
+    const ai = await server.connectAi();
+    await ai.createGame();
+
+    expect(await ai.takeTurn({ row: 0, column: 0 }))
+      .toEqual({ isError: true, text: expect.stringContaining("No one has joined your Game yet") });
+  });
+
+  it("sends the AI's first Turn to the Joiner's browser", async () => {
+    const ai = await server.connectAi();
+    const joiner = await server.playerWithNoGame();
+    await joiner.joinGame(gameCodeIn(await ai.createGame()));
+    await joiner.nextMessage();
+
+    await ai.takeTurn({ row: 7, column: 7 });
+
+    expect(await joiner.nextMessage()).toMatchObject({
+      game: { turn: "you", stones: [{ row: 7, column: 7, side: "opponent" }] },
+    });
+  });
+
+  it("is refused while the AI is already in an active Game", async () => {
+    const { ai } = await server.aiGame();
+
+    expect(await ai.createGame()).toEqual({ isError: true, text: expect.stringContaining("You're already in a Game") });
+  });
+
+  it("ends the Game in the Lobby with Leave game, so its Game code stops working", async () => {
+    const ai = await server.connectAi();
+    const gameCode = gameCodeIn(await ai.createGame());
+
+    const reply = await ai.leaveGame();
+
+    expect(reply.text).toContain("it was abandoned in the Lobby, before anyone joined.");
+    const joiner = await server.playerWithNoGame();
+    expect(await joiner.joinGame(gameCode)).toEqual({ ok: false, reason: "gameCodeNotFound" });
+  });
+});
+
 describe("Turns between a Host and an AI Player", () => {
   it("sends the AI's Turn to the Host's browser", async () => {
     const { host, ai } = await server.aiGame();

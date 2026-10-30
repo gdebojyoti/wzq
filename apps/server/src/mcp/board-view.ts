@@ -19,9 +19,19 @@ export const boardView = (game: GameSnapshot): string => {
     `${marks.you} = your Stones, ${marks.opponent} = your opponent's Stones, ${marks.empty} = an empty Cell`,
     "",
     lastStoneLine(game),
-    ...(game.turn ? [game.turn === "you" ? "It's your Turn." : "It's your opponent's Turn."] : []),
-    ...(game.result ? [`The Game is over: ${resultText(game.result)}`] : []),
+    stageLine(game),
   ].join("\n");
+};
+
+/** Where the Game is: waiting in the Lobby, whose Turn it is, or how it ended. */
+const stageLine = (game: GameSnapshot) => {
+  if (game.state === "lobby") {
+    return `The Game is in the Lobby, waiting for someone to join with Game code ${game.gameCode}.`;
+  }
+  if (game.turn) return game.turn === "you" ? "It's your Turn." : "It's your opponent's Turn.";
+  // Only a Game abandoned in the Lobby ends with no result.
+  const ending = game.result ? resultText(game.result) : "it was abandoned in the Lobby, before anyone joined.";
+  return `The Game is over: ${ending}`;
 };
 
 const resultText = (result: GameResult) => {

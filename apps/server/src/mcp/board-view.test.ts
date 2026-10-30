@@ -63,6 +63,20 @@ describe("the Board view", () => {
   });
 });
 
+describe("the Board view of a Game the AI is hosting", () => {
+  const lobby: GameSnapshot = { ...ongoing, state: "lobby", gameCode: "042917", isHost: true, turn: null };
+
+  it("says it's waiting in the Lobby for someone to join with the Game code", () => {
+    expect(boardView(lobby)).toContain("The Game is in the Lobby, waiting for someone to join with Game code 042917.");
+  });
+
+  it("says a Game abandoned in the Lobby never started", () => {
+    const view = boardView({ ...lobby, state: "abandoned", gameCode: null });
+
+    expect(view).toContain("The Game is over: it was abandoned in the Lobby, before anyone joined.");
+  });
+});
+
 describe("the Board view once the Game has ended", () => {
   const line = [0, 1, 2, 3, 4].map((column) => ({ row: 5, column }));
 

@@ -54,6 +54,7 @@ export interface ToolResult {
 
 /** An AI client connected to `/mcp` through the MCP SDK: one MCP session, so one Player. */
 export interface AiPlayer {
+  createGame: () => Promise<ToolResult>;
   joinGame: (gameCode: string) => Promise<ToolResult>;
   waitForTurn: () => Promise<ToolResult>;
   takeTurn: (cell: Cell) => Promise<ToolResult>;
@@ -192,6 +193,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     };
 
     return {
+      createGame: () => callUnchecked("create_game"),
       joinGame: (gameCode) => callUnchecked("join_game", { gameCode }),
       waitForTurn: () => callUnchecked("wait_for_turn"),
       takeTurn: ({ row, column }) => callUnchecked("take_turn", { row, column }),
