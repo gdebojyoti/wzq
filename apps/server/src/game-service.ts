@@ -77,6 +77,18 @@ export const createGameService = (
     return { ok: true, game: abandoned };
   });
 
+  /**
+   * Leave game for a Host whose Game is still in the lobby, which retires its Game code. A Game someone has
+   * joined is left as it is.
+   */
+  const leaveLobby = oneAtATime(async (playerId: string): Promise<CommandResult> => {
+    const game = await store.findActiveGameByPlayer(playerId);
+    if (game?.state !== "lobby") return { ok: false, reason: "gameNotFound" };
+    const abandoned: Game = { ...game, state: "abandoned", leaverId: playerId };
+    await save(abandoned);
+    return { ok: true, game: abandoned };
+  });
+
   /** Takes the Player's Turn by placing their Stone on the Cell. */
   const takeTurn = oneAtATime(async (playerId: string, cell: Cell): Promise<CommandResult> => {
     // A Game that has ended is still found, so a Turn on it is refused as the Game not being ongoing.
@@ -100,7 +112,7 @@ export const createGameService = (
 
   const findLastGame = oneAtATime((playerId: string) => store.findLastGameByPlayer(playerId));
 
-  return { createGame, joinGame, leaveGame, takeTurn, findActiveGame, findLastGame };
+  return { createGame, joinGame, leaveGame, leaveLobby, takeTurn, findActiveGame, findLastGame };
 };
 
 export type GameService = ReturnType<typeof createGameService>;

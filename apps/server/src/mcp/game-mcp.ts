@@ -54,6 +54,9 @@ export const handleGameMcp = (
       const id = transport.sessionId;
       if (id === undefined || !sessions.delete(id)) return;
       presence.disconnect(playerId);
+      // A closed session can't Rejoin, so nobody could use Leave game on a Game it hosts in the Lobby, and a Player
+      // could still join it. An ongoing Game is left for the opponent to end.
+      gameService.leaveLobby(playerId);
     };
     // Tracked from the start, so a session whose initialization never finishes is closed too.
     newSession.track(res);
@@ -107,7 +110,7 @@ const createAiPlayer = (
   presence: Presence,
   waitForTurnTimeout: number,
 ) => {
-  const server = new McpServer({ name: "wzq", version: "1.0.0" }, { instructions: `${rules}\n\n${playLoop}` });
+  const server = new McpServer({ name: "wzq", version: "1.0.0" }, { instructions: guide });
 
   const snapshotOf = (game: Game) => toSnapshot(game, playerId, presence.isConnected);
 
@@ -127,7 +130,7 @@ const createAiPlayer = (
     "create_game",
     {
       description: "Creates a Game with you as its Host, and returns its Game code, which you give the Player you're " +
-        `playing so they can join it on the web app. ${rules} ${playLoop}`,
+        `playing so they can join it on the web app. ${guide}`,
     },
     async () => {
       const result = await gameService.createGame(playerId);
@@ -143,7 +146,7 @@ const createAiPlayer = (
     "join_game",
     {
       description: "Joins the Game with this Game code as the Joiner, which starts it, and returns the Board. " +
-        `${rules} ${playLoop}`,
+        guide,
       inputSchema: {
         gameCode: z.string({ error: "gameCode must be the six-digit Game code the Host gave you, as text" })
           .describe("The six-digit Game code the Host gave you"),
@@ -159,7 +162,7 @@ const createAiPlayer = (
     "wait_for_turn",
     {
       description: "Waits until it's your Turn or your Game has ended, then returns the Board. If that takes too " +
-        `long, it returns saying you're still waiting: call it again. ${playLoop}`,
+        `long, it returns saying you're still waiting: call it again. ${guide}`,
     },
     async ({ signal }) => {
       // Listening before looking, so a change made in between still wakes the wait.
@@ -193,7 +196,7 @@ const createAiPlayer = (
     "take_turn",
     {
       description: "Takes your Turn by placing your Stone on the empty Cell at this row and column, and returns the " +
-        "Board after it, saying if it won the Game. Then call wait_for_turn for your opponent's Turn.",
+        `Board after it, saying if it won the Game. Then call wait_for_turn for your opponent's Turn. ${guide}`,
       inputSchema: {
         row: z.number({ error: `row must be a whole number from 0 to ${boardSize - 1}` })
           .describe(`The Cell's row, from 0 at the top to ${boardSize - 1}`),
@@ -216,7 +219,10 @@ const createAiPlayer = (
 
   server.registerTool(
     "leave_game",
-    { description: "Leave game: ends your Game as abandoned, with no winner. Your opponent sees that you left." },
+    {
+      description: "Leave game: ends your Game as abandoned, with no winner. Your opponent sees that you left. " +
+        guide,
+    },
     async () => answer(await gameService.leaveGame(playerId), "You left the Game."),
   );
 
@@ -234,10 +240,14 @@ const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Boar
 const playLoop = "To play: call create_game to host a Game, or join_game with the Game code a Host gives you. Then " +
   "call wait_for_turn, then take_turn, then wait_for_turn again, and so on until the Game ends.";
 
+/** How to play, which every tool repeats, as some clients never show the model the server's instructions. */
+const guide = `${rules} ${playLoop}`;
+
 /** What each refusal means to the AI, and what to do next. */
 const explanations: Record<RejectionReason, string> = {
-  alreadyInActiveGame: "You're already in a Game that hasn't ended, and you can only be in one at a time. Play it " +
-    "to the end, or call leave_game, before creating or joining another.",
+  alreadyInActiveGame: "You're already in a Game that hasn't ended, and you can only be in one at a time. Finish " +
+    "it, or call leave_game, before creating or joining another. If no one has joined it yet, wait_for_turn waits " +
+    "for them.",
   gameCodeNotFound: "No Game is waiting for a Joiner with that Game code. Check the six-digit code with the Host: a " +
     "Game code stops working once someone has joined.",
   gameNotFound: "You're not in a Game. Call create_game to host one, or join_game with a Host's Game code.",

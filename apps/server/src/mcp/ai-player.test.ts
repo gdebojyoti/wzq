@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { drawnBoard, startServer, type TestServer } from "../testing.js";
+import { drawnBoard, startServer, type AiPlayer, type TestServer } from "../testing.js";
 
 let server: TestServer;
 
@@ -10,6 +10,23 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await server.close();
+});
+
+describe("the tools an AI Player is given", () => {
+  it("explain the rules and the play loop in every tool's description", async () => {
+    const ai = await server.connectAi();
+
+    const descriptions = await ai.toolDescriptions();
+
+    expect(Object.keys(descriptions).sort())
+      .toEqual(["create_game", "join_game", "leave_game", "take_turn", "wait_for_turn"]);
+    for (const description of Object.values(descriptions)) {
+      expect(description).toContain("16×16 Board");
+      expect(description).toContain("five or more Stones");
+      expect(description).toContain("The Host, who created the Game, goes first");
+      expect(description).toContain("call wait_for_turn, then take_turn, then wait_for_turn again");
+    }
+  });
 });
 
 describe("an AI Player joining a Game", () => {
@@ -120,6 +137,30 @@ describe("an AI Player hosting a Game", () => {
     const { ai } = await server.aiGame();
 
     expect(await ai.createGame()).toEqual({ isError: true, text: expect.stringContaining("You're already in a Game") });
+  });
+
+  it("is refused while the AI is still waiting in its own Lobby, saying it can wait for a Joiner", async () => {
+    const ai = await server.connectAi();
+    await ai.createGame();
+
+    expect(await ai.createGame())
+      .toEqual({ isError: true, text: expect.stringContaining("If no one has joined it yet, wait_for_turn waits") });
+  });
+
+  it.each([
+    ["ends its session", (ai: AiPlayer) => ai.close()],
+    ["goes away and its session is closed as idle", (ai: AiPlayer) => ai.drop()],
+  ])("ends the Game in the Lobby when the AI %s, so its Game code stops working", async (_, goAway) => {
+    await server.close();
+    server = await startServer({ sessionIdleTimeout: 100 });
+    const ai = await server.connectAi();
+    const gameCode = gameCodeIn(await ai.createGame());
+
+    await goAway(ai);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const joiner = await server.playerWithNoGame();
+    expect(await joiner.joinGame(gameCode)).toEqual({ ok: false, reason: "gameCodeNotFound" });
   });
 
   it("ends the Game in the Lobby with Leave game, so its Game code stops working", async () => {
@@ -330,6 +371,44 @@ describe("the AI Player's presence", () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     expect(await ai.waitForTurn()).toMatchObject({ isError: false, text: expect.stringContaining("Still waiting") });
+  });
+
+  it("starts the idle time again after each request, for a client that keeps no stream open", async () => {
+    await server.close();
+    server = await startServer({ sessionIdleTimeout: 200 });
+    // Plain requests, as the SDK's client always keeps a stream open.
+    const post = (body: object, sessionId?: string) => fetch(`${server.url}/mcp`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        ...(sessionId && { "mcp-session-id": sessionId, "mcp-protocol-version": "2025-06-18" }),
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", ...body }),
+    });
+    const initialized = await post({
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "plain", version: "1.0.0" } },
+    });
+    await initialized.text();
+    const sessionId = initialized.headers.get("mcp-session-id") ?? "";
+    const ping = async (id: number) => {
+      const response = await post({ id, method: "ping" }, sessionId);
+      await response.text();
+      return response.status;
+    };
+    const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const whileActive: number[] = [];
+    for (const id of [2, 3, 4, 5]) {
+      await pause(120);
+      whileActive.push(await ping(id));
+    }
+    await pause(400);
+
+    expect(whileActive).toEqual([200, 200, 200, 200]);
+    expect(await ping(6)).toBe(404);
   });
 
   it("sends Leave game by the AI to the Host as abandoned", async () => {

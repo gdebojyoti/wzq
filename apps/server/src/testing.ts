@@ -54,6 +54,8 @@ export interface ToolResult {
 
 /** An AI client connected to `/mcp` through the MCP SDK: one MCP session, so one Player. */
 export interface AiPlayer {
+  /** The description of each tool the server lists, by name. */
+  toolDescriptions: () => Promise<Record<string, string>>;
   createGame: () => Promise<ToolResult>;
   joinGame: (gameCode: string) => Promise<ToolResult>;
   waitForTurn: () => Promise<ToolResult>;
@@ -193,6 +195,10 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     };
 
     return {
+      toolDescriptions: async () => {
+        const { tools } = await client.listTools();
+        return Object.fromEntries(tools.map((tool) => [tool.name, tool.description ?? ""]));
+      },
       createGame: () => callUnchecked("create_game"),
       joinGame: (gameCode) => callUnchecked("join_game", { gameCode }),
       waitForTurn: () => callUnchecked("wait_for_turn"),
