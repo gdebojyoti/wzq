@@ -18,6 +18,10 @@ _Avoid_: owner, creator
 The **Player** who joined a **Game** in the **Lobby** with its **Game code**. They stay the Joiner for the rest of the **Game**, including after they **Rejoin**.
 _Avoid_: guest, invitee, challenger, visitor
 
+**AI Player**:
+A **Player** who is an AI, taking its **Turns** through the game server's MCP tools rather than the web app. It can be the **Host** or the **Joiner**. Each MCP session is a new AI Player, so it can't **Rejoin**.
+_Avoid_: bot, computer, CPU
+
 ### Game lifecycle
 
 **Game**:

@@ -1,4 +1,4 @@
-// Which Players are connected, through any kind of connection: a browser tab, or later an MCP session. Games are
+// Which Players are connected, through any kind of connection: a browser tab, or an MCP session. Games are
 // kept in memory on one server (ADR-0005), so counting connections here sees all of them.
 import type { GameNotifier } from "./game-notifier.js";
 import type { GameService } from "./game-service.js";
