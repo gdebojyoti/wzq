@@ -21,7 +21,11 @@ export type CommandResult = { ok: true; game: Game } | { ok: false; reason: Reje
 /** Returns a random whole number from 0 up to, but not including, `max`. */
 export type RandomInt = (max: number) => number;
 
-export const createGameService = (store: GameStore, notifier: GameNotifier, randomInt: RandomInt = cryptoRandomInt) => {
+export const createGameService = (
+  store: GameStore,
+  notifier: GameNotifier,
+  randomInt: RandomInt = cryptoRandomInt,
+) => {
   const oneAtATime = createQueue();
 
   // Published before the command returns, so each Player is sent the change before the reply to their command.

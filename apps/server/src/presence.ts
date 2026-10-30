@@ -21,7 +21,10 @@ export const createPresence = (gameService: GameService, notifier: GameNotifier)
   /** Counts a connection the Player has closed. Their opponent only sees a change once the last one has closed. */
   const disconnect = (playerId: string) => {
     const count = (connectionCounts.get(playerId) ?? 0) - 1;
-    if (count > 0) return connectionCounts.set(playerId, count);
+    if (count > 0) {
+      connectionCounts.set(playerId, count);
+      return;
+    }
     connectionCounts.delete(playerId);
     publishActiveGame(playerId);
   };

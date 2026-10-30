@@ -18,12 +18,18 @@ import type { Presence } from "./presence.js";
 
 export type GameIo = Server<ClientToServerEvents, ServerToClientEvents, object, PlayerData>;
 
-export const handleGameSockets = (io: GameIo, gameService: GameService, notifier: GameNotifier, presence: Presence) => {
+export const handleGameSockets = (
+  io: GameIo,
+  gameService: GameService,
+  notifier: GameNotifier,
+  presence: Presence,
+) => {
+  /** The Game as this Player sees it, as it is right now. */
+  const snapshotFor = (game: Game, playerId: string) => toSnapshot(game, playerId, presence.isConnected);
+
   // Every change to a Game, whichever way it was made, reaches every tab its Players have open.
   notifier.subscribe((game) => {
-    playerIdsOf(game).forEach((playerId) => {
-      io.to(playerRoom(playerId)).emit("game", toSnapshot(game, playerId, presence.isConnected));
-    });
+    playerIdsOf(game).forEach((playerId) => io.to(playerRoom(playerId)).emit("game", snapshotFor(game, playerId)));
   });
 
   io.on("connection", async (socket) => {
@@ -35,7 +41,7 @@ export const handleGameSockets = (io: GameIo, gameService: GameService, notifier
     // Answers a command that puts the Player in a Game.
     const enterGame = (result: CommandResult, ack: (reply: Acknowledgement<{ game: GameSnapshot }>) => void) => {
       if (!result.ok) return ack(result);
-      ack({ ok: true, game: toSnapshot(result.game, playerId, presence.isConnected) });
+      ack({ ok: true, game: snapshotFor(result.game, playerId) });
     };
 
     socket.on("createGame", async (ack) => enterGame(await gameService.createGame(playerId), ack));
@@ -67,13 +73,14 @@ export const handleGameSockets = (io: GameIo, gameService: GameService, notifier
     if (!game) return socket.emit("noActiveGame");
     // A Player's first tab is a Rejoin, which presence passes on to both Players. Another tab changes nothing for
     // the opponent, so only that tab is sent the Game.
-    if (!isFirstTab) socket.emit("game", toSnapshot(game, playerId, presence.isConnected));
+    if (!isFirstTab) socket.emit("game", snapshotFor(game, playerId));
   });
 };
 
 /** One room per Player, holding every tab they have open. */
 const playerRoom = (playerId: string) => `player:${playerId}`;
 
+/** The IDs of the Game's Players: just the Host until someone joins. */
 const playerIdsOf = (game: Game) => (game.joinerId === null ? [game.hostId] : [game.hostId, game.joinerId]);
 
 /**

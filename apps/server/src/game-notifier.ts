@@ -1,7 +1,7 @@
 // Publishes every change to a Game, so each way a Player connects can pass it on, whichever of them made it.
 import type { Game } from "./game-store.js";
 
-export type GameListener = (game: Game) => void;
+type GameListener = (game: Game) => void;
 
 export const createGameNotifier = () => {
   let listeners: GameListener[] = [];
@@ -12,11 +12,10 @@ export const createGameNotifier = () => {
 
   /** Calls the listener with every Game published from now on, until the function it returns is called. */
   const subscribe = (listener: GameListener) => {
-    // Each subscription is its own entry, so subscribing the same listener twice and unsubscribing once leaves one.
-    const entry: GameListener = (game) => listener(game);
-    listeners = [...listeners, entry];
+    // A new list each time, so a listener that unsubscribes while a change is being published can't skip another.
+    listeners = [...listeners, listener];
     return () => {
-      listeners = listeners.filter((other) => other !== entry);
+      listeners = listeners.filter((other) => other !== listener);
     };
   };
 
