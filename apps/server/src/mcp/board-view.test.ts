@@ -49,12 +49,13 @@ describe("the Board view", () => {
   });
 
   it("says where the last Stone was placed, and whose it is", () => {
+    const twoStones = [{ row: 7, column: 7, side: "opponent" }, { row: 8, column: 8, side: "you" }] as const;
     const opponentsLast = boardView({
       ...ongoing,
       turn: "you",
-      stones: [{ row: 7, column: 7, side: "opponent" }, { row: 8, column: 8, side: "you" }, { row: 3, column: 12, side: "opponent" }],
+      stones: [...twoStones, { row: 3, column: 12, side: "opponent" }],
     });
-    const yoursLast = boardView({ ...ongoing, stones: [{ row: 7, column: 7, side: "opponent" }, { row: 8, column: 8, side: "you" }] });
+    const yoursLast = boardView({ ...ongoing, stones: [...twoStones] });
 
     expect(opponentsLast).toContain("The last Stone placed was your opponent's, at row 3, column 12.");
     expect(yoursLast).toContain("The last Stone placed was yours, at row 8, column 8.");

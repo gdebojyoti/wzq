@@ -6,7 +6,7 @@ import express, { type Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest, type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { boardSize, isPlayersTurn, type RejectionReason } from "@wzq/shared";
+import { boardSize, type RejectionReason } from "@wzq/shared";
 import { z } from "zod";
 
 import { boardView } from "./board-view.js";
@@ -44,7 +44,7 @@ export const handleGameMcp = (
         presence.connect(playerId);
       },
     });
-    // Set before connecting, as the MCP server calls it on from its own.
+    // Set before connecting: the MCP server keeps a handler that's already set, and calls it when the session closes.
     newTransport.onclose = () => {
       const id = newTransport.sessionId;
       if (id === undefined || !transports.delete(id)) return;
@@ -65,15 +65,15 @@ const createAiPlayer = (
 ) => {
   const server = new McpServer({ name: "wzq", version: "1.0.0" }, { instructions: `${rules}\n\n${playLoop}` });
 
+  const snapshotOf = (game: Game) => toSnapshot(game, playerId, presence.isConnected);
+
   /** The Board view of the Game, after a line saying what just happened. */
   const viewOf = (game: Game, ...notes: string[]): CallToolResult => {
-    return text([...notes, boardView(toSnapshot(game, playerId, presence.isConnected))].join("\n\n"));
+    return text([...notes, boardView(snapshotOf(game))].join("\n\n"));
   };
 
   /** Whether the AI has something to do: it's their Turn, or their Game has ended. */
-  const isReady = (game: Game) => {
-    return !isActive(game) || (game.state === "ongoing" && isPlayersTurn(game.hostId === playerId, game.turns.length));
-  };
+  const isReady = (game: Game) => !isActive(game) || snapshotOf(game).turn === "you";
 
   const answer = (result: CommandResult, ...notes: string[]) => {
     return result.ok ? viewOf(result.game, ...notes) : refusal(result.reason);
@@ -82,7 +82,8 @@ const createAiPlayer = (
   server.registerTool(
     "join_game",
     {
-      description: `Joins the Game with this Game code as the Joiner, which starts it, and returns the Board. ${playLoop}`,
+      description: "Joins the Game with this Game code as the Joiner, which starts it, and returns the Board. " +
+        `${rules} ${playLoop}`,
       inputSchema: {
         gameCode: z.string({ error: "gameCode must be the six-digit Game code the Host gave you, as text" })
           .describe("The six-digit Game code the Host gave you"),
@@ -98,7 +99,7 @@ const createAiPlayer = (
     "wait_for_turn",
     {
       description: "Waits until it's your Turn or your Game has ended, then returns the Board. If that takes too " +
-        "long, it returns saying you're still waiting: call it again. Call it after joining and after each Turn.",
+        `long, it returns saying you're still waiting: call it again. ${playLoop}`,
     },
     async ({ signal }) => {
       // Listening before looking, so a change made in between still wakes the wait.
@@ -153,9 +154,9 @@ const createAiPlayer = (
   return server;
 };
 
-const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Board. The Players take Turns placing one ` +
-  "Stone on an empty Cell, and the first with five or more Stones in an unbroken horizontal, vertical or diagonal " +
-  "line wins. If every Cell is filled with no Win, it's a Draw. The Host goes first, so you, as the Joiner, go second.";
+const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Board. The Players take Turns placing ` +
+  "one Stone on an empty Cell, and the first with five or more Stones in an unbroken horizontal, vertical or " +
+  "diagonal line wins. If every Cell is filled with no Win, it's a Draw. The Host goes first, so you, as the Joiner, go second.";
 
 const playLoop = "To play: call join_game with the Game code the Host gives you, then wait_for_turn, then take_turn, " +
   "then wait_for_turn again, and so on until the Game ends.";

@@ -73,7 +73,7 @@ export interface TestServer {
    * A new ongoing Game between a Host in a browser and an AI Player who joined it, with no Turns taken yet and
    * everything sent to the Host so far already read.
    */
-  aiGame: () => Promise<{ host: Connection; ai: AiPlayer; browser: Player }>;
+  aiGame: () => Promise<{ host: Connection; ai: AiPlayer }>;
   /** A new Player with no active Game, with everything sent so far already read. */
   playerWithNoGame: () => Promise<Connection>;
   /** A new Host waiting in the lobby, with everything sent so far already read. */
@@ -195,13 +195,12 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
   };
 
   const aiGame = async () => {
-    const browser = createPlayer();
-    const { host, gameCode } = await hostInLobby(browser);
+    const { host, gameCode } = await hostInLobby();
     const ai = await connectAi();
     const reply = await ai.joinGame(gameCode);
     if (reply.isError) throw new Error(`The AI didn't join: ${reply.text}`);
     await host.nextMessage();
-    return { host, ai, browser };
+    return { host, ai };
   };
 
   const close = async () => {

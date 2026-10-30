@@ -1,5 +1,5 @@
 // The Board view: a Game as an AI Player sees it, drawn as text for an MCP tool result.
-import { boardSize, cellKey, type GameResult, type GameSnapshot } from "@wzq/shared";
+import { boardSize, cellKey, type GameResult, type GameSnapshot, type Side } from "@wzq/shared";
 
 const marks = { you: "X", opponent: "O", empty: "." };
 
@@ -28,16 +28,18 @@ const resultText = (result: GameResult) => {
   switch (result.outcome) {
     case "won":
     case "lost": {
-      const winner = result.outcome === "won" ? "you" : "your opponent";
       const cells = result.winningLine.map(({ row, column }) => `(${row}, ${column})`).join(", ");
-      return `${winner} won, with the line of Stones at ${cells}.`;
+      return `${who(result.outcome === "won" ? "you" : "opponent")} won, with the line of Stones at ${cells}.`;
     }
     case "draw":
       return "a Draw, as every Cell is filled.";
     case "abandoned":
-      return `${result.leaver === "you" ? "you" : "your opponent"} used Leave game, so it was abandoned with no winner.`;
+      return `${who(result.leaver)} used Leave game, so it was abandoned with no winner.`;
   }
 };
+
+/** The Player on this Side, as the AI is told of them. */
+const who = (side: Side) => (side === "you" ? "you" : "your opponent");
 
 const lastStoneLine = ({ stones }: GameSnapshot) => {
   const last = stones.at(-1);
