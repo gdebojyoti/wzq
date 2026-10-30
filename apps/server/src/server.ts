@@ -53,7 +53,7 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
     waitForTurn: options.waitForTurnTimeout ?? 30_000,
     // Long enough for a Game that stalls until the Player tells the AI to carry on (ADR-0007), as a closed session
     // can't Rejoin.
-    sessionIdle: options.sessionIdleTimeout ?? 30 * 60_000,
+    sessionIdle: options.sessionIdleTimeout ?? 15 * 60_000,
   });
 
   return { httpServer, io };
