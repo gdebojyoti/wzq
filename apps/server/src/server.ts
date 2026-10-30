@@ -4,10 +4,12 @@ import express from "express";
 import { Server } from "socket.io";
 
 import type { Config } from "./config.js";
+import { createGameNotifier } from "./game-notifier.js";
 import { createGameService, type RandomInt } from "./game-service.js";
 import { handleGameSockets, type GameIo } from "./game-sockets.js";
 import { createMemoryGameStore } from "./game-store.js";
 import { identifyPlayers } from "./identity.js";
+import { createPresence } from "./presence.js";
 
 export interface GameServer {
   httpServer: HttpServer;
@@ -38,7 +40,9 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
     });
     socket.on("ping", (ack) => ack("pong"));
   });
-  handleGameSockets(io, createGameService(createMemoryGameStore(), options.randomInt));
+  const notifier = createGameNotifier();
+  const gameService = createGameService(createMemoryGameStore(), notifier, options.randomInt);
+  handleGameSockets(io, gameService, notifier, createPresence(gameService, notifier));
 
   return { httpServer, io };
 };

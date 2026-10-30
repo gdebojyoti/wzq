@@ -1,4 +1,5 @@
-// The authority on every Game: it validates each command from a Player, and changes Games through the store.
+// The authority on every Game: it validates each command from a Player, changes Games through the store, and
+// publishes each change.
 import { randomInt as cryptoRandomInt, randomUUID } from "node:crypto";
 
 import {
@@ -12,6 +13,7 @@ import {
   type RejectionReason,
 } from "@wzq/shared";
 
+import type { GameNotifier } from "./game-notifier.js";
 import { isActive, type Game, type GameStore } from "./game-store.js";
 
 export type CommandResult = { ok: true; game: Game } | { ok: false; reason: RejectionReason };
@@ -19,8 +21,18 @@ export type CommandResult = { ok: true; game: Game } | { ok: false; reason: Reje
 /** Returns a random whole number from 0 up to, but not including, `max`. */
 export type RandomInt = (max: number) => number;
 
-export const createGameService = (store: GameStore, randomInt: RandomInt = cryptoRandomInt) => {
+export const createGameService = (
+  store: GameStore,
+  notifier: GameNotifier,
+  randomInt: RandomInt = cryptoRandomInt,
+) => {
   const oneAtATime = createQueue();
+
+  // Published before the command returns, so each Player is sent the change before the reply to their command.
+  const save = async (game: Game) => {
+    await store.save(game);
+    notifier.publish(game);
+  };
 
   const newGameCode = async (): Promise<string> => {
     for (;;) {
@@ -39,7 +51,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
       joinerId: null,
       turns: [],
     };
-    await store.save(game);
+    await save(game);
     return { ok: true, game };
   });
 
@@ -50,7 +62,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
     const game = await store.findLobbyGameByCode(gameCode);
     if (!game) return { ok: false, reason: "gameCodeNotFound" };
     const started: Game = { ...game, state: "ongoing", joinerId: playerId };
-    await store.save(started);
+    await save(started);
     return { ok: true, game: started };
   });
 
@@ -61,7 +73,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
     if (!game) return { ok: false, reason: "gameNotFound" };
     if (!isActive(game)) return { ok: false, reason: "gameNotOngoing" };
     const abandoned: Game = { ...game, state: "abandoned", leaverId: playerId };
-    await store.save(abandoned);
+    await save(abandoned);
     return { ok: true, game: abandoned };
   });
 
@@ -80,7 +92,7 @@ export const createGameService = (store: GameStore, randomInt: RandomInt = crypt
     const played: Game = winningLine
       ? { ...game, turns, state: "won", winnerId: playerId, winningLine }
       : { ...game, turns, state: isDraw(turns) ? "draw" : "ongoing" };
-    await store.save(played);
+    await save(played);
     return { ok: true, game: played };
   });
 
