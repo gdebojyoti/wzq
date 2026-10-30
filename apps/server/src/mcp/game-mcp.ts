@@ -21,14 +21,17 @@ export const handleGameMcp = (
   gameService: GameService,
   notifier: GameNotifier,
   presence: Presence,
-  waitForTurnTimeout: number,
+  timeouts: McpTimeouts,
 ) => {
-  const transports = new Map<string, StreamableHTTPServerTransport>();
+  const sessions = new Map<string, Session>();
 
   app.all("/mcp", express.json(), async (req, res) => {
     const sessionId = req.header("mcp-session-id");
-    const transport = sessionId === undefined ? undefined : transports.get(sessionId);
-    if (transport) return transport.handleRequest(req, res, req.body);
+    const session = sessionId === undefined ? undefined : sessions.get(sessionId);
+    if (session) {
+      session.track(res);
+      return session.transport.handleRequest(req, res, req.body);
+    }
     // A client whose session has gone, such as after the server restarted, starts a new one when told so with a 404.
     if (sessionId !== undefined) return res.status(404).json(jsonRpcError("The session has ended: start a new one"));
     if (req.method !== "POST" || !isInitializeRequest(req.body)) {
@@ -37,22 +40,63 @@ export const handleGameMcp = (
 
     // A new session is a new Player, in place of the cookie a browser keeps (ADR-0004).
     const playerId = randomUUID();
-    const newTransport = new StreamableHTTPServerTransport({
+    const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (id) => {
-        transports.set(id, newTransport);
+        sessions.set(id, newSession);
         presence.connect(playerId);
       },
     });
+    const newSession = createSession(transport, timeouts.sessionIdle);
     // Set before connecting: the MCP server keeps a handler that's already set, and calls it when the session closes.
-    newTransport.onclose = () => {
-      const id = newTransport.sessionId;
-      if (id === undefined || !transports.delete(id)) return;
+    transport.onclose = () => {
+      newSession.stopTracking();
+      const id = transport.sessionId;
+      if (id === undefined || !sessions.delete(id)) return;
       presence.disconnect(playerId);
     };
-    await createAiPlayer(playerId, gameService, notifier, presence, waitForTurnTimeout).connect(newTransport);
-    await newTransport.handleRequest(req, res, req.body);
+    // Tracked from the start, so a session whose initialization never finishes is closed too.
+    newSession.track(res);
+    await createAiPlayer(playerId, gameService, notifier, presence, timeouts.waitForTurn).connect(transport);
+    await transport.handleRequest(req, res, req.body);
   });
+};
+
+/** How long, in milliseconds, an AI Player's `wait_for_turn` waits, and how long a session can sit idle. */
+export interface McpTimeouts {
+  waitForTurn: number;
+  sessionIdle: number;
+}
+
+type Session = ReturnType<typeof createSession>;
+
+/**
+ * An MCP session, closed once it has been idle for `idleTimeout`, as many clients never say when they're done. It's
+ * idle while it has no request open, so a long `wait_for_turn`, or a stream the client keeps open, keeps it going.
+ */
+const createSession = (transport: StreamableHTTPServerTransport, idleTimeout: number) => {
+  let openRequests = 0;
+  let isClosed = false;
+  let idleTimer: NodeJS.Timeout | undefined;
+
+  /** Counts the request this response answers as open until the response closes. */
+  const track = (res: express.Response) => {
+    openRequests += 1;
+    clearTimeout(idleTimer);
+    res.on("close", () => {
+      openRequests -= 1;
+      if (openRequests > 0 || isClosed) return;
+      // Unref'd, so a session waiting to time out never keeps the server running.
+      idleTimer = setTimeout(() => transport.close(), idleTimeout).unref();
+    });
+  };
+
+  const stopTracking = () => {
+    isClosed = true;
+    clearTimeout(idleTimer);
+  };
+
+  return { transport, track, stopTracking };
 };
 
 /** The MCP server for one session: the tools one AI Player plays with. */

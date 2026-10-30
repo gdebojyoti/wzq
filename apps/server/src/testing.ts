@@ -62,6 +62,8 @@ export interface AiPlayer {
   callUnchecked: (tool: string, args: Record<string, unknown>) => Promise<ToolResult>;
   /** Ends the MCP session, as a client does when its chat closes. */
   close: () => Promise<void>;
+  /** Goes away without ending the MCP session, as a client that quits or crashes does. */
+  drop: () => Promise<void>;
 }
 
 export interface TestServer {
@@ -184,6 +186,11 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     };
     aiClosers.push(close);
 
+    const drop = async () => {
+      isOpen = false;
+      await client.close();
+    };
+
     return {
       joinGame: (gameCode) => callUnchecked("join_game", { gameCode }),
       waitForTurn: () => callUnchecked("wait_for_turn"),
@@ -191,6 +198,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
       leaveGame: () => callUnchecked("leave_game"),
       callUnchecked,
       close,
+      drop,
     };
   };
 

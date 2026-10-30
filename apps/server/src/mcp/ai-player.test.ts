@@ -232,6 +232,27 @@ describe("the AI Player's presence", () => {
     expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: false } });
   });
 
+  it("closes a session left idle once its client has gone, so the Host sees the AI disconnected", async () => {
+    await server.close();
+    server = await startServer({ sessionIdleTimeout: 200 });
+    const { host, ai } = await server.aiGame();
+
+    await ai.drop();
+
+    expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: false } });
+  });
+
+  it("keeps a session open while a tool call is in progress, or the client keeps its stream open", async () => {
+    await server.close();
+    server = await startServer({ sessionIdleTimeout: 200, waitForTurnTimeout: 400 });
+    const { ai } = await server.aiGame();
+
+    await ai.waitForTurn();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    expect(await ai.waitForTurn()).toMatchObject({ isError: false, text: expect.stringContaining("Still waiting") });
+  });
+
   it("sends Leave game by the AI to the Host as abandoned", async () => {
     const { host, ai } = await server.aiGame();
 

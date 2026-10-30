@@ -22,6 +22,8 @@ export interface GameServerOptions {
   randomInt?: RandomInt;
   /** How long, in milliseconds, an AI Player's `wait_for_turn` waits before saying to call it again. */
   waitForTurnTimeout?: number;
+  /** How long, in milliseconds, an MCP session can go without a request open before the server closes it. */
+  sessionIdleTimeout?: number;
 }
 
 export const createGameServer = (config: Config, options: GameServerOptions = {}): GameServer => {
@@ -47,7 +49,12 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
   const gameService = createGameService(createMemoryGameStore(), notifier, options.randomInt);
   const presence = createPresence(gameService, notifier);
   handleGameSockets(io, gameService, notifier, presence);
-  handleGameMcp(app, gameService, notifier, presence, options.waitForTurnTimeout ?? 30_000);
+  handleGameMcp(app, gameService, notifier, presence, {
+    waitForTurn: options.waitForTurnTimeout ?? 30_000,
+    // Long enough for a Game that stalls until the Player tells the AI to carry on (ADR-0007), as a closed session
+    // can't Rejoin.
+    sessionIdle: options.sessionIdleTimeout ?? 30 * 60_000,
+  });
 
   return { httpServer, io };
 };
