@@ -1,26 +1,36 @@
 import { useEffect, useRef, useState } from "react";
-import type { Acknowledgement, Cell, GameSnapshot } from "@wzq/shared";
+import type { Acknowledgement, Cell, GameSnapshot, SpectatorSnapshot } from "@wzq/shared";
 import { rejectionMessages } from "./messages";
 import { connectToServer, type GameSocket } from "./socket";
+import { removeWatchLinkFromAddress, watchedGameIdInAddress } from "./watchLink";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
-// The connection to the server, and the latest snapshot of the Player's Game. The web app holds no game logic:
-// it shows what the server last sent, and sends commands.
+/**
+ * Something that happened without the Player doing it, shown until they act again: their Game went away, the Game a
+ * watch link points to isn't available, or they opened a watch link while playing.
+ */
+export type Notice = "gameGone" | "watchUnavailable" | "cantWatchWhilePlaying";
+
+// The connection to the server, and the latest snapshot of the Player's Game, or of the Game they're watching as a
+// Spectator. The web app holds no game logic: it shows what the server last sent, and sends commands.
 export const useGameServer = () => {
   const socketRef = useRef<GameSocket>(null);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   // Undefined until the server has said whether the Player has an active Game; null if they don't.
   const [game, setGame] = useState<GameSnapshot | null>();
+  // The Game being watched from a watch link, while the Player has no active Game; otherwise null.
+  const [watched, setWatched] = useState<SpectatorSnapshot | null>(null);
   const [error, setError] = useState<string>();
-  // Whether the Game on screen went away without the Player ending it, until they act again.
-  const [gameGone, setGameGone] = useState(false);
+  const [notice, setNotice] = useState<Notice>();
   const [busy, setBusy] = useState(false);
-  // The Game on screen, for the socket's handlers, which are set up once.
+  // What's on screen, for the socket's handlers, which are set up once.
   const shownGameRef = useRef(game);
+  const watchedRef = useRef(watched);
   useEffect(() => {
     shownGameRef.current = game;
-  }, [game]);
+    watchedRef.current = watched;
+  }, [game, watched]);
 
   useEffect(() => {
     const socket = connectToServer();
@@ -30,13 +40,36 @@ export const useGameServer = () => {
     });
     socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("disconnected"));
-    socket.on("game", setGame);
-    socket.on("noActiveGame", () => {
+    socket.on("game", (game) => {
+      // A Player in an active Game sees only their own, which the server stops this tab watching for.
+      if (watchedGameIdInAddress()) {
+        if (!watchedRef.current) setNotice("cantWatchWhilePlaying");
+        removeWatchLinkFromAddress();
+      }
+      setWatched(null);
+      setGame(game);
+    });
+    socket.on("noActiveGame", async () => {
       // A Game was being played or waited for, and the server no longer has it: the opponent used Leave game
       // while this Player was away, or the server restarted.
       const shown = shownGameRef.current;
-      if (shown?.state === "lobby" || shown?.state === "ongoing") setGameGone(true);
+      if (shown?.state === "lobby" || shown?.state === "ongoing") setNotice("gameGone");
+      // Sent on every connection, so a Spectator watches again when theirs comes back.
+      const gameId = watchedGameIdInAddress();
+      if (gameId) {
+        const reply = await socket.emitWithAck("watchGame", gameId);
+        if (reply.ok) setWatched(reply.game);
+        else {
+          if (reply.reason === "gameIdNotFound") setNotice("watchUnavailable");
+          removeWatchLinkFromAddress();
+          setWatched(null);
+        }
+      }
       setGame(null);
+    });
+    // Ignored once the watch link is gone, as one may have been sent before the server heard the tab stop watching.
+    socket.on("watchedGame", (game) => {
+      if (watchedGameIdInAddress()) setWatched(game);
     });
 
     // A Player who navigates away from the game counts as gone until they come back; one who only switches tabs
@@ -65,7 +98,7 @@ export const useGameServer = () => {
     if (!socket) return;
     setBusy(true);
     setError(undefined);
-    setGameGone(false);
+    setNotice(undefined);
     try {
       const reply = await command(socket);
       if (!reply.ok) setError(rejectionMessages[reply.reason]);
@@ -98,5 +131,27 @@ export const useGameServer = () => {
     setGame(null);
   };
 
-  return { status, game, error, gameGone, busy, createGame, joinGame, leaveGame, takeTurn, backToStart };
+  // "Stop watching", or "Back to start" once the watched Game has ended: back to the start screen, and the server
+  // sends this tab nothing more about the Game.
+  const stopWatching = () => {
+    removeWatchLinkFromAddress();
+    setWatched(null);
+    setNotice(undefined);
+    socketRef.current?.emit("stopWatching", () => {});
+  };
+
+  return {
+    status,
+    game,
+    watched,
+    error,
+    notice,
+    busy,
+    createGame,
+    joinGame,
+    leaveGame,
+    takeTurn,
+    backToStart,
+    stopWatching,
+  };
 };

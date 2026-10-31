@@ -6,6 +6,6 @@ Because anyone can open it, the list never shows a value that lets someone act a
 
 - **No player IDs.** A player ID is the only proof of who a player is (ADR-0004), so each player is shown by a label of its first 6 characters. That reveals 24 of a UUID's 122 random bits, which leaves the rest unguessable, and keeps the same label for a player in every game.
 - **Masked game codes.** Only a game in the lobby shows its game code, with just the first 2 digits visible. A game code stops working once someone joins, so other games show none.
-- **Game IDs in full.** Once spectating ships, anyone can watch any listed game. This is accepted for now.
+- **Game IDs in full.** A game ID is all a watch link needs (ADR-0009), so anyone can watch any listed game. This is accepted for now.
 
 A later change to the list must keep player IDs out and game codes masked. The tests check that no player's ID appears anywhere in the response.

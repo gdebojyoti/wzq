@@ -6,6 +6,7 @@ import { boardView } from "./board-view.js";
 const ongoing: GameSnapshot = {
   state: "ongoing",
   gameCode: null,
+  gameId: null,
   isHost: false,
   turn: "opponent",
   stones: [],

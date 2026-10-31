@@ -1,4 +1,4 @@
-import { boardSize, cellKey, type Cell, type Stone } from "@wzq/shared";
+import { boardSize, cellKey, type Cell, type Side, type Stone } from "@wzq/shared";
 import StoneMark from "./StoneMark";
 import { boardMessages } from "./messages";
 
@@ -9,6 +9,8 @@ interface Props {
   /** Whether the Player may place a Stone on an empty Cell. */
   canTakeTurn: boolean;
   onTakeTurn: (cell: Cell) => void;
+  /** What screen readers call each side's Stones: the viewer's and their opponent's, unless a Spectator's. */
+  stoneLabels?: Record<Side, string>;
 }
 
 const cells: Cell[] = Array.from({ length: boardSize * boardSize }, (_, index) => ({
@@ -21,7 +23,13 @@ const playableCell =
   "enabled:cursor-pointer enabled:hover:bg-cell-hover enabled:hover:after:absolute enabled:hover:after:size-[72%] " +
   "enabled:hover:after:rounded-full enabled:hover:after:bg-ink/28 enabled:hover:after:content-['']";
 
-export default function Board({ stones, winningLine, canTakeTurn, onTakeTurn }: Props) {
+export default function Board({
+  stones,
+  winningLine,
+  canTakeTurn,
+  onTakeTurn,
+  stoneLabels = boardMessages.stones,
+}: Props) {
   const stonesByCell = new Map(stones.map((stone) => [cellKey(stone), stone]));
   const winningCells = new Set(winningLine?.map(cellKey));
   // The winning line is in the winner's colour, as the viewer sees it: pink for them, blue for their opponent.
@@ -52,7 +60,7 @@ export default function Board({ stones, winningLine, canTakeTurn, onTakeTurn }: 
             }
             // Any empty Cell may be played. The server checks it again.
             disabled={!canTakeTurn || stone !== undefined}
-            aria-label={cellLabel(cell, stone, isLast, isWinning)}
+            aria-label={cellLabel(cell, stone && stoneLabels[stone.side], isLast, isWinning)}
             onClick={() => onTakeTurn(cell)}
           >
             {stone && <StoneMark side={stone.side} className="size-[72%] border-[2.5px]" />}
@@ -63,10 +71,9 @@ export default function Board({ stones, winningLine, canTakeTurn, onTakeTurn }: 
   );
 }
 
-const cellLabel = ({ row, column }: Cell, stone: Stone | undefined, isLast: boolean, isWinning: boolean) => {
+const cellLabel = ({ row, column }: Cell, whose: string | undefined, isLast: boolean, isWinning: boolean) => {
   const position = boardMessages.cell(row + 1, column + 1);
-  if (!stone) return position;
-  const whose = stone.side === "you" ? boardMessages.yourStone : boardMessages.opponentStone;
+  if (!whose) return position;
   const marks = [whose, isLast && boardMessages.mostRecent, isWinning && boardMessages.inWinningLine].filter(Boolean);
   return `${position}: ${marks.join(", ")}`;
 };

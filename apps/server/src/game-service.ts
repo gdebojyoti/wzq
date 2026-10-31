@@ -113,13 +113,25 @@ export const createGameService = (
     return { ok: true, game: await save(played) };
   });
 
+  const findGame = oneAtATime((gameId: string) => store.findGame(gameId));
+
   const findActiveGame = oneAtATime((playerId: string) => store.findActiveGameByPlayer(playerId));
 
   const findLastGame = oneAtATime((playerId: string) => store.findLastGameByPlayer(playerId));
 
   const findNewestGames = oneAtATime((limit: number) => store.findNewestGames(limit));
 
-  return { createGame, joinGame, leaveGame, leaveLobby, takeTurn, findActiveGame, findLastGame, findNewestGames };
+  return {
+    createGame,
+    joinGame,
+    leaveGame,
+    leaveLobby,
+    takeTurn,
+    findGame,
+    findActiveGame,
+    findLastGame,
+    findNewestGames,
+  };
 };
 
 export type GameService = ReturnType<typeof createGameService>;

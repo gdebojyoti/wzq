@@ -12,13 +12,23 @@ interface Props {
   game: GameSnapshot;
   disabled: boolean;
   error: string | undefined;
+  /** Something that happened without the Player doing it, such as opening a watch link while playing. */
+  notice: string | undefined;
   onTakeTurn: (cell: Cell) => void;
   onLeaveGame: () => void;
   onBackToStart: () => void;
 }
 
 // A Game being played, or one that has ended, which shows its result on the same screen.
-export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveGame, onBackToStart }: Props) {
+export default function GameScreen({
+  game,
+  disabled,
+  error,
+  notice,
+  onTakeTurn,
+  onLeaveGame,
+  onBackToStart,
+}: Props) {
   const { turn, result } = game;
   const playing = game.state === "ongoing";
   const winningLine = result?.outcome === "won" || result?.outcome === "lost" ? result.winningLine : null;
@@ -69,6 +79,7 @@ export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveG
       {/* Everything that comes and goes sits under the Board, so the Board never moves. An error shows only in play:
           one left from a command just before the end would be stale beside the result. */}
       {playing && error && <Notice tone="error" className="px-0.5">{error}</Notice>}
+      {notice && <Notice className="px-0.5">{notice}</Notice>}
       {playing && !game.opponentConnected && (
         <Notice className="px-0.5 opacity-40">{gameMessages.opponentDisconnectedNotice}</Notice>
       )}

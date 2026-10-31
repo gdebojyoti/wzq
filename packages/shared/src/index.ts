@@ -5,8 +5,12 @@ export type {
   GameSnapshot,
   GameState,
   RejectionReason,
+  Role,
   ServerToClientEvents,
   Side,
+  SpectatorResult,
+  SpectatorSnapshot,
+  SpectatorStone,
   Stone,
 } from "./events.js";
 export {

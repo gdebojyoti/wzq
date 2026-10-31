@@ -7,14 +7,14 @@ import { commonMessages, startMessages } from "./messages";
 
 interface Props {
   disabled: boolean;
-  /** Whether the Game the Player was in has gone since they last saw it. */
-  gameGone: boolean;
+  /** Something that happened without the Player doing it, such as their Game going since they last saw it. */
+  notice: string | undefined;
   error: string | undefined;
   onNewGame: () => void;
   onJoinGame: (gameCode: string) => void;
 }
 
-export default function StartScreen({ disabled, gameGone, error, onNewGame, onJoinGame }: Props) {
+export default function StartScreen({ disabled, notice, error, onNewGame, onJoinGame }: Props) {
   const [gameCode, setGameCode] = useState("");
 
   const joinGame = (event: FormEvent) => {
@@ -24,7 +24,7 @@ export default function StartScreen({ disabled, gameGone, error, onNewGame, onJo
 
   return (
     <section className="flex flex-1 flex-col gap-6 px-6 pt-10 pb-6">
-      {gameGone && <Notice size="large">{startMessages.gameGone}</Notice>}
+      {notice && <Notice size="large">{notice}</Notice>}
       <div className="relative mt-3 border-3 border-ink bg-surface px-5.5 pt-5.5 pb-4.5">
         <h1 className="m-0 font-display text-[96px] leading-[.95] tracking-[-.02em]">{commonMessages.wordmark}</h1>
         <p className="m-0 mt-2.5 text-[17px] leading-[1.45] font-semibold text-pretty">{startMessages.tagline}</p>

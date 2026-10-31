@@ -14,6 +14,7 @@ import {
   type ClientToServerEvents,
   type GameSnapshot,
   type ServerToClientEvents,
+  type SpectatorSnapshot,
 } from "@wzq/shared";
 
 import type { DebugGame } from "./debug-games.js";
@@ -23,7 +24,10 @@ import { createGameServer, type GameServerOptions } from "./server.js";
 export const webOrigin = "http://localhost:8081";
 
 /** What the server sent a connection, in the order it arrived. */
-type Message = { event: "game"; game: GameSnapshot } | { event: "noActiveGame" };
+type Message =
+  | { event: "game"; game: GameSnapshot }
+  | { event: "noActiveGame" }
+  | { event: "watchedGame"; game: SpectatorSnapshot };
 
 /** One open connection to the server: a browser tab with the web app loaded. */
 export interface Connection {
@@ -33,6 +37,8 @@ export interface Connection {
   joinGame: (gameCode: string) => Promise<Acknowledgement<{ game: GameSnapshot }>>;
   leaveGame: () => Promise<Acknowledgement>;
   takeTurn: (cell: Cell) => Promise<Acknowledgement>;
+  watchGame: (gameId: string) => Promise<Acknowledgement<{ game: SpectatorSnapshot }>>;
+  stopWatching: () => Promise<Acknowledgement>;
   /** Sends a command with any arguments, unchecked by the event types, as no well-behaved client would. */
   sendUnchecked: (event: keyof ClientToServerEvents, ...args: unknown[]) => void;
   /** Closes the connection, like closing the tab. */
@@ -80,15 +86,23 @@ export interface TestServer {
    * everything sent to the Host so far already read.
    */
   aiGame: () => Promise<{ host: Connection; ai: AiPlayer }>;
-  /** A new Player with no active Game, with everything sent so far already read. */
-  playerWithNoGame: () => Promise<Connection>;
+  /**
+   * A tab of a Player with no active Game, with everything sent so far already read: a new Player, or another tab
+   * of `player`.
+   */
+  playerWithNoGame: (player?: Player) => Promise<Connection>;
   /** A new Host waiting in the lobby, with everything sent so far already read. */
-  hostInLobby: () => Promise<{ host: Connection; gameCode: string }>;
+  hostInLobby: () => Promise<{ host: Connection; gameCode: string; gameId: string }>;
   /**
    * A new ongoing Game with no Turns taken yet, with everything sent to either Player so far already read. Each
    * Player has one tab open, and `browsers` can open more, or open one again after it closes.
    */
-  ongoingGame: () => Promise<{ host: Connection; joiner: Connection; browsers: { host: Player; joiner: Player } }>;
+  ongoingGame: () => Promise<{
+    host: Connection;
+    joiner: Connection;
+    browsers: { host: Player; joiner: Player };
+    gameId: string;
+  }>;
   /** Opens `/debug/games` as a browser does, and returns the body as it was sent and as JSON. */
   debugGames: () => Promise<{ body: string; games: DebugGame[] }>;
   close: () => Promise<void>;
@@ -119,6 +133,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
       const inbox = createInbox<Message>();
       socket.on("game", (game) => inbox.put({ event: "game", game }));
       socket.on("noActiveGame", () => inbox.put({ event: "noActiveGame" }));
+      socket.on("watchedGame", (game) => inbox.put({ event: "watchedGame", game }));
 
       await new Promise<void>((resolve, reject) => {
         socket.once("connect", resolve);
@@ -132,6 +147,8 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
         joinGame: (gameCode) => socket.emitWithAck("joinGame", gameCode),
         leaveGame: () => socket.emitWithAck("leaveGame"),
         takeTurn: (cell) => socket.emitWithAck("takeTurn", cell),
+        watchGame: (gameId) => socket.emitWithAck("watchGame", gameId),
+        stopWatching: () => socket.emitWithAck("stopWatching"),
         sendUnchecked: (event, ...args) => {
           (socket.emit as (event: string, ...args: unknown[]) => void)(event, ...args);
         },
@@ -157,19 +174,19 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
   const hostInLobby = async (player = createPlayer()) => {
     const host = await playerWithNoGame(player);
     const reply = await host.createGame();
-    if (!reply.ok || !reply.game.gameCode) throw new Error("The Game wasn't created");
+    if (!reply.ok || !reply.game.gameCode || !reply.game.gameId) throw new Error("The Game wasn't created");
     await host.nextMessage();
-    return { host, gameCode: reply.game.gameCode };
+    return { host, gameCode: reply.game.gameCode, gameId: reply.game.gameId };
   };
 
   const ongoingGame = async () => {
     const browsers = { host: createPlayer(), joiner: createPlayer() };
-    const { host, gameCode } = await hostInLobby(browsers.host);
+    const { host, gameCode, gameId } = await hostInLobby(browsers.host);
     const joiner = await playerWithNoGame(browsers.joiner);
     await joiner.joinGame(gameCode);
     await host.nextMessage();
     await joiner.nextMessage();
-    return { host, joiner, browsers };
+    return { host, joiner, browsers, gameId };
   };
 
   const connectAi = async (): Promise<AiPlayer> => {

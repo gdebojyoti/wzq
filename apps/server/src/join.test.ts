@@ -19,7 +19,14 @@ describe("joining a Game by Game code", () => {
 
     const reply = await joiner.joinGame(gameCode);
 
-    const ongoing = { state: "ongoing", gameCode: null, stones: [], result: null, opponentConnected: true };
+    const ongoing = {
+      state: "ongoing",
+      gameCode: null,
+      gameId: null,
+      stones: [],
+      result: null,
+      opponentConnected: true,
+    };
     const joinerView = { ...ongoing, isHost: false, turn: "opponent" };
     expect(reply).toEqual({ ok: true, game: joinerView });
     expect(await joiner.nextMessage()).toEqual({ event: "game", game: joinerView });
