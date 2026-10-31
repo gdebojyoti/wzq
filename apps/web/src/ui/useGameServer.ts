@@ -24,13 +24,11 @@ export const useGameServer = () => {
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<Notice>();
   const [busy, setBusy] = useState(false);
-  // What's on screen, for the socket's handlers, which are set up once.
+  // The Game on screen, for the socket's handlers, which are set up once.
   const shownGameRef = useRef(game);
-  const watchedRef = useRef(watched);
   useEffect(() => {
     shownGameRef.current = game;
-    watchedRef.current = watched;
-  }, [game, watched]);
+  }, [game]);
 
   useEffect(() => {
     const socket = connectToServer();
@@ -38,6 +36,9 @@ export const useGameServer = () => {
     // How many snapshots of the Player's own Game the server has sent, so a reply that arrives after one can tell
     // it's out of date.
     let gamesReceived = 0;
+    // Whether the web app has asked to watch the Game in the watch link, which it does only when the Player has no
+    // active Game. A Game of their own arriving after that is one they started or joined, not one they were playing.
+    let askedToWatch = false;
     socket.on("connect", () => {
       socket.emit("ping", () => setStatus("connected"));
     });
@@ -47,7 +48,7 @@ export const useGameServer = () => {
       gamesReceived++;
       // A Player in an active Game sees only their own, which the server stops this tab watching for.
       if (watchedGameIdInAddress()) {
-        if (!watchedRef.current) setNotice("cantWatchWhilePlaying");
+        if (!askedToWatch) setNotice("cantWatchWhilePlaying");
         removeWatchLinkFromAddress();
       }
       setWatched(null);
@@ -62,6 +63,7 @@ export const useGameServer = () => {
       const gameId = watchedGameIdInAddress();
       if (!gameId) return setGame(null);
       const gamesBefore = gamesReceived;
+      askedToWatch = true;
       const reply = await socket.emitWithAck("watchGame", gameId);
       // A Game of the Player's own arrived meanwhile, such as one they started in another tab, so they aren't watching.
       if (gamesReceived !== gamesBefore) return;
