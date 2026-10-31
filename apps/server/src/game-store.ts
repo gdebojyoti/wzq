@@ -52,6 +52,7 @@ type NoJoiner = { joinerId: null; joinerKind: null };
 export interface GameStore {
   /** Adds the Game, or replaces the one with the same ID. */
   save: (game: Game) => Promise<void>;
+  findGame: (gameId: string) => Promise<Game | undefined>;
   /** The Game the Player is in, if it's active: a Player is in at most one active Game. */
   findActiveGameByPlayer: (playerId: string) => Promise<Game | undefined>;
   /** The Game the Player is in if it's active, otherwise the one they were in that was created last, if any. */
@@ -67,6 +68,10 @@ export const createMemoryGameStore = (): GameStore => {
   return {
     save: async (game) => {
       games.set(game.id, copy(game));
+    },
+    findGame: async (gameId) => {
+      const game = games.get(gameId);
+      return game && copy(game);
     },
     findActiveGameByPlayer: async (playerId) => {
       const game = [...games.values()].find((game) => isActive(game) && isPlayerIn(game, playerId));

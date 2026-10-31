@@ -7,7 +7,7 @@ import type { CommandResult, GameService } from "./game-service.js";
 import type { Game } from "./game-store.js";
 import type { PlayerData } from "./identity.js";
 import type { Presence } from "./presence.js";
-import { playerIdsOf, toSnapshot } from "./snapshot.js";
+import { playerIdsOf, toSnapshot, toSpectatorSnapshot } from "./snapshot.js";
 
 export type GameIo = Server<ClientToServerEvents, ServerToClientEvents, object, PlayerData>;
 
@@ -23,6 +23,7 @@ export const handleGameSockets = (
   // Every change to a Game, whichever way it was made, reaches every tab its Players have open.
   notifier.subscribe((game) => {
     playerIdsOf(game).forEach((playerId) => io.to(playerRoom(playerId)).emit("game", snapshotFor(game, playerId)));
+    io.to(watchRoom(game.id)).emit("watchedGame", toSpectatorSnapshot(game, presence.isConnected));
   });
 
   io.on("connection", async (socket) => {
@@ -32,8 +33,13 @@ export const handleGameSockets = (
     const isFirstTab = presence.connect(playerId);
 
     // Answers a command that puts the Player in a Game.
-    const enterGame = (result: CommandResult, ack: (reply: Acknowledgement<{ game: GameSnapshot }>) => void) => {
+    const enterGame = async (
+      result: CommandResult,
+      ack: (reply: Acknowledgement<{ game: GameSnapshot }>) => void,
+    ) => {
       if (!result.ok) return ack(result);
+      // Every tab of the Player now shows their own Game, so none of them is a Spectator any more.
+      (await io.in(playerRoom(playerId)).fetchSockets()).forEach(stopWatching);
       ack({ ok: true, game: snapshotFor(result.game, playerId) });
     };
 
@@ -60,6 +66,29 @@ export const handleGameSockets = (
       ack(result.ok ? { ok: true } : result);
     });
 
+    socket.on("watchGame", async (gameId, ack) => {
+      // As with joining, a command sent with no Game ID has nothing to reply to.
+      if (typeof ack !== "function") return;
+      if (typeof gameId !== "string") return ack({ ok: false, reason: "gameIdNotFound" });
+      // A Spectator isn't playing, so a Player in an active Game watches only their own, as its Player.
+      if (await gameService.findActiveGame(playerId)) return ack({ ok: false, reason: "alreadyInActiveGame" });
+      // A tab watches one Game at a time. It's in the room before the Game is found, so a change made after it's
+      // found still reaches the tab.
+      stopWatching(socket);
+      socket.join(watchRoom(gameId));
+      const game = await gameService.findGame(gameId);
+      if (!game) {
+        socket.leave(watchRoom(gameId));
+        return ack({ ok: false, reason: "gameIdNotFound" });
+      }
+      ack({ ok: true, game: toSpectatorSnapshot(game, presence.isConnected) });
+    });
+
+    socket.on("stopWatching", (ack) => {
+      stopWatching(socket);
+      ack({ ok: true });
+    });
+
     socket.on("disconnect", () => presence.disconnect(playerId));
 
     const game = await gameService.findActiveGame(playerId);
@@ -72,3 +101,13 @@ export const handleGameSockets = (
 
 /** One room per Player, holding every tab they have open. */
 const playerRoom = (playerId: string) => `player:${playerId}`;
+
+/** One room per watched Game, holding every tab watching it as a Spectator. */
+const watchRoom = (gameId: string) => `${watchRoomPrefix}${gameId}`;
+
+const watchRoomPrefix = "watch:";
+
+/** Takes the tab out of the room of any Game it's watching. */
+const stopWatching = (tab: { rooms: Set<string>; leave: (room: string) => unknown }) => {
+  [...tab.rooms].filter((room) => room.startsWith(watchRoomPrefix)).forEach((room) => tab.leave(room));
+};

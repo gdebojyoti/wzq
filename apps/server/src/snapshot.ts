@@ -1,5 +1,12 @@
-// How a Game looks to one of its Players, whichever way they're connected.
-import { isPlayersTurn, type GameResult, type GameSnapshot, type Side } from "@wzq/shared";
+// How a Game looks to one of its Players, whichever way they're connected, and to a Spectator.
+import {
+  isPlayersTurn,
+  type GameResult,
+  type GameSnapshot,
+  type Role,
+  type Side,
+  type SpectatorSnapshot,
+} from "@wzq/shared";
 
 import { resultOf, type Game } from "./game-store.js";
 
@@ -22,6 +29,8 @@ export const toSnapshot = (
   return {
     state: game.state,
     gameCode: game.state === "lobby" ? game.gameCode : null,
+    // Only the Host is sent a Game in the lobby. The ID only lets someone watch, so it's safe to share.
+    gameId: game.state === "lobby" ? game.id : null,
     isHost,
     turn: game.state === "ongoing" ? sideAfter(game.turns.length) : null,
     // Each Stone was placed on the Turn taken after all the Stones before it.
@@ -30,6 +39,28 @@ export const toSnapshot = (
     opponentConnected: opponentId !== null && isConnected(opponentId),
   };
 };
+
+/**
+ * The Game as a Spectator sees it, given which Players are connected, with each Player named as the Host or the
+ * Joiner. Never includes a player ID, nor the Game code, which would let a Spectator join.
+ */
+export const toSpectatorSnapshot = (game: Game, isConnected: (playerId: string) => boolean): SpectatorSnapshot => {
+  return {
+    state: game.state,
+    turn: game.state === "ongoing" ? roleAfter(game.turns.length) : null,
+    // Each Stone was placed on the Turn taken after all the Stones before it.
+    stones: game.turns.map((cell, index) => ({ ...cell, role: roleAfter(index) })),
+    result: resultOf(game, roleIn(game)),
+    hostConnected: isConnected(game.hostId),
+    joinerConnected: game.joinerId !== null && isConnected(game.joinerId),
+  };
+};
+
+/** Whose Turn it is once this many Turns have been taken, named as the Host or the Joiner. */
+export const roleAfter = (turnsTaken: number): Role => (isPlayersTurn(true, turnsTaken) ? "host" : "joiner");
+
+/** Names each of the Game's Players as the Host or the Joiner. */
+export const roleIn = (game: Game) => (playerId: string): Role => (playerId === game.hostId ? "host" : "joiner");
 
 /** How the Game ended, as this Player sees it, or null if it hasn't. */
 const resultFor = (game: Game, playerId: string): GameResult | null => {

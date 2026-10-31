@@ -251,6 +251,8 @@ const explanations: Record<RejectionReason, string> = {
   gameCodeNotFound: "No Game is waiting for a Joiner with that Game code. Check the six-digit code with the Host: a " +
     "Game code stops working once someone has joined.",
   gameNotFound: "You're not in a Game. Call create_game to host one, or join_game with a Host's Game code.",
+  // Only the web app watches Games, so no tool is refused this way.
+  gameIdNotFound: "No Game has that ID.",
   gameNotOngoing: "Your Game has ended, so no more Turns can be taken, and there's nothing to leave. Call " +
     "wait_for_turn to see how it ended, or create_game or join_game to play another.",
   notYourTurn: "It's not your Turn. Call wait_for_turn, which returns once your opponent has taken theirs.",

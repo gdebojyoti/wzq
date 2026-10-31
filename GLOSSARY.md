@@ -22,6 +22,10 @@ _Avoid_: guest, invitee, challenger, visitor
 A **Player** who is an AI, taking its **Turns** through the game server's MCP tools rather than the web app. It can be the **Host** or the **Joiner**. Each MCP session is a new AI Player, so it can't **Rejoin**.
 _Avoid_: bot, computer, CPU
 
+**Spectator**:
+Someone with no active **Game** who watches a **Game** through its **Watch link**, without being one of its **Players**. A Spectator sees the **Players** as the **Host** and the **Joiner**, can't take a **Turn** or use **Leave game**, and the **Players** aren't told they're watching.
+_Avoid_: viewer, observer, audience
+
 ### Game lifecycle
 
 **Game**:
@@ -35,6 +39,10 @@ _Avoid_: waiting room
 **Game code**:
 The six-digit code the **Host** shares, which the **Joiner** enters to join a **Game** in the **Lobby**.
 _Avoid_: room code, invite code
+
+**Watch link**:
+The web app's address with a **Game's** ID, `/wzq?watch=<Game ID>`, which the **Host** copies in the **Lobby** and shares so others can watch as **Spectators**. It works from the **Lobby** until the server no longer has the **Game**, and only to watch: it can't be used to join.
+_Avoid_: spectate link, share link
 
 **Rejoin**:
 A **Player** returning to a **Game** they are already in, such as after a page refresh or a lost connection.

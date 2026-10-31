@@ -31,6 +31,8 @@ describe("creating a Game", () => {
       game: {
         state: "lobby",
         gameCode: expect.stringMatching(/^\d{6}$/),
+        // A random UUID, so it can't be guessed: it's shared to let others watch.
+        gameId: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/),
         isHost: true,
         turn: null,
         stones: [],
@@ -102,6 +104,7 @@ describe("leaving a Game in the lobby", () => {
       game: {
         state: "abandoned",
         gameCode: null,
+        gameId: null,
         isHost: true,
         turn: null,
         stones: [],

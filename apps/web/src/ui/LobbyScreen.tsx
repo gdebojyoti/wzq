@@ -5,33 +5,41 @@ import Header from "./Header";
 import Icon from "./Icon";
 import Notice from "./Notice";
 import { lobbyMessages } from "./messages";
+import { watchLinkFor } from "./watchLink";
 
 interface Props {
   game: GameSnapshot;
   disabled: boolean;
   error: string | undefined;
+  /** Something that happened without the Player doing it, such as opening a watch link while playing. */
+  notice: string | undefined;
   onLeaveGame: () => void;
 }
 
-// How long Copy code shows that it worked.
+/** What the Host can copy to share the Game. */
+type Copyable = "code" | "watchLink";
+
+// How long a copy button shows that it worked.
 const copiedFor = 2000;
 
-export default function LobbyScreen({ game, disabled, error, onLeaveGame }: Props) {
+export default function LobbyScreen({ game, disabled, error, notice, onLeaveGame }: Props) {
   const gameCode = game.gameCode ?? "";
-  const [copied, setCopied] = useState(false);
+  const { gameId } = game;
+  // Which of the copy buttons last worked, while it shows that it did.
+  const [copied, setCopied] = useState<Copyable>();
 
   useEffect(() => {
     if (!copied) return;
-    const timeout = setTimeout(() => setCopied(false), copiedFor);
+    const timeout = setTimeout(() => setCopied(undefined), copiedFor);
     return () => clearTimeout(timeout);
   }, [copied]);
 
-  const copyCode = async () => {
+  const copy = async (what: Copyable, text: string) => {
     try {
-      await navigator.clipboard.writeText(gameCode);
-      setCopied(true);
+      await navigator.clipboard.writeText(text);
+      setCopied(what);
     } catch {
-      // The browser refused. The code is on screen to copy by hand.
+      // The browser refused. The code is on screen to copy by hand, and either button can be tried again.
     }
   };
 
@@ -51,12 +59,27 @@ export default function LobbyScreen({ game, disabled, error, onLeaveGame }: Prop
           ))}
         </div>
         <p className="m-0 text-[17px] leading-normal font-semibold text-pretty">{lobbyMessages.shareHint}</p>
-        <Button variant="primary" shadow="large" className="h-15 gap-3 text-lg" onClick={copyCode}>
-          <Icon name={copied ? "check" : "copy"} size={20} strokeWidth={2.8} />
-          <span aria-live="polite">{copied ? lobbyMessages.copied : lobbyMessages.copyCode}</span>
+        <Button variant="primary" shadow="large" className="h-15 gap-3 text-lg" onClick={() => copy("code", gameCode)}>
+          <Icon name={copied === "code" ? "check" : "copy"} size={20} strokeWidth={2.8} />
+          <span aria-live="polite">{copied === "code" ? lobbyMessages.copied : lobbyMessages.copyCode}</span>
         </Button>
+        {gameId && (
+          <Button
+            variant="secondary"
+            shadow="small"
+            className="h-12 gap-2.5 text-base"
+            onClick={() => copy("watchLink", watchLinkFor(gameId))}
+          >
+            <Icon name={copied === "watchLink" ? "check" : "copy"} size={18} strokeWidth={2.8} />
+            <span aria-live="polite">
+              {copied === "watchLink" ? lobbyMessages.copied : lobbyMessages.copyWatchLink}
+            </span>
+          </Button>
+        )}
         {/* Room for a two-line error is kept, so the code and buttons don't move when one appears. */}
-        <div className="min-h-[2.9em] text-sm">{error && <Notice tone="error">{error}</Notice>}</div>
+        <div className="min-h-[2.9em] text-sm">
+          {error ? <Notice tone="error">{error}</Notice> : notice && <Notice>{notice}</Notice>}
+        </div>
       </div>
       <div role="status" className="-mx-6 overflow-hidden border-y-3 border-ink py-3 whitespace-nowrap">
         <span className="sr-only">{lobbyMessages.waitingForScreenReaders}</span>

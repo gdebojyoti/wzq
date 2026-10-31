@@ -23,6 +23,8 @@ export interface GameSnapshot {
   state: GameState;
   /** The six-digit Game code the Host shares, while the Game is in the lobby; otherwise null. */
   gameCode: string | null;
+  /** The Game's ID, which the Host shares in a watch link, while the Game is in the lobby; otherwise null. */
+  gameId: string | null;
   /** Whether the Player viewing this snapshot is the Host. */
   isHost: boolean;
   /** Whose Turn it is, while the Game is ongoing; otherwise null. */
@@ -40,11 +42,47 @@ export interface Stone extends Cell {
   side: Side;
 }
 
+/**
+ * One of the two Players of a Game, named the same way for every Spectator, since a Spectator has no "you": the Host
+ * or the Joiner.
+ */
+export type Role = "host" | "joiner";
+
+/**
+ * A Game as a Spectator sees it, labelled by Host and Joiner. The server sends a fresh one after every change, and it
+ * replaces the last. It never has the Game code, so a Spectator can't join the Game they're watching.
+ */
+export interface SpectatorSnapshot {
+  state: GameState;
+  /** Whose Turn it is, while the Game is ongoing; otherwise null. */
+  turn: Role | null;
+  /** Every Stone placed, in the order the Turns were taken, so the last is the most recent. */
+  stones: SpectatorStone[];
+  /** How the Game ended, once it has; otherwise null, as it is for a Game abandoned in the lobby. */
+  result: SpectatorResult | null;
+  /** Whether the Host has the Game open right now. */
+  hostConnected: boolean;
+  /** Whether the Joiner has the Game open right now. False in the lobby, with no Joiner. */
+  joinerConnected: boolean;
+}
+
+/** A Stone on the Board, marked by whose it is. */
+export interface SpectatorStone extends Cell {
+  role: Role;
+}
+
+/** How a Game ended, as a Spectator sees it: who won and the winning line, a Draw, or who used Leave game. */
+export type SpectatorResult =
+  | { outcome: "won"; winner: Role; winningLine: Cell[] }
+  | { outcome: "draw" }
+  | { outcome: "abandoned"; leaver: Role };
+
 /** Why the server refused a command. */
 export type RejectionReason =
   | "alreadyInActiveGame"
   | "gameCodeNotFound"
   | "gameNotFound"
+  | "gameIdNotFound"
   | "gameNotOngoing"
   | "notYourTurn"
   | "cellOffBoard"
@@ -73,6 +111,14 @@ export interface ClientToServerEvents {
    * Player's Turn, and the Cell is on the Board and empty.
    */
   takeTurn: (cell: Cell, ack: (reply: Acknowledgement) => void) => void;
+  /**
+   * Watches the Game with this ID as a Spectator, in this tab only, until the tab stops watching or the Player
+   * enters a Game. Watching another Game stops watching the last. Refused if the Player is in an active Game, or the
+   * server has no Game with this ID.
+   */
+  watchGame: (gameId: string, ack: (reply: Acknowledgement<{ game: SpectatorSnapshot }>) => void) => void;
+  /** Stops watching, so this tab is sent nothing more about the Game it was watching. */
+  stopWatching: (ack: (reply: Acknowledgement) => void) => void;
 }
 
 /** Events the server sends to the web app. */
@@ -81,4 +127,6 @@ export interface ServerToClientEvents {
   game: (game: GameSnapshot) => void;
   /** Sent when a Player connects without an active Game, so the web app shows the start screen. */
   noActiveGame: () => void;
+  /** The Game a tab is watching as a Spectator, sent after every change to it. */
+  watchedGame: (game: SpectatorSnapshot) => void;
 }

@@ -1,12 +1,13 @@
 // The debug list (ADR-0008): serves `/debug/games`, the newest Games as JSON, so the state of the server can be checked
 // by opening a URL in a browser. It's public, so it never shows a player ID or a whole Game code.
 import type { Express } from "express";
-import { cellKey, isPlayersTurn, type Cell, type GameState } from "@wzq/shared";
+import { cellKey, type Cell, type GameState, type Role } from "@wzq/shared";
 
 import type { GameService } from "./game-service.js";
 import { resultOf, type Game, type PlayerKind, type Result } from "./game-store.js";
 import { boardRows } from "./mcp/board-view.js";
 import type { Presence } from "./presence.js";
+import { roleAfter, roleIn } from "./snapshot.js";
 
 /** How many Games the list shows at most. */
 const maxGamesListed = 100;
@@ -17,9 +18,6 @@ export const handleDebugGames = (app: Express, gameService: GameService, presenc
     res.json(games.map((game) => toDebugGame(game, presence.isConnected)));
   });
 };
-
-/** One of the two Players of a Game, as the list labels them, rather than as either Player sees the other. */
-type Role = "host" | "joiner";
 
 interface DebugPlayer {
   /** The start of the player ID: enough to tell Players apart, but not to act as one. */
@@ -60,7 +58,7 @@ const toDebugGame = (game: Game, isConnected: (playerId: string) => boolean): De
     updatedAt: game.updatedAt,
     host: player(game.hostId, game.hostKind),
     joiner: game.joinerId === null ? null : player(game.joinerId, game.joinerKind),
-    result: resultOf(game, (playerId): Role => (playerId === game.hostId ? "host" : "joiner")),
+    result: resultOf(game, roleIn(game)),
     board: boardRows((cell) => marks[roles.get(cellKey(cell)) ?? "empty"]),
     // Last, as the list can be long, and the rest is easier to read above it.
     turns,
@@ -68,9 +66,6 @@ const toDebugGame = (game: Game, isConnected: (playerId: string) => boolean): De
 };
 
 const marks = { host: "H", joiner: "J", empty: "." };
-
-/** Whose Turn it is once this many Turns have been taken. */
-const roleAfter = (turnsTaken: number): Role => (isPlayersTurn(true, turnsTaken) ? "host" : "joiner");
 
 // A player ID is a random UUID, the only proof of who a Player is (ADR-0004). Its first 6 characters reveal 24 of its
 // 122 random bits, which leaves the rest unguessable, and the same Player has the same label in every Game.

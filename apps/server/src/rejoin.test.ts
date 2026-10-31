@@ -26,6 +26,7 @@ describe("a Player disconnecting during play", () => {
       game: {
         state: "ongoing",
         gameCode: null,
+        gameId: null,
         isHost: true,
         turn: "opponent",
         stones: [{ row: 7, column: 7, side: "you" }],
@@ -75,6 +76,7 @@ describe("a Player who Rejoins during play", () => {
       game: {
         state: "ongoing",
         gameCode: null,
+        gameId: null,
         isHost: false,
         turn: "you",
         stones: [

@@ -1,94 +1,75 @@
 import type { Cell, GameResult, GameSnapshot } from "@wzq/shared";
 import Board from "./Board";
-import Button from "./Button";
+import GameOver from "./GameOver";
 import Header from "./Header";
-import Icon from "./Icon";
+import Headline from "./Headline";
 import Notice from "./Notice";
-import PlayerName from "./PlayerName";
-import StoneMark from "./StoneMark";
+import PlayerStrip from "./PlayerStrip";
 import { gameMessages } from "./messages";
 
 interface Props {
   game: GameSnapshot;
   disabled: boolean;
   error: string | undefined;
+  /** Something that happened without the Player doing it, such as opening a watch link while playing. */
+  notice: string | undefined;
   onTakeTurn: (cell: Cell) => void;
   onLeaveGame: () => void;
   onBackToStart: () => void;
 }
 
 // A Game being played, or one that has ended, which shows its result on the same screen.
-export default function GameScreen({ game, disabled, error, onTakeTurn, onLeaveGame, onBackToStart }: Props) {
+export default function GameScreen({
+  game,
+  disabled,
+  error,
+  notice,
+  onTakeTurn,
+  onLeaveGame,
+  onBackToStart,
+}: Props) {
   const { turn, result } = game;
   const playing = game.state === "ongoing";
   const winningLine = result?.outcome === "won" || result?.outcome === "lost" ? result.winningLine : null;
+  const opponentStatus = game.opponentConnected ? gameMessages.opponentOnline : gameMessages.opponentDisconnected;
 
   return (
     <section className="flex flex-1 flex-col gap-4 pt-4 pr-3.5 pb-4 pl-3">
       <div className="px-0.5">
         <Header disabled={disabled} onLeaveGame={playing ? onLeaveGame : undefined} />
       </div>
-      <div className="flex items-center gap-2.5 px-0.5 pt-1">
-        <div className={`flex flex-1 items-center gap-2.5 ${sideOpacity(playing, turn === "you")}`}>
-          <StoneMark side="you" className="size-6.5 flex-none border-3" />
-          <div className="flex flex-col items-start gap-0.75">
-            <PlayerName highlight={turn === "you" ? "pink" : undefined}>{gameMessages.you}</PlayerName>
-            <span className="text-xs font-semibold">
-              {game.isHost ? gameMessages.hostRole : gameMessages.joinerRole}
-            </span>
-          </div>
-        </div>
-        <span aria-hidden className="font-display text-[13px]">{gameMessages.versus}</span>
-        <div
-          className={
-            `flex flex-1 items-center justify-end gap-2.5 text-right ${sideOpacity(playing, turn === "opponent")}`
-          }
-        >
-          <div className="flex flex-col items-end gap-0.75">
-            <PlayerName highlight={turn === "opponent" ? "blue" : undefined}>{gameMessages.opponent}</PlayerName>
-            <span className="text-xs font-semibold">
-              {game.isHost ? "" : gameMessages.hostPrefix}
-              {game.opponentConnected ? gameMessages.opponentOnline : gameMessages.opponentDisconnected}
-            </span>
-          </div>
-          <StoneMark side="opponent" className="size-6.5 flex-none border-3" />
-        </div>
-      </div>
-      <div className="flex flex-col gap-1.5 border-t-3 border-ink px-0.5 pt-1.5">
-        <h1 aria-live="polite" className="m-0 font-display text-[34px] leading-[1.05] uppercase">
-          {headline(game)}
-        </h1>
-        <span className="text-sm font-semibold">{playing ? hint(game) : gameMessages.hints.gameOver}</span>
-      </div>
+      <PlayerStrip
+        playing={playing}
+        left={{
+          name: gameMessages.you,
+          detail: game.isHost ? gameMessages.hostRole : gameMessages.joinerRole,
+          isTurn: turn === "you",
+        }}
+        right={{
+          name: gameMessages.opponent,
+          detail: (game.isHost ? "" : gameMessages.hostPrefix) + opponentStatus,
+          isTurn: turn === "opponent",
+        }}
+      />
+      <Headline hint={playing ? hint(game) : gameMessages.hints.gameOver}>{headline(game)}</Headline>
       <Board
         stones={game.stones}
         winningLine={winningLine}
         canTakeTurn={playing && !disabled && turn === "you"}
         onTakeTurn={onTakeTurn}
       />
-      {/* Everything that comes and goes sits under the Board, so the Board never moves. An error shows only in play:
-          one left from a command just before the end would be stale beside the result. */}
+      {/* Everything that comes and goes sits under the Board, so the Board never moves. An error or notice shows only
+          in play: one left from before the end would be stale beside the result. */}
       {playing && error && <Notice tone="error" className="px-0.5">{error}</Notice>}
+      {playing && notice && <Notice className="px-0.5">{notice}</Notice>}
       {playing && !game.opponentConnected && (
         <Notice className="px-0.5 opacity-40">{gameMessages.opponentDisconnectedNotice}</Notice>
       )}
-      {result && (
-        <div className="flex flex-col gap-4 px-0.5">
-          <p className="m-0 text-[15px] leading-normal font-semibold text-pretty">{resultLine(result)}</p>
-          <Button variant="primary" shadow="large" className="h-15 gap-3 text-lg" onClick={onBackToStart}>
-            <span>{gameMessages.backToStart}</span>
-            <Icon name="arrow" size={22} />
-          </Button>
-        </div>
-      )}
+      {result && <GameOver onBackToStart={onBackToStart}>{resultLine(result)}</GameOver>}
       <div className="flex-1" />
     </section>
   );
 }
-
-// While the Game is being played, the Player whose Turn it isn't fades back.
-const sideOpacity = (playing: boolean, theirTurn: boolean) =>
-  playing ? `transition-opacity duration-200 ${theirTurn ? "" : "opacity-40"}` : "";
 
 const headline = ({ turn, result }: GameSnapshot) => {
   if (!result) return turn === "you" ? gameMessages.headlines.yourTurn : gameMessages.headlines.theirTurn;
