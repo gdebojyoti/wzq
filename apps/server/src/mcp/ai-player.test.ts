@@ -30,7 +30,7 @@ describe("the tools an AI Player is given", () => {
 });
 
 describe("an AI Player joining a Game", () => {
-  it("starts the Game, and the Host sees it ongoing with the AI connected", async () => {
+  it("starts the Game, and the Host sees it ongoing with the AI connected, as an AI Player", async () => {
     const { host, gameCode } = await server.hostInLobby();
     const ai = await server.connectAi();
 
@@ -41,7 +41,7 @@ describe("an AI Player joining a Game", () => {
     expect(reply.text).toContain("It's your opponent's Turn.");
     expect(await host.nextMessage()).toMatchObject({
       event: "game",
-      game: { state: "ongoing", isHost: true, turn: "you", stones: [], opponentConnected: true },
+      game: { state: "ongoing", isHost: true, turn: "you", stones: [], opponentConnected: true, opponentIsAi: true },
     });
   });
 
@@ -97,7 +97,7 @@ describe("an AI Player hosting a Game", () => {
 
     expect(reply).toMatchObject({
       ok: true,
-      game: { state: "ongoing", isHost: false, turn: "opponent", opponentConnected: true },
+      game: { state: "ongoing", isHost: false, turn: "opponent", opponentConnected: true, opponentIsAi: true },
     });
     expect((await waiting).text).toContain("It's your Turn.");
   });

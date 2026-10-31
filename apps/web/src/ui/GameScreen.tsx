@@ -4,7 +4,7 @@ import GameOver from "./GameOver";
 import Header from "./Header";
 import Headline from "./Headline";
 import Notice from "./Notice";
-import PlayerStrip from "./PlayerStrip";
+import PlayerStrip, { kindTags } from "./PlayerStrip";
 import { gameMessages } from "./messages";
 
 interface Props {
@@ -32,6 +32,8 @@ export default function GameScreen({
   const playing = game.state === "ongoing";
   const winningLine = result?.outcome === "won" || result?.outcome === "lost" ? result.winningLine : null;
   const opponentStatus = game.opponentConnected ? gameMessages.opponentOnline : gameMessages.opponentDisconnected;
+  // The Player viewing is always human, as an AI Player plays through the MCP tools, not the web app.
+  const tags = kindTags(false, game.opponentIsAi);
 
   return (
     <section className="flex flex-1 flex-col gap-4 pt-4 pr-3.5 pb-4 pl-3">
@@ -42,11 +44,13 @@ export default function GameScreen({
         playing={playing}
         left={{
           name: gameMessages.you,
+          tag: tags.left,
           detail: game.isHost ? gameMessages.hostRole : gameMessages.joinerRole,
           isTurn: turn === "you",
         }}
         right={{
           name: gameMessages.opponent,
+          tag: tags.right,
           detail: (game.isHost ? "" : gameMessages.hostPrefix) + opponentStatus,
           isTurn: turn === "opponent",
         }}

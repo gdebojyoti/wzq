@@ -38,6 +38,7 @@ describe("creating a Game", () => {
         stones: [],
         result: null,
         opponentConnected: false,
+        opponentIsAi: false,
       },
     });
   });
@@ -110,6 +111,7 @@ describe("leaving a Game in the lobby", () => {
         stones: [],
         result: null,
         opponentConnected: false,
+        opponentIsAi: false,
       },
     });
   });

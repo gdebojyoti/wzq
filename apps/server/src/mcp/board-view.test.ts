@@ -12,6 +12,7 @@ const ongoing: GameSnapshot = {
   stones: [],
   result: null,
   opponentConnected: true,
+  opponentIsAi: false,
 };
 
 /** The lines of the view that draw the Board: the column numbers, then one line per row. */

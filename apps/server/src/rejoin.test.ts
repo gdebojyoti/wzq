@@ -32,6 +32,7 @@ describe("a Player disconnecting during play", () => {
         stones: [{ row: 7, column: 7, side: "you" }],
         result: null,
         opponentConnected: false,
+        opponentIsAi: false,
       },
     });
   });
@@ -86,6 +87,7 @@ describe("a Player who Rejoins during play", () => {
         ],
         result: null,
         opponentConnected: true,
+        opponentIsAi: false,
       },
     });
     expect(await host.nextMessage()).toMatchObject({ game: { stones: { length: 3 }, opponentConnected: true } });

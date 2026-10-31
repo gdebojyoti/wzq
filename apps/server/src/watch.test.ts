@@ -28,6 +28,8 @@ describe("watching a Game in the lobby", () => {
         result: null,
         hostConnected: true,
         joinerConnected: false,
+        hostIsAi: false,
+        joinerIsAi: false,
       },
     });
   });
@@ -48,6 +50,8 @@ describe("watching a Game in the lobby", () => {
         result: null,
         hostConnected: true,
         joinerConnected: true,
+        hostIsAi: false,
+        joinerIsAi: false,
       },
     });
   });
@@ -69,6 +73,8 @@ describe("watching an ongoing Game", () => {
         result: null,
         hostConnected: true,
         joinerConnected: true,
+        hostIsAi: false,
+        joinerIsAi: false,
       },
     });
   });
@@ -98,6 +104,17 @@ describe("watching an ongoing Game", () => {
     await browsers.joiner.connect();
     expect(await spectator.nextMessage())
       .toMatchObject({ game: { hostConnected: true, joinerConnected: true } });
+  });
+
+  it("shows which Players are AI Players", async () => {
+    const { gameId, gameCode } = await server.hostInLobby();
+    await (await server.connectAi()).joinGame(gameCode);
+    await (await server.connectAi()).createGame();
+    const [hostedByAi] = (await server.debugGames()).games;
+    const spectator = await server.playerWithNoGame();
+
+    expect(await spectator.watchGame(gameId)).toMatchObject({ game: { hostIsAi: false, joinerIsAi: true } });
+    expect(await spectator.watchGame(hostedByAi?.id ?? "")).toMatchObject({ game: { hostIsAi: true, joinerIsAi: false } });
   });
 
   it("shows a Win with whose it is and the winning line", async () => {
@@ -219,6 +236,8 @@ describe("watching a Game that has ended", () => {
         result: { outcome: "abandoned", leaver: "host" },
         hostConnected: true,
         joinerConnected: false,
+        hostIsAi: false,
+        joinerIsAi: false,
       },
     });
   });
@@ -280,7 +299,7 @@ describe("Spectators aren't Players", () => {
     await host.takeTurn({ row: 7, column: 7 });
 
     // The first thing either Player is sent is the snapshot after the Turn, the same as with no Spectator.
-    const after = { state: "ongoing", gameCode: null, gameId: null, result: null, opponentConnected: true };
+    const after = { state: "ongoing", gameCode: null, gameId: null, result: null, opponentConnected: true, opponentIsAi: false };
     expect(await host.nextMessage()).toEqual({
       event: "game",
       game: { ...after, isHost: true, turn: "opponent", stones: [{ row: 7, column: 7, side: "you" }] },

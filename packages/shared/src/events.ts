@@ -35,6 +35,8 @@ export interface GameSnapshot {
   result: GameResult | null;
   /** Whether the opponent has the Game open right now. False while the Host waits in the lobby, with no opponent. */
   opponentConnected: boolean;
+  /** Whether the opponent is an AI Player. False while the Host waits in the lobby, with no opponent. */
+  opponentIsAi: boolean;
 }
 
 /** A Stone on the Board, marked by whose it is as the viewer sees it. */
@@ -64,6 +66,10 @@ export interface SpectatorSnapshot {
   hostConnected: boolean;
   /** Whether the Joiner has the Game open right now. False in the lobby, with no Joiner. */
   joinerConnected: boolean;
+  /** Whether the Host is an AI Player. */
+  hostIsAi: boolean;
+  /** Whether the Joiner is an AI Player. False in the lobby, with no Joiner. */
+  joinerIsAi: boolean;
 }
 
 /** A Stone on the Board, marked by whose it is. */
