@@ -120,7 +120,6 @@ export const spectatorMessages = {
     joinerLeft: "The joiner left the game. There is no winner.",
     hostLeftLobby: "The host left before anyone joined.",
   },
-  backToStart: "Back to Home",
 };
 
 export const boardMessages = {

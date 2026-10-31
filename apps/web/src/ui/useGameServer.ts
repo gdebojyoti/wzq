@@ -35,12 +35,16 @@ export const useGameServer = () => {
   useEffect(() => {
     const socket = connectToServer();
     socketRef.current = socket;
+    // How many snapshots of the Player's own Game the server has sent, so a reply that arrives after one can tell
+    // it's out of date.
+    let gamesReceived = 0;
     socket.on("connect", () => {
       socket.emit("ping", () => setStatus("connected"));
     });
     socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("disconnected"));
     socket.on("game", (game) => {
+      gamesReceived++;
       // A Player in an active Game sees only their own, which the server stops this tab watching for.
       if (watchedGameIdInAddress()) {
         if (!watchedRef.current) setNotice("cantWatchWhilePlaying");
@@ -56,15 +60,18 @@ export const useGameServer = () => {
       if (shown?.state === "lobby" || shown?.state === "ongoing") setNotice("gameGone");
       // Sent on every connection, so a Spectator watches again when theirs comes back.
       const gameId = watchedGameIdInAddress();
-      if (gameId) {
-        const reply = await socket.emitWithAck("watchGame", gameId);
-        if (reply.ok) setWatched(reply.game);
-        else {
-          if (reply.reason === "gameIdNotFound") setNotice("watchUnavailable");
-          removeWatchLinkFromAddress();
-          setWatched(null);
-        }
+      if (!gameId) return setGame(null);
+      const gamesBefore = gamesReceived;
+      const reply = await socket.emitWithAck("watchGame", gameId);
+      // A Game of the Player's own arrived meanwhile, such as one they started in another tab, so they aren't watching.
+      if (gamesReceived !== gamesBefore) return;
+      if (reply.ok) setWatched(reply.game);
+      else {
+        if (reply.reason === "gameIdNotFound") setNotice("watchUnavailable");
+        removeWatchLinkFromAddress();
+        setWatched(null);
       }
+      // Cleared only now, so the start screen doesn't flash up before the watched Game.
       setGame(null);
     });
     // Ignored once the watch link is gone, as one may have been sent before the server heard the tab stop watching.

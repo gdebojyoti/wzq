@@ -42,7 +42,10 @@ export interface Stone extends Cell {
   side: Side;
 }
 
-/** One of the two Players of a Game, named the same way for every Spectator, since a Spectator has no "you". */
+/**
+ * One of the two Players of a Game, named the same way for every Spectator, since a Spectator has no "you": the Host
+ * or the Joiner.
+ */
 export type Role = "host" | "joiner";
 
 /**

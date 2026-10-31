@@ -16,13 +16,17 @@ interface Props {
   onLeaveGame: () => void;
 }
 
+/** What the Host can copy to share the Game. */
+type Copyable = "code" | "watchLink";
+
 // How long a copy button shows that it worked.
 const copiedFor = 2000;
 
 export default function LobbyScreen({ game, disabled, error, notice, onLeaveGame }: Props) {
   const gameCode = game.gameCode ?? "";
+  const { gameId } = game;
   // Which of the copy buttons last worked, while it shows that it did.
-  const [copied, setCopied] = useState<"code" | "watchLink">();
+  const [copied, setCopied] = useState<Copyable>();
 
   useEffect(() => {
     if (!copied) return;
@@ -30,7 +34,7 @@ export default function LobbyScreen({ game, disabled, error, notice, onLeaveGame
     return () => clearTimeout(timeout);
   }, [copied]);
 
-  const copy = async (what: "code" | "watchLink", text: string) => {
+  const copy = async (what: Copyable, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(what);
@@ -59,12 +63,12 @@ export default function LobbyScreen({ game, disabled, error, notice, onLeaveGame
           <Icon name={copied === "code" ? "check" : "copy"} size={20} strokeWidth={2.8} />
           <span aria-live="polite">{copied === "code" ? lobbyMessages.copied : lobbyMessages.copyCode}</span>
         </Button>
-        {game.gameId && (
+        {gameId && (
           <Button
             variant="secondary"
             shadow="small"
             className="h-12 gap-2.5 text-base"
-            onClick={() => game.gameId && copy("watchLink", watchLinkFor(game.gameId))}
+            onClick={() => copy("watchLink", watchLinkFor(gameId))}
           >
             <Icon name={copied === "watchLink" ? "check" : "copy"} size={18} strokeWidth={2.8} />
             <span aria-live="polite">
