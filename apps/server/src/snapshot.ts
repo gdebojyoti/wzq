@@ -37,7 +37,7 @@ export const toSnapshot = (
     stones: game.turns.map((cell, index) => ({ ...cell, side: sideAfter(index) })),
     result: resultFor(game, playerId),
     opponentConnected: opponentId !== null && isConnected(opponentId),
-    opponentIsAi: (isHost ? game.joinerKind : game.hostKind) === "ai",
+    opponentKind: isHost ? game.joinerKind : game.hostKind,
   };
 };
 
@@ -54,8 +54,8 @@ export const toSpectatorSnapshot = (game: Game, isConnected: (playerId: string) 
     result: resultOf(game, roleIn(game)),
     hostConnected: isConnected(game.hostId),
     joinerConnected: game.joinerId !== null && isConnected(game.joinerId),
-    hostIsAi: game.hostKind === "ai",
-    joinerIsAi: game.joinerKind === "ai",
+    hostKind: game.hostKind,
+    joinerKind: game.joinerKind,
   };
 };
 

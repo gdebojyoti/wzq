@@ -1,6 +1,8 @@
 // Where Games are kept. The game service only knows this interface, so the in-memory store (ADR-0005)
 // can be swapped for a Postgres one without touching game logic.
-import type { Cell, GameState } from "@wzq/shared";
+import type { Cell, GameState, PlayerKind } from "@wzq/shared";
+
+export type { PlayerKind };
 
 export type Game = {
   id: string;
@@ -15,9 +17,6 @@ export type Game = {
   /** When the Game was last saved, as an ISO 8601 timestamp. */
   updatedAt: string;
 } & Stage;
-
-/** How a Player plays: as an AI Player through the MCP tools, or on the web app in a browser. */
-export type PlayerKind = "ai" | "browser";
 
 /**
  * The stage a Game is at, with what it records there, so a Game can't have a winner unless it's won. There's one

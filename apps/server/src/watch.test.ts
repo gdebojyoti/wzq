@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { boardSize, type Cell } from "@wzq/shared";
 
-import { drawnBoard, startServer, type TestServer } from "./testing.js";
+import { drawnBoard, gameCodeIn, startServer, type TestServer } from "./testing.js";
 
 let server: TestServer;
 
@@ -28,8 +28,8 @@ describe("watching a Game in the lobby", () => {
         result: null,
         hostConnected: true,
         joinerConnected: false,
-        hostIsAi: false,
-        joinerIsAi: false,
+        hostKind: "browser",
+        joinerKind: null,
       },
     });
   });
@@ -50,8 +50,8 @@ describe("watching a Game in the lobby", () => {
         result: null,
         hostConnected: true,
         joinerConnected: true,
-        hostIsAi: false,
-        joinerIsAi: false,
+        hostKind: "browser",
+        joinerKind: "browser",
       },
     });
   });
@@ -73,8 +73,8 @@ describe("watching an ongoing Game", () => {
         result: null,
         hostConnected: true,
         joinerConnected: true,
-        hostIsAi: false,
-        joinerIsAi: false,
+        hostKind: "browser",
+        joinerKind: "browser",
       },
     });
   });
@@ -106,15 +106,23 @@ describe("watching an ongoing Game", () => {
       .toMatchObject({ game: { hostConnected: true, joinerConnected: true } });
   });
 
-  it("shows which Players are AI Players", async () => {
+  it("shows how each Player plays, with no Joiner for a Game abandoned in the lobby", async () => {
     const { gameId, gameCode } = await server.hostInLobby();
     await (await server.connectAi()).joinGame(gameCode);
-    await (await server.connectAi()).createGame();
-    const [hostedByAi] = (await server.debugGames()).games;
+    await (await server.connectAi()).joinGame(gameCodeIn(await (await server.connectAi()).createGame()));
+    const leaver = await server.connectAi();
+    await leaver.createGame();
+    await leaver.leaveGame();
+    // The debug list is newest first.
+    const [abandonedInLobby, allAi] = (await server.debugGames()).games;
     const spectator = await server.playerWithNoGame();
 
-    expect(await spectator.watchGame(gameId)).toMatchObject({ game: { hostIsAi: false, joinerIsAi: true } });
-    expect(await spectator.watchGame(hostedByAi?.id ?? "")).toMatchObject({ game: { hostIsAi: true, joinerIsAi: false } });
+    expect(await spectator.watchGame(gameId))
+      .toMatchObject({ game: { hostKind: "browser", joinerKind: "ai" } });
+    expect(await spectator.watchGame(allAi?.id ?? ""))
+      .toMatchObject({ game: { state: "ongoing", hostKind: "ai", joinerKind: "ai" } });
+    expect(await spectator.watchGame(abandonedInLobby?.id ?? ""))
+      .toMatchObject({ game: { state: "abandoned", hostKind: "ai", joinerKind: null } });
   });
 
   it("shows a Win with whose it is and the winning line", async () => {
@@ -236,8 +244,8 @@ describe("watching a Game that has ended", () => {
         result: { outcome: "abandoned", leaver: "host" },
         hostConnected: true,
         joinerConnected: false,
-        hostIsAi: false,
-        joinerIsAi: false,
+        hostKind: "browser",
+        joinerKind: "browser",
       },
     });
   });
@@ -299,7 +307,9 @@ describe("Spectators aren't Players", () => {
     await host.takeTurn({ row: 7, column: 7 });
 
     // The first thing either Player is sent is the snapshot after the Turn, the same as with no Spectator.
-    const after = { state: "ongoing", gameCode: null, gameId: null, result: null, opponentConnected: true, opponentIsAi: false };
+    const after = {
+      state: "ongoing", gameCode: null, gameId: null, result: null, opponentConnected: true, opponentKind: "browser",
+    };
     expect(await host.nextMessage()).toEqual({
       event: "game",
       game: { ...after, isHost: true, turn: "opponent", stones: [{ row: 7, column: 7, side: "you" }] },

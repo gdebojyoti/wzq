@@ -255,6 +255,9 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
   return { url, createPlayer, connectAi, aiGame, playerWithNoGame, hostInLobby, ongoingGame, debugGames, close };
 };
 
+/** The Game code in what `create_game` returned. */
+export const gameCodeIn = (reply: { text: string }) => /Game code (\d{6})/.exec(reply.text)?.[1] ?? "";
+
 /**
  * Every Cell on the Board, shared between the Players with no five in a row: going along each row, two Cells
  * are the Host's then two are the Joiner's, and each row starts two Cells further on than the one above.

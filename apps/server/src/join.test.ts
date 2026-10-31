@@ -26,7 +26,7 @@ describe("joining a Game by Game code", () => {
       stones: [],
       result: null,
       opponentConnected: true,
-      opponentIsAi: false,
+      opponentKind: "browser",
     };
     const joinerView = { ...ongoing, isHost: false, turn: "opponent" };
     expect(reply).toEqual({ ok: true, game: joinerView });

@@ -48,7 +48,7 @@ export default function PlayerStrip({ left, right, playing }: Props) {
   );
 }
 
-// Whether a Player is an AI or a human, beside their name.
+// The style of the tag after a Player's name, which says whether they're an AI or a human.
 const tagStyle = "font-display text-[11px] leading-[1.1] uppercase";
 // While the Game is being played, the Player whose Turn it isn't fades back.
 const sideOpacity = (playing: boolean, theirTurn: boolean) =>

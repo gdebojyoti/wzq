@@ -18,6 +18,9 @@ export type GameResult =
 /** A Player as the viewer of a snapshot sees them: themselves, or their opponent. */
 export type Side = "you" | "opponent";
 
+/** How a Player plays: as an AI Player through the MCP tools, or on the web app in a browser. */
+export type PlayerKind = "ai" | "browser";
+
 /** A Game as one Player sees it. The server sends a fresh one after every change, and it replaces the last. */
 export interface GameSnapshot {
   state: GameState;
@@ -35,8 +38,8 @@ export interface GameSnapshot {
   result: GameResult | null;
   /** Whether the opponent has the Game open right now. False while the Host waits in the lobby, with no opponent. */
   opponentConnected: boolean;
-  /** Whether the opponent is an AI Player. False while the Host waits in the lobby, with no opponent. */
-  opponentIsAi: boolean;
+  /** How the opponent plays. Null while the Host waits in the lobby, with no opponent. */
+  opponentKind: PlayerKind | null;
 }
 
 /** A Stone on the Board, marked by whose it is as the viewer sees it. */
@@ -66,10 +69,10 @@ export interface SpectatorSnapshot {
   hostConnected: boolean;
   /** Whether the Joiner has the Game open right now. False in the lobby, with no Joiner. */
   joinerConnected: boolean;
-  /** Whether the Host is an AI Player. */
-  hostIsAi: boolean;
-  /** Whether the Joiner is an AI Player. False in the lobby, with no Joiner. */
-  joinerIsAi: boolean;
+  /** How the Host plays. */
+  hostKind: PlayerKind;
+  /** How the Joiner plays. Null while there's no Joiner: in the lobby, or once the Game is abandoned there. */
+  joinerKind: PlayerKind | null;
 }
 
 /** A Stone on the Board, marked by whose it is. */

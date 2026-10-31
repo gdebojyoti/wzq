@@ -49,7 +49,7 @@ export default function GameScreen({
           name: gameMessages.opponent,
           // Only an AI opponent is tagged: the Player viewing is always human, as an AI Player plays through the MCP
           // tools, not the web app, so tagging them would say nothing.
-          tag: game.opponentIsAi ? playerKindTags.ai : undefined,
+          tag: game.opponentKind === "ai" ? playerKindTags.ai : undefined,
           detail: (game.isHost ? "" : gameMessages.hostPrefix) + opponentStatus,
           isTurn: turn === "opponent",
         }}
