@@ -3,8 +3,8 @@ import Board from "./Board";
 import GameOver from "./GameOver";
 import Header from "./Header";
 import Headline from "./Headline";
-import PlayerStrip, { kindTags } from "./PlayerStrip";
-import { boardMessages, spectatorMessages } from "./messages";
+import PlayerStrip from "./PlayerStrip";
+import { boardMessages, playerKindTags, spectatorMessages } from "./messages";
 
 interface Props {
   game: SpectatorSnapshot;
@@ -31,13 +31,13 @@ export default function SpectatorScreen({ game, onStopWatching }: Props) {
         playing={playing}
         left={{
           name: spectatorMessages.host,
-          tag: tags.left,
+          tag: tags.host,
           detail: spectatorMessages.hostRole + connection(game.hostConnected),
           isTurn: turn === "host",
         }}
         right={{
           name: spectatorMessages.joiner,
-          tag: tags.right,
+          tag: tags.joiner,
           detail: state === "lobby"
             ? spectatorMessages.notJoined
             : spectatorMessages.joinerRole + connection(game.joinerConnected),
@@ -60,6 +60,16 @@ export default function SpectatorScreen({ game, onStopWatching }: Props) {
 
 // The Board and Stone marks draw the Host as they draw a Player, and the Joiner as that Player's opponent.
 const sideOf = (role: Role): Side => (role === "host" ? "you" : "opponent");
+
+/**
+ * The tags for the Host and the Joiner, marking each as an AI or a human, but only when at least one is an AI: a Game
+ * between two humans needs no tags. A Joiner who isn't there yet, in the lobby, gets none.
+ */
+const kindTags = (hostIsAi: boolean, joinerIsAi: boolean | null) => {
+  if (!hostIsAi && !joinerIsAi) return { host: undefined, joiner: undefined };
+  const tagOf = (isAi: boolean) => (isAi ? playerKindTags.ai : playerKindTags.human);
+  return { host: tagOf(hostIsAi), joiner: joinerIsAi === null ? undefined : tagOf(joinerIsAi) };
+};
 
 const connection = (connected: boolean) => (connected ? spectatorMessages.online : spectatorMessages.disconnected);
 

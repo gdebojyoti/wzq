@@ -52,7 +52,8 @@ export const lobbyMessages = {
   waitingForScreenReaders: "Waiting for your friend to join",
 };
 
-// Beside a Player's name when an AI Player is in the Game, on the Game and Spectator screens.
+// Beside a Player's name when an AI Player is in the Game: only the AI on the Game screen, and both Players on the
+// Spectator screen.
 export const playerKindTags = {
   ai: "AI",
   human: "Human",
