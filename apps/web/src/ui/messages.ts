@@ -52,6 +52,11 @@ export const lobbyMessages = {
   waitingForScreenReaders: "Waiting for your friend to join",
 };
 
+export const playerKindTags = {
+  ai: "AI",
+  human: "Human",
+};
+
 export const gameMessages = {
   you: "You",
   opponent: "Opponent",

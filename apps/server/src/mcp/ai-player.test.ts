@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { drawnBoard, startServer, type AiPlayer, type TestServer } from "../testing.js";
+import { drawnBoard, gameCodeIn, startServer, type AiPlayer, type TestServer } from "../testing.js";
 
 let server: TestServer;
 
@@ -30,7 +30,7 @@ describe("the tools an AI Player is given", () => {
 });
 
 describe("an AI Player joining a Game", () => {
-  it("starts the Game, and the Host sees it ongoing with the AI connected", async () => {
+  it("starts the Game, and the Host sees it ongoing with the AI Player connected", async () => {
     const { host, gameCode } = await server.hostInLobby();
     const ai = await server.connectAi();
 
@@ -41,7 +41,7 @@ describe("an AI Player joining a Game", () => {
     expect(reply.text).toContain("It's your opponent's Turn.");
     expect(await host.nextMessage()).toMatchObject({
       event: "game",
-      game: { state: "ongoing", isHost: true, turn: "you", stones: [], opponentConnected: true },
+      game: { state: "ongoing", isHost: true, turn: "you", stones: [], opponentConnected: true, opponentKind: "ai" },
     });
   });
 
@@ -73,9 +73,6 @@ describe("an AI Player joining a Game", () => {
 });
 
 describe("an AI Player hosting a Game", () => {
-  /** The Game code in what `create_game` returned. */
-  const gameCodeIn = (reply: { text: string }) => /Game code (\d{6})/.exec(reply.text)?.[1] ?? "";
-
   it("creates a Game in the Lobby, and tells the AI the web app's address and the Game code", async () => {
     const ai = await server.connectAi();
 
@@ -97,7 +94,7 @@ describe("an AI Player hosting a Game", () => {
 
     expect(reply).toMatchObject({
       ok: true,
-      game: { state: "ongoing", isHost: false, turn: "opponent", opponentConnected: true },
+      game: { state: "ongoing", isHost: false, turn: "opponent", opponentConnected: true, opponentKind: "ai" },
     });
     expect((await waiting).text).toContain("It's your Turn.");
   });

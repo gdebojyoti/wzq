@@ -1,10 +1,10 @@
-import type { Role, Side, SpectatorSnapshot } from "@wzq/shared";
+import type { PlayerKind, Role, Side, SpectatorSnapshot } from "@wzq/shared";
 import Board from "./Board";
 import GameOver from "./GameOver";
 import Header from "./Header";
 import Headline from "./Headline";
 import PlayerStrip from "./PlayerStrip";
-import { boardMessages, spectatorMessages } from "./messages";
+import { boardMessages, playerKindTags, spectatorMessages } from "./messages";
 
 interface Props {
   game: SpectatorSnapshot;
@@ -20,6 +20,7 @@ export default function SpectatorScreen({ game, onStopWatching }: Props) {
   const ended = state !== "lobby" && !playing;
   const stones = game.stones.map(({ role, ...cell }) => ({ ...cell, side: sideOf(role) }));
   const winningLine = result?.outcome === "won" ? result.winningLine : null;
+  const tags = kindTags(game.hostKind, game.joinerKind);
 
   return (
     <section className="flex flex-1 flex-col gap-4 pt-4 pr-3.5 pb-4 pl-3">
@@ -30,11 +31,13 @@ export default function SpectatorScreen({ game, onStopWatching }: Props) {
         playing={playing}
         left={{
           name: spectatorMessages.host,
+          tag: tags.host,
           detail: spectatorMessages.hostRole + connection(game.hostConnected),
           isTurn: turn === "host",
         }}
         right={{
           name: spectatorMessages.joiner,
+          tag: tags.joiner,
           detail: state === "lobby"
             ? spectatorMessages.notJoined
             : spectatorMessages.joinerRole + connection(game.joinerConnected),
@@ -57,6 +60,16 @@ export default function SpectatorScreen({ game, onStopWatching }: Props) {
 
 // The Board and Stone marks draw the Host as they draw a Player, and the Joiner as that Player's opponent.
 const sideOf = (role: Role): Side => (role === "host" ? "you" : "opponent");
+
+/**
+ * The tags for the Host and the Joiner, marking each as an AI or a human, but only when at least one is an AI: a Game
+ * between two humans needs no tags. A Joiner who never joined gets none.
+ */
+const kindTags = (hostKind: PlayerKind, joinerKind: PlayerKind | null) => {
+  if (hostKind !== "ai" && joinerKind !== "ai") return { host: undefined, joiner: undefined };
+  const tagOf = (kind: PlayerKind) => (kind === "ai" ? playerKindTags.ai : playerKindTags.human);
+  return { host: tagOf(hostKind), joiner: joinerKind ? tagOf(joinerKind) : undefined };
+};
 
 const connection = (connected: boolean) => (connected ? spectatorMessages.online : spectatorMessages.disconnected);
 

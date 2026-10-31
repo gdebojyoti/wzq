@@ -4,6 +4,7 @@ export type {
   GameResult,
   GameSnapshot,
   GameState,
+  PlayerKind,
   RejectionReason,
   Role,
   ServerToClientEvents,

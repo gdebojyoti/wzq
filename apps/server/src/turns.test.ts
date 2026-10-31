@@ -18,7 +18,9 @@ describe("taking a Turn", () => {
 
     const reply = await host.takeTurn({ row: 7, column: 8 });
 
-    const ongoing = { state: "ongoing", gameCode: null, gameId: null, result: null, opponentConnected: true };
+    const ongoing = {
+      state: "ongoing", gameCode: null, gameId: null, result: null, opponentConnected: true, opponentKind: "browser",
+    };
     const hostView = { ...ongoing, isHost: true, turn: "opponent" };
     const joinerView = { ...ongoing, isHost: false, turn: "you" };
     expect(reply).toEqual({ ok: true });

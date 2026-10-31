@@ -5,7 +5,7 @@ import Header from "./Header";
 import Headline from "./Headline";
 import Notice from "./Notice";
 import PlayerStrip from "./PlayerStrip";
-import { gameMessages } from "./messages";
+import { gameMessages, playerKindTags } from "./messages";
 
 interface Props {
   game: GameSnapshot;
@@ -47,6 +47,9 @@ export default function GameScreen({
         }}
         right={{
           name: gameMessages.opponent,
+          // Only an AI opponent is tagged: the Player viewing is always human, as an AI Player plays through the MCP
+          // tools, not the web app, so tagging them would say nothing.
+          tag: game.opponentKind === "ai" ? playerKindTags.ai : undefined,
           detail: (game.isHost ? "" : gameMessages.hostPrefix) + opponentStatus,
           isTurn: turn === "opponent",
         }}
