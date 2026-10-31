@@ -1,20 +1,15 @@
-// The Board view: a Game as an AI Player sees it, drawn as text for an MCP tool result.
-import { boardSize, cellKey, type GameResult, type GameSnapshot, type Side } from "@wzq/shared";
+// The Board view: a Game as an AI Player sees it, drawn as text for an MCP tool result. The debug list of Games
+// draws its Boards the same way.
+import { boardSize, cellKey, type Cell, type GameResult, type GameSnapshot, type Side } from "@wzq/shared";
 
 const marks = { you: "X", opponent: "O", empty: "." };
 
 /** The Game in the snapshot as text: the Board with its row and column numbers, and a legend. */
 export const boardView = (game: GameSnapshot): string => {
-  const indexes = [...Array(boardSize).keys()];
-  const cell = (text: string | number) => String(text).padStart(3);
-  const rowLabel = (text: string | number) => String(text).padStart(2);
   const sides = new Map(game.stones.map((stone) => [cellKey(stone), stone.side]));
-  const markAt = (row: number, column: number) => marks[sides.get(cellKey({ row, column })) ?? "empty"];
-  const header = rowLabel("") + indexes.map(cell).join("");
-  const rows = indexes.map((row) => rowLabel(row) + indexes.map((column) => cell(markAt(row, column))).join(""));
   return [
-    header,
-    ...rows,
+    rowLabel("") + indexes.map(cellText).join(""),
+    ...boardRows((cell) => marks[sides.get(cellKey(cell)) ?? "empty"]),
     "",
     `${marks.you} = your Stones, ${marks.opponent} = your opponent's Stones, ${marks.empty} = an empty Cell`,
     "",
@@ -22,6 +17,17 @@ export const boardView = (game: GameSnapshot): string => {
     stageLine(game),
   ].join("\n");
 };
+
+/** The Board as text, one line for each row, starting with its row number, given the mark for each Cell. */
+export const boardRows = (markAt: (cell: Cell) => string): string[] => {
+  return indexes.map((row) => rowLabel(row) + indexes.map((column) => cellText(markAt({ row, column }))).join(""));
+};
+
+const indexes = [...Array(boardSize).keys()];
+
+const cellText = (text: string | number) => String(text).padStart(3);
+
+const rowLabel = (text: string | number) => String(text).padStart(2);
 
 /** Where the Game is: waiting in the Lobby, whose Turn it is, or how it ended. */
 const stageLine = (game: GameSnapshot) => {

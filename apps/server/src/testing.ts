@@ -88,6 +88,8 @@ export interface TestServer {
    * Player has one tab open, and `browsers` can open more, or open one again after it closes.
    */
   ongoingGame: () => Promise<{ host: Connection; joiner: Connection; browsers: { host: Player; joiner: Player } }>;
+  /** Opens `/debug/games` as a browser does, and returns the body as it was sent and as JSON. */
+  debugGames: () => Promise<{ body: string; games: any[] }>;
   close: () => Promise<void>;
 }
 
@@ -219,13 +221,20 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     return { host, ai };
   };
 
+  const debugGames = async () => {
+    const response = await fetch(`${url}/debug/games`);
+    if (!response.ok) throw new Error(`/debug/games answered ${response.status}`);
+    const body = await response.text();
+    return { body, games: JSON.parse(body) };
+  };
+
   const close = async () => {
     await Promise.all(aiClosers.map((closeAi) => closeAi()));
     sockets.forEach((socket) => socket.disconnect());
     await server.io.close();
   };
 
-  return { url, createPlayer, connectAi, aiGame, playerWithNoGame, hostInLobby, ongoingGame, close };
+  return { url, createPlayer, connectAi, aiGame, playerWithNoGame, hostInLobby, ongoingGame, debugGames, close };
 };
 
 /**

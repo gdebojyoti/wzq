@@ -14,25 +14,33 @@ import {
 } from "@wzq/shared";
 
 import type { GameNotifier } from "./game-notifier.js";
-import { isActive, type Game, type GameStore } from "./game-store.js";
+import { isActive, type Game, type GameStore, type PlayerKind } from "./game-store.js";
 
 export type CommandResult = { ok: true; game: Game } | { ok: false; reason: RejectionReason };
 
 /** Returns a random whole number from 0 up to, but not including, `max`. */
 export type RandomInt = (max: number) => number;
 
+/** Says what time it is now. */
+export type Clock = () => Date;
+
 export const createGameService = (
   store: GameStore,
   notifier: GameNotifier,
   randomInt: RandomInt = cryptoRandomInt,
+  now: Clock = () => new Date(),
 ) => {
   const oneAtATime = createQueue();
 
   // Published before the command returns, so each Player is sent the change before the reply to their command.
-  const save = async (game: Game) => {
-    await store.save(game);
-    notifier.publish(game);
+  const save = async (game: Game, savedAt = timestamp()): Promise<Game> => {
+    const saved: Game = { ...game, updatedAt: savedAt };
+    await store.save(saved);
+    notifier.publish(saved);
+    return saved;
   };
+
+  const timestamp = () => now().toISOString();
 
   const newGameCode = async (): Promise<string> => {
     for (;;) {
@@ -41,29 +49,31 @@ export const createGameService = (
     }
   };
 
-  const createGame = oneAtATime(async (playerId: string): Promise<CommandResult> => {
+  const createGame = oneAtATime(async (playerId: string, kind: PlayerKind): Promise<CommandResult> => {
     if (await store.findActiveGameByPlayer(playerId)) return { ok: false, reason: "alreadyInActiveGame" };
+    const createdAt = timestamp();
     const game: Game = {
       id: randomUUID(),
       gameCode: await newGameCode(),
       state: "lobby",
       hostId: playerId,
+      hostKind: kind,
       joinerId: null,
+      joinerKind: null,
       turns: [],
+      createdAt,
+      updatedAt: createdAt,
     };
-    await save(game);
-    return { ok: true, game };
+    return { ok: true, game: await save(game, createdAt) };
   });
 
   /** Joins the Game in the lobby with this Game code, which starts it and retires the Game code. */
-  const joinGame = oneAtATime(async (playerId: string, gameCode: string): Promise<CommandResult> => {
+  const joinGame = oneAtATime(async (playerId: string, kind: PlayerKind, gameCode: string): Promise<CommandResult> => {
     // This also stops the Host joining their own Game.
     if (await store.findActiveGameByPlayer(playerId)) return { ok: false, reason: "alreadyInActiveGame" };
     const game = await store.findLobbyGameByCode(gameCode);
     if (!game) return { ok: false, reason: "gameCodeNotFound" };
-    const started: Game = { ...game, state: "ongoing", joinerId: playerId };
-    await save(started);
-    return { ok: true, game: started };
+    return { ok: true, game: await save({ ...game, state: "ongoing", joinerId: playerId, joinerKind: kind }) };
   });
 
   /** Leave game: ends the Player's active Game as abandoned, with no winner. */
@@ -72,9 +82,7 @@ export const createGameService = (
     const game = await store.findLastGameByPlayer(playerId);
     if (!game) return { ok: false, reason: "gameNotFound" };
     if (!isActive(game)) return { ok: false, reason: "gameNotOngoing" };
-    const abandoned: Game = { ...game, state: "abandoned", leaverId: playerId };
-    await save(abandoned);
-    return { ok: true, game: abandoned };
+    return { ok: true, game: await save({ ...game, state: "abandoned", leaverId: playerId }) };
   });
 
   /**
@@ -84,9 +92,7 @@ export const createGameService = (
   const leaveLobby = oneAtATime(async (playerId: string): Promise<CommandResult> => {
     const game = await store.findActiveGameByPlayer(playerId);
     if (game?.state !== "lobby") return { ok: false, reason: "gameNotFound" };
-    const abandoned: Game = { ...game, state: "abandoned", leaverId: playerId };
-    await save(abandoned);
-    return { ok: true, game: abandoned };
+    return { ok: true, game: await save({ ...game, state: "abandoned", leaverId: playerId }) };
   });
 
   /** Takes the Player's Turn by placing their Stone on the Cell. */
@@ -104,15 +110,16 @@ export const createGameService = (
     const played: Game = winningLine
       ? { ...game, turns, state: "won", winnerId: playerId, winningLine }
       : { ...game, turns, state: isDraw(turns) ? "draw" : "ongoing" };
-    await save(played);
-    return { ok: true, game: played };
+    return { ok: true, game: await save(played) };
   });
 
   const findActiveGame = oneAtATime((playerId: string) => store.findActiveGameByPlayer(playerId));
 
   const findLastGame = oneAtATime((playerId: string) => store.findLastGameByPlayer(playerId));
 
-  return { createGame, joinGame, leaveGame, leaveLobby, takeTurn, findActiveGame, findLastGame };
+  const findNewestGames = oneAtATime((limit: number) => store.findNewestGames(limit));
+
+  return { createGame, joinGame, leaveGame, leaveLobby, takeTurn, findActiveGame, findLastGame, findNewestGames };
 };
 
 export type GameService = ReturnType<typeof createGameService>;

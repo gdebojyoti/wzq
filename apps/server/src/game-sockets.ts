@@ -37,13 +37,13 @@ export const handleGameSockets = (
       ack({ ok: true, game: snapshotFor(result.game, playerId) });
     };
 
-    socket.on("createGame", async (ack) => enterGame(await gameService.createGame(playerId), ack));
+    socket.on("createGame", async (ack) => enterGame(await gameService.createGame(playerId, "browser"), ack));
     socket.on("joinGame", async (gameCode, ack) => {
       // The check in server.ts only looks at the last argument, so a command sent with no Game code arrives
       // here with its callback as the Game code, and nothing to reply to.
       if (typeof ack !== "function") return;
       if (typeof gameCode !== "string") return ack({ ok: false, reason: "gameCodeNotFound" });
-      enterGame(await gameService.joinGame(playerId, gameCode), ack);
+      enterGame(await gameService.joinGame(playerId, "browser", gameCode), ack);
     });
 
     socket.on("leaveGame", async (ack) => {

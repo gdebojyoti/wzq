@@ -4,8 +4,9 @@ import express from "express";
 import { Server } from "socket.io";
 
 import type { Config } from "./config.js";
+import { handleDebugGames } from "./debug-games.js";
 import { createGameNotifier } from "./game-notifier.js";
-import { createGameService, type RandomInt } from "./game-service.js";
+import { createGameService, type Clock, type RandomInt } from "./game-service.js";
 import { handleGameSockets, type GameIo } from "./game-sockets.js";
 import { createMemoryGameStore } from "./game-store.js";
 import { identifyPlayers } from "./identity.js";
@@ -20,6 +21,8 @@ export interface GameServer {
 export interface GameServerOptions {
   /** Picks Game codes. Tests replace it to make codes predictable. */
   randomInt?: RandomInt;
+  /** Says when each Game is created and saved. Tests replace it to make the times predictable. */
+  now?: Clock;
   /** How long, in milliseconds, an AI Player's `wait_for_turn` waits before saying to call it again. */
   waitForTurnTimeout?: number;
   /** How long, in milliseconds, an MCP session can go without a request open before the server closes it. */
@@ -46,8 +49,9 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
     socket.on("ping", (ack) => ack("pong"));
   });
   const notifier = createGameNotifier();
-  const gameService = createGameService(createMemoryGameStore(), notifier, options.randomInt);
+  const gameService = createGameService(createMemoryGameStore(), notifier, options.randomInt, options.now);
   const presence = createPresence(gameService, notifier);
+  handleDebugGames(app, gameService, presence);
   handleGameSockets(io, gameService, notifier, presence);
   handleGameMcp(app, gameService, notifier, presence, {
     waitForTurn: options.waitForTurnTimeout ?? 30_000,
