@@ -133,7 +133,7 @@ const createAiPlayer = (
         `playing so they can join it on the web app. ${guide}`,
     },
     async () => {
-      const result = await gameService.createGame(playerId);
+      const result = await gameService.createGame(playerId, "ai");
       if (!result.ok) return refusal(result.reason);
       const created = `You created a Game. Tell the Player you're playing to open ${webAppUrl}, choose to join a ` +
         `Game, and enter the Game code ${result.game.gameCode}. You're the Host, so you go first once they've ` +
@@ -154,7 +154,7 @@ const createAiPlayer = (
     },
     async ({ gameCode }) => {
       const joined = "You joined the Game. The Host goes first: call wait_for_turn to wait for their Turn.";
-      return answer(await gameService.joinGame(playerId, gameCode.trim()), joined);
+      return answer(await gameService.joinGame(playerId, "ai", gameCode.trim()), joined);
     },
   );
 
