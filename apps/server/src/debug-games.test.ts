@@ -32,6 +32,8 @@ describe("the debug list of Games", () => {
       result: null,
       board: Array(16).fill(expect.stringMatching(/^ ?\d+( {2}\.){16}$/)),
     }]);
+    // The Turns can be a long list, so they come after everything else.
+    expect(Object.keys(games[0]).at(-1)).toBe("turns");
   });
 
   it("shows an ongoing Game's Turns and Board by Host and Joiner, and no Game code", async () => {

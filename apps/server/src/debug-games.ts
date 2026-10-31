@@ -43,11 +43,11 @@ interface DebugGame {
   host: DebugPlayer;
   /** Null until someone joins. */
   joiner: DebugPlayer | null;
-  turns: Array<Cell & { role: Role }>;
   /** How the Game ended, once it has; otherwise null, as it is for a Game abandoned in the Lobby. */
   result: DebugResult | null;
   /** The Board as text, one string per row: `H` for the Host's Stones, `J` for the Joiner's, `.` for an empty Cell. */
   board: string[];
+  turns: Array<Cell & { role: Role }>;
 }
 
 const toDebugGame = (game: Game, isConnected: (playerId: string) => boolean): DebugGame => {
@@ -65,9 +65,10 @@ const toDebugGame = (game: Game, isConnected: (playerId: string) => boolean): De
     updatedAt: game.updatedAt,
     host: player(game.hostId, game.hostKind),
     joiner: game.joinerId === null ? null : player(game.joinerId, game.joinerKind),
-    turns,
     result: resultOf(game),
     board: boardRows((cell) => marks[roles.get(cellKey(cell)) ?? "empty"]),
+    // Last, as the list can be long, and the rest is easier to read above it.
+    turns,
   };
 };
 
