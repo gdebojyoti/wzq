@@ -1,7 +1,7 @@
 // How a Game looks to one of its Players, whichever way they're connected.
 import { isPlayersTurn, type GameResult, type GameSnapshot, type Side } from "@wzq/shared";
 
-import type { Game } from "./game-store.js";
+import { resultOf, type Game } from "./game-store.js";
 
 /** The IDs of the Game's Players: just the Host until someone joins. */
 export const playerIdsOf = (game: Game) => (game.joinerId === null ? [game.hostId] : [game.hostId, game.joinerId]);
@@ -33,16 +33,8 @@ export const toSnapshot = (
 
 /** How the Game ended, as this Player sees it, or null if it hasn't. */
 const resultFor = (game: Game, playerId: string): GameResult | null => {
-  switch (game.state) {
-    case "won":
-      return { outcome: game.winnerId === playerId ? "won" : "lost", winningLine: game.winningLine };
-    case "draw":
-      return { outcome: "draw" };
-    case "abandoned":
-      // A Game abandoned in the lobby never started, so it has no result to show.
-      if (game.joinerId === null) return null;
-      return { outcome: "abandoned", leaver: game.leaverId === playerId ? "you" : "opponent" };
-    default:
-      return null;
-  }
+  const result = resultOf(game, (id): Side => (id === playerId ? "you" : "opponent"));
+  if (result?.outcome !== "won") return result;
+  // A snapshot says whether the viewer won or lost, rather than who won.
+  return { outcome: result.winner === "you" ? "won" : "lost", winningLine: result.winningLine };
 };

@@ -16,6 +16,7 @@ import {
   type ServerToClientEvents,
 } from "@wzq/shared";
 
+import type { DebugGame } from "./debug-games.js";
 import { playerIdCookieName } from "./identity.js";
 import { createGameServer, type GameServerOptions } from "./server.js";
 
@@ -89,7 +90,7 @@ export interface TestServer {
    */
   ongoingGame: () => Promise<{ host: Connection; joiner: Connection; browsers: { host: Player; joiner: Player } }>;
   /** Opens `/debug/games` as a browser does, and returns the body as it was sent and as JSON. */
-  debugGames: () => Promise<{ body: string; games: any[] }>;
+  debugGames: () => Promise<{ body: string; games: DebugGame[] }>;
   close: () => Promise<void>;
 }
 

@@ -4,7 +4,7 @@ import type { Express } from "express";
 import { cellKey, isPlayersTurn, type Cell, type GameState } from "@wzq/shared";
 
 import type { GameService } from "./game-service.js";
-import type { Game, PlayerKind } from "./game-store.js";
+import { resultOf, type Game, type PlayerKind, type Result } from "./game-store.js";
 import { boardRows } from "./mcp/board-view.js";
 import type { Presence } from "./presence.js";
 
@@ -28,12 +28,7 @@ interface DebugPlayer {
   connected: boolean;
 }
 
-type DebugResult =
-  | { outcome: "won"; winner: Role; winningLine: Cell[] }
-  | { outcome: "draw" }
-  | { outcome: "abandoned"; leaver: Role };
-
-interface DebugGame {
+export interface DebugGame {
   id: string;
   state: GameState;
   /** The Game code with all but its first digits masked, while the Game is in the Lobby; otherwise null. */
@@ -44,7 +39,7 @@ interface DebugGame {
   /** Null until someone joins. */
   joiner: DebugPlayer | null;
   /** How the Game ended, once it has; otherwise null, as it is for a Game abandoned in the Lobby. */
-  result: DebugResult | null;
+  result: Result<Role> | null;
   /** The Board as text, one string per row: `H` for the Host's Stones, `J` for the Joiner's, `.` for an empty Cell. */
   board: string[];
   turns: Array<Cell & { role: Role }>;
@@ -65,7 +60,7 @@ const toDebugGame = (game: Game, isConnected: (playerId: string) => boolean): De
     updatedAt: game.updatedAt,
     host: player(game.hostId, game.hostKind),
     joiner: game.joinerId === null ? null : player(game.joinerId, game.joinerKind),
-    result: resultOf(game),
+    result: resultOf(game, (playerId): Role => (playerId === game.hostId ? "host" : "joiner")),
     board: boardRows((cell) => marks[roles.get(cellKey(cell)) ?? "empty"]),
     // Last, as the list can be long, and the rest is easier to read above it.
     turns,
@@ -73,23 +68,6 @@ const toDebugGame = (game: Game, isConnected: (playerId: string) => boolean): De
 };
 
 const marks = { host: "H", joiner: "J", empty: "." };
-
-/** How the Game ended, labelled by Host and Joiner, or null if it hasn't. */
-const resultOf = (game: Game): DebugResult | null => {
-  const roleOf = (playerId: string): Role => (playerId === game.hostId ? "host" : "joiner");
-  switch (game.state) {
-    case "won":
-      return { outcome: "won", winner: roleOf(game.winnerId), winningLine: game.winningLine };
-    case "draw":
-      return { outcome: "draw" };
-    case "abandoned":
-      // A Game abandoned in the Lobby never started, so it has no result to show.
-      if (game.joinerId === null) return null;
-      return { outcome: "abandoned", leaver: roleOf(game.leaverId) };
-    default:
-      return null;
-  }
-};
 
 /** Whose Turn it is once this many Turns have been taken. */
 const roleAfter = (turnsTaken: number): Role => (isPlayersTurn(true, turnsTaken) ? "host" : "joiner");

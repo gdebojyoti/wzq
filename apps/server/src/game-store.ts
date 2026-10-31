@@ -90,6 +90,31 @@ export const createMemoryGameStore = (): GameStore => {
 /** Whether the Game is in the lobby or ongoing, rather than ended. */
 export const isActive = (game: Game) => game.state === "lobby" || game.state === "ongoing";
 
+/**
+ * How a Game ended: who won and the winning line, a Draw, or who used Leave game. Each Player is named however the
+ * caller names them, such as by Side for a snapshot.
+ */
+export type Result<Name> =
+  | { outcome: "won"; winner: Name; winningLine: Cell[] }
+  | { outcome: "draw" }
+  | { outcome: "abandoned"; leaver: Name };
+
+/** How the Game ended, naming each Player with `nameOf`, or null if it hasn't. */
+export const resultOf = <Name>(game: Game, nameOf: (playerId: string) => Name): Result<Name> | null => {
+  switch (game.state) {
+    case "won":
+      return { outcome: "won", winner: nameOf(game.winnerId), winningLine: game.winningLine };
+    case "draw":
+      return { outcome: "draw" };
+    case "abandoned":
+      // A Game abandoned in the lobby never started, so it has no result to show.
+      if (game.joinerId === null) return null;
+      return { outcome: "abandoned", leaver: nameOf(game.leaverId) };
+    default:
+      return null;
+  }
+};
+
 const isPlayerIn = (game: Game, playerId: string) => game.hostId === playerId || game.joinerId === playerId;
 
 // Hands out copies, so changing a Game only takes effect once it's saved, as with a database.

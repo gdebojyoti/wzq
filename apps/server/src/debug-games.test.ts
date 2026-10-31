@@ -14,6 +14,13 @@ afterEach(async () => {
   await server.close();
 });
 
+/** The Game created last, as the debug list shows it. */
+const newestGame = async () => {
+  const [game] = (await server.debugGames()).games;
+  if (!game) throw new Error("The debug list has no Games");
+  return game;
+};
+
 describe("the debug list of Games", () => {
   it("shows a Game in the Lobby with its Host, its masked Game code and when it was created", async () => {
     const { gameCode } = await server.hostInLobby();
@@ -33,7 +40,7 @@ describe("the debug list of Games", () => {
       board: Array(16).fill(expect.stringMatching(/^ ?\d+( {2}\.){16}$/)),
     }]);
     // The Turns can be a long list, so they come after everything else.
-    expect(Object.keys(games[0]).at(-1)).toBe("turns");
+    expect(Object.keys(games[0] ?? {}).at(-1)).toBe("turns");
   });
 
   it("shows an ongoing Game's Turns and Board by Host and Joiner, and no Game code", async () => {
@@ -42,7 +49,7 @@ describe("the debug list of Games", () => {
     await joiner.takeTurn({ row: 2, column: 15 });
     await host.takeTurn({ row: 1, column: 1 });
 
-    const [game] = (await server.debugGames()).games;
+    const game = await newestGame();
 
     expect(game).toMatchObject({
       state: "ongoing",
@@ -82,19 +89,19 @@ describe("the debug list of Games", () => {
       expect(gameIds).toContain(uuid);
     }
     const [, newGame, oldGame] = games;
-    expect(newGame.host.label).toBe(hostId.slice(0, 6));
-    expect(oldGame.host.label).toBe(hostId.slice(0, 6));
-    expect(oldGame.joiner.label).toBe(joinerId.slice(0, 6));
+    expect(newGame?.host.label).toBe(hostId.slice(0, 6));
+    expect(oldGame?.host.label).toBe(hostId.slice(0, 6));
+    expect(oldGame?.joiner?.label).toBe(joinerId.slice(0, 6));
   });
 
   it("shows whether each Player is connected right now", async () => {
     const { joiner } = await server.ongoingGame();
     await joiner.close();
 
-    const [game] = (await server.debugGames()).games;
+    const game = await newestGame();
 
     expect(game.host.connected).toBe(true);
-    expect(game.joiner.connected).toBe(false);
+    expect(game.joiner?.connected).toBe(false);
   });
 
   it("shows an AI Player who hosted or joined through the MCP tools as an AI Player", async () => {
@@ -104,9 +111,9 @@ describe("the debug list of Games", () => {
 
     const [joinedByAi, hostedByAi] = (await server.debugGames()).games;
 
-    expect(joinedByAi.host.kind).toBe("browser");
-    expect(joinedByAi.joiner.kind).toBe("ai");
-    expect(hostedByAi.host.kind).toBe("ai");
+    expect(joinedByAi?.host.kind).toBe("browser");
+    expect(joinedByAi?.joiner?.kind).toBe("ai");
+    expect(hostedByAi?.host.kind).toBe("ai");
   });
 
   it("lists only the newest 100 Games, newest first", async () => {
@@ -120,7 +127,7 @@ describe("the debug list of Games", () => {
     const { games } = await server.debugGames();
 
     expect(games).toHaveLength(100);
-    expect(games[0].state).toBe("lobby");
+    expect(games[0]?.state).toBe("lobby");
     // The ongoing Game was created first, so it's the one left out.
     expect(games.slice(1).every((game) => game.state === "abandoned")).toBe(true);
     const createdAts = games.map((game) => game.createdAt);
@@ -137,7 +144,7 @@ describe("the result of a Game in the debug list", () => {
     }
     await host.takeTurn({ row: 0, column: 4 });
 
-    const [game] = (await server.debugGames()).games;
+    const game = await newestGame();
 
     const winningLine = [0, 1, 2, 3, 4].map((column) => ({ row: 0, column }));
     expect(game).toMatchObject({ state: "won", result: { outcome: "won", winner: "host", winningLine } });
@@ -147,7 +154,7 @@ describe("the result of a Game in the debug list", () => {
     const { joiner } = await server.ongoingGame();
     await joiner.leaveGame();
 
-    const [game] = (await server.debugGames()).games;
+    const game = await newestGame();
 
     expect(game).toMatchObject({
       state: "abandoned",
@@ -164,7 +171,7 @@ describe("the result of a Game in the debug list", () => {
       await joiner.takeTurn(cells.joiner[i]!);
     }
 
-    const [game] = (await server.debugGames()).games;
+    const game = await newestGame();
 
     expect(game).toMatchObject({ state: "draw", result: { outcome: "draw" } });
     expect(game.board.join("")).not.toContain(".");
@@ -174,14 +181,14 @@ describe("the result of a Game in the debug list", () => {
     const { host } = await server.hostInLobby();
     await host.leaveGame();
 
-    const [game] = (await server.debugGames()).games;
+    const game = await newestGame();
 
     expect(game).toMatchObject({ state: "abandoned", gameCode: null, joiner: null, result: null });
   });
 });
 
 describe("when a Game was last saved, in the debug list", () => {
-  const updatedAt = async () => (await server.debugGames()).games[0].updatedAt;
+  const updatedAt = async () => (await newestGame()).updatedAt;
 
   it("moves on with the join, every Turn and Leave game, while when it was created stays", async () => {
     const { host, gameCode } = await server.hostInLobby();
@@ -200,7 +207,7 @@ describe("when a Game was last saved, in the debug list", () => {
       "2026-01-01T00:00:02.000Z",
       "2026-01-01T00:00:03.000Z",
     ]);
-    expect((await server.debugGames()).games[0].createdAt).toBe("2026-01-01T00:00:00.000Z");
+    expect((await newestGame()).createdAt).toBe("2026-01-01T00:00:00.000Z");
   });
 
   it("moves on with the Turn that ends the Game", async () => {
