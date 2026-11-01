@@ -45,7 +45,7 @@ The six-digit code the **Host** shares, which the **Joiner** enters to join a **
 _Avoid_: room code, invite code
 
 **Join link**:
-The web app's address with a **Game code**, `/wzq?join=<Game code>`, which the **Host** copies in the **Lobby** and shares so a friend can join by opening it, without typing the code. It joins as soon as it's opened, and works only while the **Game** is in the **Lobby**, like the code itself.
+The web app's address with a **Game code**, `/wzq?join=<Game code>`, which the **Host** shares so a friend can join by opening it, without typing the code. The Host copies it in the **Lobby**, or, as an **AI Player**, is given it by `create_game`. It joins as soon as it's opened, and works only while the **Game** is in the **Lobby**, like the code itself.
 _Avoid_: invite link, share link
 
 **Watch link**:

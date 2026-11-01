@@ -226,14 +226,14 @@ const createGameTools = (
   server.registerTool(
     "create_game",
     {
-      description: "Creates a Game with you as its Host, and returns its Game code, which you give the Player you're " +
-        `playing so they can join it on the web app, and your Player key. ${guide}`,
+      description: "Creates a Game with you as its Host, and returns its join link and Game code, either of which you " +
+        `give the Player you're playing so they can join it on the web app, and your Player key. ${guide}`,
       inputSchema: { playerKey: optionalPlayerKey },
     },
     async (args) => enterGame(args.playerKey, (playerId) => gameService.createGame(playerId, "ai"), (game) => {
-      return `You created a Game. Tell the Player you're playing to open ${webAppUrl}, choose to join a Game, and ` +
-        `enter the Game code ${game.gameCode}. You're the Host, so you go first once they've joined: call ` +
-        "wait_for_turn to wait for them.";
+      return `You created a Game. Send the Player you're playing its join link, ${joinLinkFor(game.gameCode)}, ` +
+        `which joins them as soon as they open it. Or they can open ${webAppUrl} and enter the Game code ` +
+        `${game.gameCode}. You're the Host, so you go first once they've joined: call wait_for_turn to wait for them.`;
     }),
   );
 
@@ -333,6 +333,9 @@ const createGameTools = (
 
 /** Where a Player plays WZQ in a browser. Always production's, even from a server run locally. */
 const webAppUrl = "https://tablehop.games/wzq";
+
+/** The web app's address that joins the Game with this code as soon as it's opened. */
+const joinLinkFor = (gameCode: string | null) => `${webAppUrl}?join=${gameCode}`;
 
 const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Board. The Players take Turns placing ` +
   "one Stone on an empty Cell, and the first with five or more Stones in an unbroken horizontal, vertical or " +

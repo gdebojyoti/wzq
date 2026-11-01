@@ -166,13 +166,14 @@ describe("an AI Player joining a Game", () => {
 });
 
 describe("an AI Player hosting a Game", () => {
-  it("creates a Game in the Lobby, and tells the AI the web app's address and the Game code", async () => {
+  it("creates a Game in the Lobby, and tells the AI its join link and Game code", async () => {
     const ai = await server.connectAi();
 
     const reply = await ai.createGame();
 
     expect(reply.isError).toBe(false);
-    expect(reply.text).toContain("https://tablehop.games/wzq");
+    expect(reply.text).toContain(`https://tablehop.games/wzq?join=${gameCodeIn(reply)},`);
+    expect(reply.text).toContain("open https://tablehop.games/wzq and enter");
     expect(reply.text)
       .toContain(`The Game is in the Lobby, waiting for someone to join with Game code ${gameCodeIn(reply)}.`);
   });
