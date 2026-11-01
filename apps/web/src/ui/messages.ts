@@ -42,6 +42,7 @@ export const startMessages = {
   gameCodePlaceholder: "000000",
   joinGame: "Join",
   invalidJoinLink: "That join link isn't valid. Check it with your friend.",
+  joinLinkNoReply: "The connection dropped before you could join. Try joining again.",
 };
 
 export const lobbyMessages = {

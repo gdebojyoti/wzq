@@ -335,7 +335,7 @@ const createGameTools = (
 const webAppUrl = "https://tablehop.games/wzq";
 
 /** The web app's address that joins the Game with this code as soon as it's opened. */
-const joinLinkFor = (gameCode: string | null) => `${webAppUrl}?join=${gameCode}`;
+const joinLinkFor = (gameCode: string) => `${webAppUrl}?join=${gameCode}`;
 
 const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Board. The Players take Turns placing ` +
   "one Stone on an empty Cell, and the first with five or more Stones in an unbroken horizontal, vertical or " +

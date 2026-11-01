@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { gameCodeLength, type Acknowledgement, type Cell, type GameSnapshot, type SpectatorSnapshot } from "@wzq/shared";
+import { gameCodeLength } from "@wzq/shared";
+import type { Acknowledgement, Cell, GameSnapshot, SpectatorSnapshot } from "@wzq/shared";
 import { gameCodeInAddress, isGameCode, removeJoinLinkFromAddress } from "./joinLink";
 import { rejectionMessages, startMessages } from "./messages";
 import { connectToServer, type GameSocket } from "./socket";
@@ -75,11 +76,13 @@ export const useGameServer = () => {
         removeWatchLinkFromAddress();
         if (isGameCode(gameCode)) {
           const gamesBefore = gamesReceived;
-          const reply = await socket.emitWithAck("joinGame", gameCode);
-          if (reply.ok) return setGame(reply.game);
+          // No reply if the connection drops first. If the server joined the Game anyway, it sends it when the
+          // connection comes back.
+          const reply = await socket.emitWithAck("joinGame", gameCode).catch(() => undefined);
+          if (reply?.ok) return setGame(reply.game);
           // A Game of the Player's own arrived meanwhile, such as one they started in another tab.
           if (gamesReceived !== gamesBefore) return;
-          setError(rejectionMessages[reply.reason]);
+          setError(reply ? rejectionMessages[reply.reason] : startMessages.joinLinkNoReply);
         } else setError(startMessages.invalidJoinLink);
         setGameCodeFromLink(gameCode.replace(/\D/g, "").slice(0, gameCodeLength));
         return setGame(null);
