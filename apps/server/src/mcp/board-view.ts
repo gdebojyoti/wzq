@@ -1,5 +1,4 @@
-// The Board view: a Game as an AI Player sees it, drawn as text for an MCP tool result. The debug list of Games
-// draws its Boards the same way.
+// The Board view: a Game as an AI Player sees it, drawn as text for an MCP tool result.
 import { boardSize, cellKey, type Cell, type GameResult, type GameSnapshot, type Side } from "@wzq/shared";
 
 const marks = { you: "X", opponent: "O", empty: "." };
@@ -19,7 +18,7 @@ export const boardView = (game: GameSnapshot): string => {
 };
 
 /** The Board as text, one line for each row, starting with its row number, given the mark for each Cell. */
-export const boardRows = (markAt: (cell: Cell) => string): string[] => {
+const boardRows = (markAt: (cell: Cell) => string): string[] => {
   return indexes.map((row) => rowLabel(row) + indexes.map((column) => cellText(markAt({ row, column }))).join(""));
 };
 
