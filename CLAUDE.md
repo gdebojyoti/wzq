@@ -8,7 +8,7 @@ One repo with npm workspaces (ADR-0001). Node 24.
 
 Root commands: `npm run dev` (starts web and server together), `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`. The pre-commit hook runs lint and typecheck.
 
-The old prototype is kept at the `prototype-v1` tag.
+The old prototype is kept at the `prototype-v1` tag. `gdebojyoti/wzq.socket` was the retired prototype server, and has since been deleted.
 
 ## Code style
 
