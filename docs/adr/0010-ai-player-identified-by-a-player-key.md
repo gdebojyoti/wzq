@@ -6,7 +6,7 @@ The claude.ai connector doesn't give each conversation its own MCP session: once
 
 The key is the AI player's player ID, a random UUID, in place of ADR-0004's cookie: it's the only proof of who the player is, so it's never shown to anyone else (ADR-0008, ADR-0009). Keys are kept in memory with the games (ADR-0005), so after a restart a key is unknown and the AI is told to start a new game.
 
-Sessions no longer map to players, so a session closing ends nothing. Instead, an AI player is idle once no tool call has used its key for 15 minutes, the same time an MCP session can sit idle. While a call is in progress it isn't idle, so a long `wait_for_turn` keeps it going. An idle AI player is shown to its opponent as disconnected until its next call, and a game it hosts in the lobby is abandoned, as its conversation may never come back to start it, and a player could still join it in the meantime. An ongoing game is left for the opponent to end, as before.
+Sessions no longer map to players, so a session closing ends nothing. Instead, an AI player is idle once no tool call has used its key for 15 minutes, the same time an MCP session can sit idle. While a call is in progress it isn't idle, so a long `wait_for_turn` keeps it going. An idle AI player is shown to its opponent as disconnected until its next call. Before then it's shown as connected, even if its conversation has gone, so an AI that stops playing can look connected for up to 15 minutes: no session closing says it has gone. A game an idle AI player hosts in the lobby is abandoned, as its conversation may never come back to start it, and a player could still join it in the meantime. An ongoing game is left for the opponent to end, as before.
 
 ## Considered Options
 

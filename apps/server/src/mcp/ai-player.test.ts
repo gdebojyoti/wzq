@@ -263,7 +263,8 @@ describe("an AI Player hosting a Game", () => {
 
   it("keeps the Game in the Lobby while the AI's calls keep using its key, from whichever MCP session", async () => {
     await server.close();
-    server = await startServer({ aiPlayerIdleTimeout: 200, waitForTurnTimeout: 150 });
+    // Two waits, longer together than the idle time, with short gaps between them.
+    server = await startServer({ aiPlayerIdleTimeout: 400, waitForTurnTimeout: 300 });
     const ai = await server.connectAi();
     const gameCode = gameCodeIn(await ai.createGame());
 
