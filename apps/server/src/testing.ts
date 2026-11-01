@@ -59,7 +59,10 @@ export interface ToolResult {
   isError: boolean;
 }
 
-/** An AI client connected to `/mcp` through the MCP SDK: one MCP session, so one Player. */
+/**
+ * An AI client's conversation, connected to `/mcp` through the MCP SDK. It keeps the player key that `create_game` or
+ * `join_game` gives it, and passes it to every later tool call, as the tools tell it to.
+ */
 export interface AiPlayer {
   /** The description of each tool the server lists, by name. */
   toolDescriptions: () => Promise<Record<string, string>>;
@@ -68,18 +71,33 @@ export interface AiPlayer {
   waitForTurn: () => Promise<ToolResult>;
   takeTurn: (cell: Cell) => Promise<ToolResult>;
   leaveGame: () => Promise<ToolResult>;
-  /** Calls a tool with any arguments, unchecked by the tool's schema, as no well-behaved client would. */
+  /**
+   * Calls a tool with any arguments, unchecked by the tool's schema and with no player key added, as no well-behaved
+   * client would.
+   */
   callUnchecked: (tool: string, args: Record<string, unknown>) => Promise<ToolResult>;
-  /** Ends the MCP session, as a client does when its chat closes. */
+  /**
+   * A new conversation whose calls arrive on this one's MCP session, as the claude.ai connector sends a second
+   * conversation's calls on the first one's session.
+   */
+  sharingSession: () => AiPlayer;
+  /** Starts a new MCP session, and carries on the conversation on it with the same player key. */
+  moveToNewSession: () => Promise<void>;
+  /** Ends the conversation's MCP session, as a client does when it's done with it. */
   close: () => Promise<void>;
-  /** Goes away without ending the MCP session, as a client that quits or crashes does. */
-  drop: () => Promise<void>;
+}
+
+/** One MCP session, which any number of conversations can send their calls on. */
+interface McpSession {
+  client: Client;
+  call: (tool: string, args: Record<string, unknown>) => Promise<ToolResult>;
+  close: () => Promise<void>;
 }
 
 export interface TestServer {
   url: string;
   createPlayer: () => Player;
-  /** Starts an MCP session, as an AI client does when it's given the server's `/mcp` URL. */
+  /** Starts an MCP session and a conversation on it, as an AI client does when it's given the server's `/mcp` URL. */
   connectAi: () => Promise<AiPlayer>;
   /**
    * A new ongoing Game between a Host in a browser and an AI Player who joined it, with no Turns taken yet and
@@ -189,12 +207,12 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     return { host, joiner, browsers, gameId };
   };
 
-  const connectAi = async (): Promise<AiPlayer> => {
+  const startMcpSession = async (): Promise<McpSession> => {
     const client = new Client({ name: "wzq-test-ai", version: "1.0.0" });
     const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`));
     await client.connect(transport);
 
-    const callUnchecked = async (tool: string, args: Record<string, unknown> = {}): Promise<ToolResult> => {
+    const call = async (tool: string, args: Record<string, unknown>): Promise<ToolResult> => {
       const result = await client.callTool({ name: tool, arguments: args });
       const content = result.content as Array<{ type: string; text?: string }>;
       return { text: content.map((part) => part.text ?? "").join("\n"), isError: result.isError === true };
@@ -209,26 +227,44 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     };
     aiClosers.push(close);
 
-    const drop = async () => {
-      isOpen = false;
-      await client.close();
+    return { client, call, close };
+  };
+
+  const conversationOn = (firstSession: McpSession): AiPlayer => {
+    let session = firstSession;
+    let playerKey: string | undefined;
+
+    const call = (tool: string, args: Record<string, unknown> = {}) => {
+      return session.call(tool, playerKey === undefined ? args : { ...args, playerKey });
+    };
+
+    /** Calls `create_game` or `join_game`, and keeps the player key it gives. */
+    const start = async (tool: string, args: Record<string, unknown> = {}) => {
+      const reply = await call(tool, args);
+      playerKey ??= playerKeyIn(reply) || undefined;
+      return reply;
     };
 
     return {
       toolDescriptions: async () => {
-        const { tools } = await client.listTools();
+        const { tools } = await session.client.listTools();
         return Object.fromEntries(tools.map((tool) => [tool.name, tool.description ?? ""]));
       },
-      createGame: () => callUnchecked("create_game"),
-      joinGame: (gameCode) => callUnchecked("join_game", { gameCode }),
-      waitForTurn: () => callUnchecked("wait_for_turn"),
-      takeTurn: ({ row, column }) => callUnchecked("take_turn", { row, column }),
-      leaveGame: () => callUnchecked("leave_game"),
-      callUnchecked,
-      close,
-      drop,
+      createGame: () => start("create_game"),
+      joinGame: (gameCode) => start("join_game", { gameCode }),
+      waitForTurn: () => call("wait_for_turn"),
+      takeTurn: ({ row, column }) => call("take_turn", { row, column }),
+      leaveGame: () => call("leave_game"),
+      callUnchecked: (tool, args) => session.call(tool, args),
+      sharingSession: () => conversationOn(session),
+      moveToNewSession: async () => {
+        session = await startMcpSession();
+      },
+      close: () => session.close(),
     };
   };
+
+  const connectAi = async () => conversationOn(await startMcpSession());
 
   const aiGame = async () => {
     const { host, gameCode } = await hostInLobby();
@@ -257,6 +293,9 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
 
 /** The Game code in what `create_game` returned. */
 export const gameCodeIn = (reply: { text: string }) => /Game code (\d{6})/.exec(reply.text)?.[1] ?? "";
+
+/** The player key in what `create_game` or `join_game` returned. */
+export const playerKeyIn = (reply: { text: string }) => /player key is ([\w-]+)/.exec(reply.text)?.[1] ?? "";
 
 /**
  * Every Cell on the Board, shared between the Players with no five in a row: going along each row, two Cells
