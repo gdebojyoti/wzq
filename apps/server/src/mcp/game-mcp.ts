@@ -226,21 +226,25 @@ const createGameTools = (
   server.registerTool(
     "create_game",
     {
-      description: "Creates a Game with you as its Host, and returns its Game code, which you give the Player you're " +
-        `playing so they can join it on the web app, and your Player key. ${guide}`,
+      description: "Creates a Game with you as its Host, and returns its join link and Game code, either of which you " +
+        "give the Player you're playing so they can join it on the web app, its watch link, which you also give them " +
+        `to share with anyone who wants to watch, and your Player key. ${guide}`,
       inputSchema: { playerKey: optionalPlayerKey },
     },
     async (args) => enterGame(args.playerKey, (playerId) => gameService.createGame(playerId, "ai"), (game) => {
-      return `You created a Game. Tell the Player you're playing to open ${webAppUrl}, choose to join a Game, and ` +
-        `enter the Game code ${game.gameCode}. You're the Host, so you go first once they've joined: call ` +
-        "wait_for_turn to wait for them.";
+      return `You created a Game. Send the Player you're playing its join link, ${joinLinkFor(game.gameCode)}, ` +
+        `which joins them as soon as they open it. Or they can open ${webAppUrl} and enter the Game code ` +
+        `${game.gameCode}. Also send them its watch link, ${watchLinkFor(game.id)}, which they can share with ` +
+        "anyone who wants to watch. " +
+        "You're the Host, so you go first once they've joined: call wait_for_turn to wait for them.";
     }),
   );
 
   server.registerTool(
     "join_game",
     {
-      description: "Joins the Game with this Game code as the Joiner, which starts it, and returns the Board and your " +
+      description: "Joins the Game with this Game code as the Joiner, which starts it, and returns the Board, its " +
+        "watch link, which you give the Player you're playing to share with anyone who wants to watch, and your " +
         `Player key. ${guide}`,
       inputSchema: {
         gameCode: z.string({ error: "gameCode must be the six-digit Game code the Host gave you, as text" })
@@ -251,7 +255,9 @@ const createGameTools = (
     async (args) => enterGame(
       args.playerKey,
       (playerId) => gameService.joinGame(playerId, "ai", args.gameCode.trim()),
-      () => "You joined the Game. The Host goes first: call wait_for_turn to wait for their Turn.",
+      (game) => "You joined the Game. Send the Player you're playing its watch link, " +
+        `${watchLinkFor(game.id)}, which they can share with anyone who wants to watch. The Host goes first: call ` +
+        "wait_for_turn to wait for their Turn.",
     ),
   );
 
@@ -333,6 +339,12 @@ const createGameTools = (
 
 /** Where a Player plays WZQ in a browser. Always production's, even from a server run locally. */
 const webAppUrl = "https://tablehop.games/wzq";
+
+/** The web app's address that joins the Game with this code as soon as it's opened. */
+const joinLinkFor = (gameCode: string) => `${webAppUrl}?join=${gameCode}`;
+
+/** The web app's address that lets anyone with no active Game watch the Game with this ID as a Spectator. */
+const watchLinkFor = (gameId: string) => `${webAppUrl}?watch=${gameId}`;
 
 const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Board. The Players take Turns placing ` +
   "one Stone on an empty Cell, and the first with five or more Stones in an unbroken horizontal, vertical or " +

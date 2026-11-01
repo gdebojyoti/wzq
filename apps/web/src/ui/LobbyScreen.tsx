@@ -5,6 +5,7 @@ import Header from "./Header";
 import Icon from "./Icon";
 import Notice from "./Notice";
 import { lobbyMessages } from "./messages";
+import { joinLinkFor } from "./joinLink";
 import { watchLinkFor } from "./watchLink";
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
 }
 
 /** What the Host can copy to share the Game. */
-type Copyable = "code" | "watchLink";
+type Copyable = "joinLink" | "code" | "watchLink";
 
 // How long a copy button shows that it worked.
 const copiedFor = 2000;
@@ -59,8 +60,22 @@ export default function LobbyScreen({ game, disabled, error, notice, onLeaveGame
           ))}
         </div>
         <p className="m-0 text-[17px] leading-normal font-semibold text-pretty">{lobbyMessages.shareHint}</p>
-        <Button variant="primary" shadow="large" className="h-15 gap-3 text-lg" onClick={() => copy("code", gameCode)}>
-          <Icon name={copied === "code" ? "check" : "copy"} size={20} strokeWidth={2.8} />
+        <Button
+          variant="primary"
+          shadow="large"
+          className="h-15 gap-3 text-lg"
+          onClick={() => copy("joinLink", joinLinkFor(gameCode))}
+        >
+          <Icon name={copied === "joinLink" ? "check" : "copy"} size={20} strokeWidth={2.8} />
+          <span aria-live="polite">{copied === "joinLink" ? lobbyMessages.copied : lobbyMessages.copyJoinLink}</span>
+        </Button>
+        <Button
+          variant="secondary"
+          shadow="small"
+          className="h-12 gap-2.5 text-base"
+          onClick={() => copy("code", gameCode)}
+        >
+          <Icon name={copied === "code" ? "check" : "copy"} size={18} strokeWidth={2.8} />
           <span aria-live="polite">{copied === "code" ? lobbyMessages.copied : lobbyMessages.copyCode}</span>
         </Button>
         {gameId && (

@@ -44,8 +44,12 @@ _Avoid_: waiting room
 The six-digit code the **Host** shares, which the **Joiner** enters to join a **Game** in the **Lobby**.
 _Avoid_: room code, invite code
 
+**Join link**:
+The web app's address with a **Game code**, `/wzq?join=<Game code>`, which the **Host** shares so a friend can join by opening it, without typing the code. The Host copies it in the **Lobby**, or, as an **AI Player**, is given it by `create_game`. It joins as soon as it's opened, and works only while the **Game** is in the **Lobby**, like the code itself.
+_Avoid_: invite link, share link
+
 **Watch link**:
-The web app's address with a **Game's** ID, `/wzq?watch=<Game ID>`, which the **Host** copies in the **Lobby** and shares so others can watch as **Spectators**. It works from the **Lobby** until the server no longer has the **Game**, and only to watch: it can't be used to join.
+The web app's address with a **Game's** ID, `/wzq?watch=<Game ID>`, which the **Host** copies in the **Lobby**, and an **AI Player** is given by `create_game` or `join_game`, to share so others can watch as **Spectators**. It works from the **Lobby** until the server no longer has the **Game**, and only to watch: it can't be used to join.
 _Avoid_: spectate link, share link
 
 **Rejoin**:

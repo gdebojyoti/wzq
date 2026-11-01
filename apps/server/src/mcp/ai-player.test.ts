@@ -133,13 +133,14 @@ describe("an AI Player's Player key", () => {
 
 describe("an AI Player joining a Game", () => {
   it("starts the Game, and the Host sees it ongoing with the AI Player connected", async () => {
-    const { host, gameCode } = await server.hostInLobby();
+    const { host, gameCode, gameId } = await server.hostInLobby();
     const ai = await server.connectAi();
 
     const reply = await ai.joinGame(gameCode);
 
     expect(reply.isError).toBe(false);
     expect(reply.text).toContain("You joined the Game.");
+    expect(reply.text).toContain(`watch link, https://tablehop.games/wzq?watch=${gameId},`);
     expect(reply.text).toContain("It's your opponent's Turn.");
     expect(await host.nextMessage()).toMatchObject({
       event: "game",
@@ -166,13 +167,16 @@ describe("an AI Player joining a Game", () => {
 });
 
 describe("an AI Player hosting a Game", () => {
-  it("creates a Game in the Lobby, and tells the AI the web app's address and the Game code", async () => {
+  it("creates a Game in the Lobby, and tells the AI its join link, Game code and watch link", async () => {
     const ai = await server.connectAi();
 
     const reply = await ai.createGame();
 
     expect(reply.isError).toBe(false);
-    expect(reply.text).toContain("https://tablehop.games/wzq");
+    expect(reply.text).toContain(`https://tablehop.games/wzq?join=${gameCodeIn(reply)},`);
+    expect(reply.text).toContain("open https://tablehop.games/wzq and enter");
+    const [game] = (await server.debugGames()).games;
+    expect(reply.text).toContain(`watch link, https://tablehop.games/wzq?watch=${game?.id},`);
     expect(reply.text)
       .toContain(`The Game is in the Lobby, waiting for someone to join with Game code ${gameCodeIn(reply)}.`);
   });
