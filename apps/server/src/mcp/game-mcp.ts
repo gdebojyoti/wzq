@@ -21,6 +21,7 @@ export const handleGameMcp = (
   gameService: GameService,
   notifier: GameNotifier,
   presence: Presence,
+  webAppUrl: string,
   timeouts: McpTimeouts,
 ) => {
   const sessions = new Map<string, Session>();
@@ -54,7 +55,8 @@ export const handleGameMcp = (
     };
     // Tracked from the start, so a session whose initialization never finishes is closed too.
     newSession.track(res);
-    await createGameTools(aiPlayers, gameService, notifier, presence, timeouts.waitForTurn).connect(transport);
+    await createGameTools(aiPlayers, gameService, notifier, presence, webAppUrl, timeouts.waitForTurn)
+      .connect(transport);
     await transport.handleRequest(req, res, req.body);
   });
 };
@@ -180,6 +182,7 @@ const createGameTools = (
   gameService: GameService,
   notifier: GameNotifier,
   presence: Presence,
+  webAppUrl: string,
   waitForTurnTimeout: number,
 ) => {
   const server = new McpServer({ name: "wzq", version: "1.0.0" }, { instructions: guide });
@@ -232,10 +235,10 @@ const createGameTools = (
       inputSchema: { playerKey: optionalPlayerKey },
     },
     async (args) => enterGame(args.playerKey, (playerId) => gameService.createGame(playerId, "ai"), (game) => {
-      return `You created a Game. Send the Player you're playing its join link, ${joinLinkFor(game.gameCode)}, ` +
-        `which joins them as soon as they open it. Or they can open ${webAppUrl} and enter the Game code ` +
-        `${game.gameCode}. Also send them its watch link, ${watchLinkFor(game.id)}, which they can share with ` +
-        "anyone who wants to watch. " +
+      return "You created a Game. Send the Player you're playing its join link, " +
+        `${joinLinkFor(webAppUrl, game.gameCode)}, which joins them as soon as they open it. Or they can open ` +
+        `${webAppUrl} and enter the Game code ${game.gameCode}. Also send them its watch link, ` +
+        `${watchLinkFor(webAppUrl, game.id)}, which they can share with anyone who wants to watch. ` +
         "You're the Host, so you go first once they've joined: call wait_for_turn to wait for them.";
     }),
   );
@@ -256,8 +259,8 @@ const createGameTools = (
       args.playerKey,
       (playerId) => gameService.joinGame(playerId, "ai", args.gameCode.trim()),
       (game) => "You joined the Game. Send the Player you're playing its watch link, " +
-        `${watchLinkFor(game.id)}, which they can share with anyone who wants to watch. The Host goes first: call ` +
-        "wait_for_turn to wait for their Turn.",
+        `${watchLinkFor(webAppUrl, game.id)}, which they can share with anyone who wants to watch. The Host goes ` +
+        "first: call wait_for_turn to wait for their Turn.",
     ),
   );
 
@@ -337,14 +340,11 @@ const createGameTools = (
   return server;
 };
 
-/** Where a Player plays WZQ in a browser. Always production's, even from a server run locally. */
-const webAppUrl = "https://tablehop.games/wzq";
-
 /** The web app's address that joins the Game with this code as soon as it's opened. */
-const joinLinkFor = (gameCode: string) => `${webAppUrl}?join=${gameCode}`;
+const joinLinkFor = (webAppUrl: string, gameCode: string) => `${webAppUrl}?join=${gameCode}`;
 
 /** The web app's address that lets anyone with no active Game watch the Game with this ID as a Spectator. */
-const watchLinkFor = (gameId: string) => `${webAppUrl}?watch=${gameId}`;
+const watchLinkFor = (webAppUrl: string, gameId: string) => `${webAppUrl}?watch=${gameId}`;
 
 const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Board. The Players take Turns placing ` +
   "one Stone on an empty Cell, and the first with five or more Stones in an unbroken horizontal, vertical or " +

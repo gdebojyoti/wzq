@@ -6,12 +6,13 @@ import { createGameServer, type GameServer } from "./server.js";
 
 const webOrigin = "http://localhost:8081";
 const hostOrigin = "https://debojyotighosh.com";
+const webAppUrl = `${webOrigin}/wzq`;
 
 let server: GameServer;
 let url: string;
 
 beforeEach(async () => {
-  server = createGameServer({ port: 0, webOrigins: [webOrigin, hostOrigin] });
+  server = createGameServer({ port: 0, webOrigins: [webOrigin, hostOrigin], webAppUrl });
   await new Promise<void>((resolve) => server.httpServer.listen(0, resolve));
   const { port } = server.httpServer.address() as AddressInfo;
   url = `http://localhost:${port}`;
