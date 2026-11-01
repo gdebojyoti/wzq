@@ -1,5 +1,5 @@
-import { boardSize } from "@wzq/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { boardSize } from "@wzq/shared";
 
 import { drawnBoard, startServer, type TestServer } from "./testing.js";
 
