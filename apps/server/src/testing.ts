@@ -23,6 +23,8 @@ import { createGameServer, type GameServerOptions } from "./server.js";
 
 export const webOrigin = "http://localhost:8081";
 
+export const webAppUrl = `${webOrigin}/wzq`;
+
 /** What the server sent a connection, in the order it arrived. */
 type Message =
   | { event: "game"; game: GameSnapshot }
@@ -127,7 +129,7 @@ export interface TestServer {
 }
 
 export const startServer = async (options?: GameServerOptions): Promise<TestServer> => {
-  const server = createGameServer({ port: 0, webOrigins: [webOrigin] }, options);
+  const server = createGameServer({ port: 0, webOrigins: [webOrigin], webAppUrl }, options);
   await new Promise<void>((resolve) => server.httpServer.listen(0, resolve));
   const { port } = server.httpServer.address() as AddressInfo;
   const url = `http://localhost:${port}`;

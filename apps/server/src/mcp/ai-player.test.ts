@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { drawnBoard, gameCodeIn, playerKeyIn, startServer, type TestServer } from "../testing.js";
+import { drawnBoard, gameCodeIn, playerKeyIn, startServer, webAppUrl, type TestServer } from "../testing.js";
 
 let server: TestServer;
 
@@ -140,7 +140,7 @@ describe("an AI Player joining a Game", () => {
 
     expect(reply.isError).toBe(false);
     expect(reply.text).toContain("You joined the Game.");
-    expect(reply.text).toContain(`watch link, https://tablehop.games/wzq?watch=${gameId},`);
+    expect(reply.text).toContain(`watch link, ${webAppUrl}?watch=${gameId},`);
     expect(reply.text).toContain("It's your opponent's Turn.");
     expect(await host.nextMessage()).toMatchObject({
       event: "game",
@@ -173,10 +173,10 @@ describe("an AI Player hosting a Game", () => {
     const reply = await ai.createGame();
 
     expect(reply.isError).toBe(false);
-    expect(reply.text).toContain(`https://tablehop.games/wzq?join=${gameCodeIn(reply)},`);
-    expect(reply.text).toContain("open https://tablehop.games/wzq and enter");
+    expect(reply.text).toContain(`${webAppUrl}?join=${gameCodeIn(reply)},`);
+    expect(reply.text).toContain(`open ${webAppUrl} and enter`);
     const [game] = (await server.debugGames()).games;
-    expect(reply.text).toContain(`watch link, https://tablehop.games/wzq?watch=${game?.id},`);
+    expect(reply.text).toContain(`watch link, ${webAppUrl}?watch=${game?.id},`);
     expect(reply.text)
       .toContain(`The Game is in the Lobby, waiting for someone to join with Game code ${gameCodeIn(reply)}.`);
   });

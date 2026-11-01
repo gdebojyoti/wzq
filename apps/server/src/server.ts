@@ -58,7 +58,7 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
   const presence = createPresence(gameService, notifier);
   handleDebugGames(app, gameService, presence);
   handleGameSockets(io, gameService, notifier, presence);
-  handleGameMcp(app, gameService, notifier, presence, {
+  handleGameMcp(app, gameService, notifier, presence, config.webAppUrl, {
     waitForTurn: options.waitForTurnTimeout ?? 30_000,
     sessionIdle: options.sessionIdleTimeout ?? 15 * 60_000,
     // Long enough for a Game that stalls until the Player tells the AI to carry on (ADR-0007), as an idle AI Player's
