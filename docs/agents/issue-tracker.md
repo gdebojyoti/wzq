@@ -2,7 +2,7 @@
 
 Issues and specs for the whole WZQ project (web app, server and shared code, all in this repo) live as GitHub issues on **`gdebojyoti/wzq`**. Use the `gh` CLI for all operations.
 
-**Always pass `--repo gdebojyoti/wzq`** (`-R`) to every `gh issue` / `gh api` call. The retired prototype server repo `gdebojyoti/wzq.socket` gets no new issues unless the user explicitly asks for one.
+**Always pass `--repo gdebojyoti/wzq`** (`-R`) to every `gh issue` / `gh api` call.
 
 ## Conventions
 
