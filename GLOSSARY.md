@@ -49,7 +49,7 @@ The web app's address with a **Game code**, `/wzq?join=<Game code>`, which the *
 _Avoid_: invite link, share link
 
 **Watch link**:
-The web app's address with a **Game's** ID, `/wzq?watch=<Game ID>`, which the **Host** copies in the **Lobby** and shares so others can watch as **Spectators**. It works from the **Lobby** until the server no longer has the **Game**, and only to watch: it can't be used to join.
+The web app's address with a **Game's** ID, `/wzq?watch=<Game ID>`, which the **Host** copies in the **Lobby**, and an **AI Player** is given by `create_game` or `join_game`, to share so others can watch as **Spectators**. It works from the **Lobby** until the server no longer has the **Game**, and only to watch: it can't be used to join.
 _Avoid_: spectate link, share link
 
 **Rejoin**:
