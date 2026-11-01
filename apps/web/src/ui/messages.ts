@@ -25,6 +25,7 @@ export const noticeMessages: Record<Notice, string> = {
   gameGone: "That game no longer exists. Start a new one, or join a friend's.",
   watchUnavailable: "That game isn't available to watch. It may have been lost when the server restarted.",
   cantWatchWhilePlaying: "You can't watch a game while you're playing one, so here's yours.",
+  cantJoinWhilePlaying: "You're already in a game, so here's yours.",
 };
 
 export const commonMessages = {
@@ -40,11 +41,13 @@ export const startMessages = {
   gameCodeLabel: "Got a code? Join in",
   gameCodePlaceholder: "000000",
   joinGame: "Join",
+  invalidJoinLink: "That join link isn't valid. Check it with your friend.",
 };
 
 export const lobbyMessages = {
   gameCodeHeading: "Your game code",
-  shareHint: "Send this code to your friend. The game starts the moment they join.",
+  shareHint: "Send your friend the join link, or this code. The game starts the moment they join.",
+  copyJoinLink: "Copy join link",
   copyCode: "Copy code",
   copyWatchLink: "Copy watch link",
   copied: "Copied",

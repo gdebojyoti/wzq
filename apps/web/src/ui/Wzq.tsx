@@ -20,6 +20,7 @@ export default function Wzq() {
     error,
     notice,
     busy,
+    gameCodeFromLink,
     createGame,
     joinGame,
     leaveGame,
@@ -52,7 +53,14 @@ export default function Wzq() {
     if (watched) return <SpectatorScreen game={watched} onStopWatching={stopWatching} />;
     // No active Game, or one abandoned in the lobby.
     return (
-      <StartScreen disabled={busy} notice={noticeText} error={error} onNewGame={createGame} onJoinGame={joinGame} />
+      <StartScreen
+        disabled={busy}
+        notice={noticeText}
+        error={error}
+        initialGameCode={gameCodeFromLink}
+        onNewGame={createGame}
+        onJoinGame={joinGame}
+      />
     );
   };
 

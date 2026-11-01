@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { Acknowledgement, Cell, GameSnapshot, SpectatorSnapshot } from "@wzq/shared";
-import { rejectionMessages } from "./messages";
+import { gameCodeLength, type Acknowledgement, type Cell, type GameSnapshot, type SpectatorSnapshot } from "@wzq/shared";
+import { gameCodeInAddress, isGameCode, removeJoinLinkFromAddress } from "./joinLink";
+import { rejectionMessages, startMessages } from "./messages";
 import { connectToServer, type GameSocket } from "./socket";
 import { removeWatchLinkFromAddress, watchedGameIdInAddress } from "./watchLink";
 
@@ -8,9 +9,9 @@ export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 /**
  * Something that happened without the Player doing it, shown until they act again: their Game went away, the Game a
- * watch link points to isn't available, or they opened a watch link while playing.
+ * watch link points to isn't available, or they opened a watch link or a join link while playing.
  */
-export type Notice = "gameGone" | "watchUnavailable" | "cantWatchWhilePlaying";
+export type Notice = "gameGone" | "watchUnavailable" | "cantWatchWhilePlaying" | "cantJoinWhilePlaying";
 
 // The connection to the server, and the latest snapshot of the Player's Game, or of the Game they're watching as a
 // Spectator. The web app holds no game logic: it shows what the server last sent, and sends commands.
@@ -24,6 +25,8 @@ export const useGameServer = () => {
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<Notice>();
   const [busy, setBusy] = useState(false);
+  // The code from a join link that didn't work, filled in on the start screen so it can be fixed by hand.
+  const [gameCodeFromLink, setGameCodeFromLink] = useState("");
   // The Game on screen, for the socket's handlers, which are set up once.
   const shownGameRef = useRef(game);
   useEffect(() => {
@@ -51,6 +54,11 @@ export const useGameServer = () => {
         if (!askedToWatch) setNotice("cantWatchWhilePlaying");
         removeWatchLinkFromAddress();
       }
+      // A join link still in the address hasn't been used, as it's taken out before joining.
+      if (gameCodeInAddress() !== null) {
+        setNotice("cantJoinWhilePlaying");
+        removeJoinLinkFromAddress();
+      }
       setWatched(null);
       setGame(game);
     });
@@ -59,6 +67,23 @@ export const useGameServer = () => {
       // while this Player was away, or the server restarted.
       const shown = shownGameRef.current;
       if (shown?.state === "lobby" || shown?.state === "ongoing") setNotice("gameGone");
+      // A join link is used once, and goes before a watch link. The start screen waits for the reply, so it doesn't
+      // flash up before the Game.
+      const gameCode = gameCodeInAddress();
+      if (gameCode !== null) {
+        removeJoinLinkFromAddress();
+        removeWatchLinkFromAddress();
+        if (isGameCode(gameCode)) {
+          const gamesBefore = gamesReceived;
+          const reply = await socket.emitWithAck("joinGame", gameCode);
+          if (reply.ok) return setGame(reply.game);
+          // A Game of the Player's own arrived meanwhile, such as one they started in another tab.
+          if (gamesReceived !== gamesBefore) return;
+          setError(rejectionMessages[reply.reason]);
+        } else setError(startMessages.invalidJoinLink);
+        setGameCodeFromLink(gameCode.replace(/\D/g, "").slice(0, gameCodeLength));
+        return setGame(null);
+      }
       // Sent on every connection, so a Spectator watches again when theirs comes back.
       const gameId = watchedGameIdInAddress();
       if (!gameId) return setGame(null);
@@ -108,6 +133,7 @@ export const useGameServer = () => {
     setBusy(true);
     setError(undefined);
     setNotice(undefined);
+    setGameCodeFromLink("");
     try {
       const reply = await command(socket);
       if (!reply.ok) setError(rejectionMessages[reply.reason]);
@@ -156,6 +182,7 @@ export const useGameServer = () => {
     error,
     notice,
     busy,
+    gameCodeFromLink,
     createGame,
     joinGame,
     leaveGame,

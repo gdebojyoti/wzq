@@ -10,12 +10,14 @@ interface Props {
   /** Something that happened without the Player doing it, such as their Game going since they last saw it. */
   notice: string | undefined;
   error: string | undefined;
+  /** The code to fill in at first, from a join link that didn't work. */
+  initialGameCode: string;
   onNewGame: () => void;
   onJoinGame: (gameCode: string) => void;
 }
 
-export default function StartScreen({ disabled, notice, error, onNewGame, onJoinGame }: Props) {
-  const [gameCode, setGameCode] = useState("");
+export default function StartScreen({ disabled, notice, error, initialGameCode, onNewGame, onJoinGame }: Props) {
+  const [gameCode, setGameCode] = useState(initialGameCode);
 
   const joinGame = (event: FormEvent) => {
     event.preventDefault();
