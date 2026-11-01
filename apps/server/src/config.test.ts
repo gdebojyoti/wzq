@@ -12,7 +12,11 @@ describe("readConfig", () => {
       PORT: "10000",
       WEB_ORIGIN: "https://wzq.debojyotighosh.com",
       WEB_APP_URL: "https://tablehop.games/wzq",
-    })).toEqual({ port: 10000, webOrigins: ["https://wzq.debojyotighosh.com"], webAppUrl: "https://tablehop.games/wzq" });
+    })).toEqual({
+      port: 10000,
+      webOrigins: ["https://wzq.debojyotighosh.com"],
+      webAppUrl: "https://tablehop.games/wzq",
+    });
   });
 
   it("reads several web addresses separated by commas", () => {

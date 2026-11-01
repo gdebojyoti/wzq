@@ -235,10 +235,10 @@ const createGameTools = (
       inputSchema: { playerKey: optionalPlayerKey },
     },
     async (args) => enterGame(args.playerKey, (playerId) => gameService.createGame(playerId, "ai"), (game) => {
-      return `You created a Game. Send the Player you're playing its join link, ${joinLinkFor(webAppUrl, game.gameCode)}, ` +
-        `which joins them as soon as they open it. Or they can open ${webAppUrl} and enter the Game code ` +
-        `${game.gameCode}. Also send them its watch link, ${watchLinkFor(webAppUrl, game.id)}, which they can share with ` +
-        "anyone who wants to watch. " +
+      return "You created a Game. Send the Player you're playing its join link, " +
+        `${joinLinkFor(webAppUrl, game.gameCode)}, which joins them as soon as they open it. Or they can open ` +
+        `${webAppUrl} and enter the Game code ${game.gameCode}. Also send them its watch link, ` +
+        `${watchLinkFor(webAppUrl, game.id)}, which they can share with anyone who wants to watch. ` +
         "You're the Host, so you go first once they've joined: call wait_for_turn to wait for them.";
     }),
   );
@@ -259,8 +259,8 @@ const createGameTools = (
       args.playerKey,
       (playerId) => gameService.joinGame(playerId, "ai", args.gameCode.trim()),
       (game) => "You joined the Game. Send the Player you're playing its watch link, " +
-        `${watchLinkFor(webAppUrl, game.id)}, which they can share with anyone who wants to watch. The Host goes first: call ` +
-        "wait_for_turn to wait for their Turn.",
+        `${watchLinkFor(webAppUrl, game.id)}, which they can share with anyone who wants to watch. The Host goes ` +
+        "first: call wait_for_turn to wait for their Turn.",
     ),
   );
 
