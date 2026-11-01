@@ -29,7 +29,7 @@ describe("the tools an AI Player is given", () => {
   });
 });
 
-describe("an AI Player's player key", () => {
+describe("an AI Player's Player key", () => {
   it("is given by create_game and join_game, which say to pass it to every later call", async () => {
     const host = await server.connectAi();
     const created = await host.createGame();
@@ -95,8 +95,18 @@ describe("an AI Player's player key", () => {
   it.each(["wait_for_turn", "take_turn", "leave_game"])("is required by %s, which says how to get one", async (tool) => {
     const { ai } = await server.aiGame();
 
+    // Refused as other refusals are, not as bad arguments.
     expect(await ai.callUnchecked(tool, { row: 0, column: 0 }))
-      .toEqual({ isError: true, text: expect.stringContaining("playerKey is missing: pass the player key that") });
+      .toEqual({ isError: true, text: expect.stringMatching(/^playerKey is missing: pass the Player key that/) });
+  });
+
+  it("explains a Player key that isn't text", async () => {
+    const { ai } = await server.aiGame();
+
+    expect(await ai.callUnchecked("wait_for_turn", { playerKey: 42 })).toEqual({
+      isError: true,
+      text: expect.stringContaining("playerKey must be the Player key create_game or join_game gave you, as text"),
+    });
   });
 
   it.each(["wait_for_turn", "take_turn", "leave_game", "create_game", "join_game"])(
@@ -106,7 +116,7 @@ describe("an AI Player's player key", () => {
 
       const reply = await ai.callUnchecked(tool, { playerKey: "not-a-key", gameCode: "123456", row: 0, column: 0 });
 
-      expect(reply).toEqual({ isError: true, text: expect.stringContaining("That isn't a player key WZQ gave out") });
+      expect(reply).toEqual({ isError: true, text: expect.stringContaining("That isn't a Player key WZQ gave out") });
       expect(reply.text).toContain("call create_game or join_game without a playerKey");
     },
   );
@@ -227,7 +237,7 @@ describe("an AI Player hosting a Game", () => {
       .toEqual({ isError: true, text: expect.stringContaining("If no one has joined it yet, wait_for_turn waits") });
   });
 
-  it("ends the Game in the Lobby once no call has used the AI's player key for the idle time, so its Game code " +
+  it("ends the Game in the Lobby once no call has used the AI's Player key for the idle time, so its Game code " +
     "stops working", async () => {
     await server.close();
     server = await startServer({ aiPlayerIdleTimeout: 100 });
@@ -238,6 +248,17 @@ describe("an AI Player hosting a Game", () => {
 
     const joiner = await server.playerWithNoGame();
     expect(await joiner.joinGame(gameCode)).toEqual({ ok: false, reason: "gameCodeNotFound" });
+  });
+
+  it("leaves an ongoing Game for the opponent to end once the AI is idle", async () => {
+    await server.close();
+    server = await startServer({ aiPlayerIdleTimeout: 100 });
+    const { host, ai } = await server.aiGame();
+
+    expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: false } });
+
+    expect(await host.takeTurn({ row: 0, column: 0 })).toMatchObject({ ok: true });
+    expect((await ai.waitForTurn()).text).toContain("It's your Turn.");
   });
 
   it("keeps the Game in the Lobby while the AI's calls keep using its key, from whichever MCP session", async () => {
@@ -436,7 +457,7 @@ describe("waiting for a Turn", () => {
 });
 
 describe("the AI Player's presence", () => {
-  it("shows the AI as disconnected once no call has used its player key for the idle time, and connected again " +
+  it("shows the AI as disconnected once no call has used its Player key for the idle time, and connected again " +
     "when one does", async () => {
     await server.close();
     server = await startServer({ aiPlayerIdleTimeout: 200, waitForTurnTimeout: 300 });

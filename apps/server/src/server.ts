@@ -28,7 +28,7 @@ export interface GameServerOptions {
   /** How long, in milliseconds, an MCP session can go without a request open before the server closes it. */
   sessionIdleTimeout?: number;
   /**
-   * How long, in milliseconds, an AI Player can go without a tool call using its player key before it's shown as
+   * How long, in milliseconds, an AI Player can go without a tool call using its Player key before it's shown as
    * disconnected and a Game it hosts in the Lobby is abandoned.
    */
   aiPlayerIdleTimeout?: number;
@@ -61,8 +61,8 @@ export const createGameServer = (config: Config, options: GameServerOptions = {}
   handleGameMcp(app, gameService, notifier, presence, {
     waitForTurn: options.waitForTurnTimeout ?? 30_000,
     sessionIdle: options.sessionIdleTimeout ?? 15 * 60_000,
-    // Long enough for a Game that stalls until the Player tells the AI to carry on (ADR-0007), as a Game it hosts in
-    // the Lobby is abandoned once it's idle (ADR-0010).
+    // Long enough for a Game that stalls until the Player tells the AI to carry on (ADR-0007), as an idle AI Player's
+    // Game in the Lobby is abandoned (ADR-0010).
     aiPlayerIdle: options.aiPlayerIdleTimeout ?? 15 * 60_000,
   });
 

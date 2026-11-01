@@ -1,5 +1,5 @@
 ---
-status: partly superseded by ADR-0010, which identifies an AI player by a player key rather than by its MCP session
+status: partly superseded by ADR-0010
 ---
 
 # MCP endpoint in the game server

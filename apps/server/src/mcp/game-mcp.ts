@@ -1,5 +1,5 @@
 // The MCP layer (ADR-0007): serves `/mcp`, where AI Players join a Game and take their Turns through tools. Each AI
-// Player is known by the player key it holds in its conversation, whichever MCP session its calls arrive on (ADR-0010).
+// Player is known by the Player key it holds in its conversation, whichever MCP session its calls arrive on (ADR-0010).
 import { randomUUID } from "node:crypto";
 
 import express, { type Express } from "express";
@@ -61,7 +61,7 @@ export const handleGameMcp = (
 
 /**
  * How long, in milliseconds, an AI Player's `wait_for_turn` waits, how long a session can sit idle, and how long an AI
- * Player can go without a tool call using its player key.
+ * Player can go without a tool call using its Player key.
  */
 export interface McpTimeouts {
   waitForTurn: number;
@@ -120,13 +120,15 @@ const createSession = (transport: StreamableHTTPServerTransport, idleTimeout: nu
 type AiPlayers = ReturnType<typeof createAiPlayers>;
 
 /**
- * The AI Players, each known by the player key it was given, which is its player ID, in place of the cookie a browser
+ * The AI Players, each known by the Player key it was given, which is its player ID, in place of the cookie a browser
  * keeps (ADR-0004). One is connected while a tool call uses its key, and until `idleTimeout` after the last one ends.
+ * Keys are kept in memory for as long as the server runs, as Games are (ADR-0005), so a key works for as long as its
+ * Game is there.
  */
 const createAiPlayers = (gameService: GameService, presence: Presence, idleTimeout: number) => {
   const players = new Map<string, { idleTimer: IdleTimer; isConnected: boolean }>();
 
-  /** A new AI Player, who's connected from its first tool call. Returns its player key. */
+  /** A new AI Player, who's connected from its first tool call. Returns its Player key. */
   const add = () => {
     const playerKey = randomUUID();
     players.set(playerKey, { idleTimer: createIdleTimer(idleTimeout, () => goIdle(playerKey)), isConnected: false });
@@ -152,8 +154,9 @@ const createAiPlayers = (gameService: GameService, presence: Presence, idleTimeo
     gameService.leaveLobby(playerKey);
   };
 
-  /** Runs a tool call as the AI Player with this key, connected until the call ends, or refuses an unknown key. */
-  const actAs = async (playerKey: string, act: (playerId: string) => Promise<CallToolResult>) => {
+  /** Runs a tool call as the AI Player with this key, connected until the call ends, or refuses a missing or unknown key. */
+  const actAs = async (playerKey: string | undefined, act: (playerId: string) => Promise<CallToolResult>) => {
+    if (playerKey === undefined) return toolError(missingPlayerKey);
     const player = players.get(playerKey);
     if (!player) return toolError(unknownPlayerKey);
     const end = player.idleTimer.start();
@@ -199,7 +202,7 @@ const createGameTools = (
    * Creates or joins a Game as the AI Player with this key, or, when there's none, as a new AI Player given a key.
    * `note` says what happened.
    */
-  const start = async (
+  const enterGame = async (
     playerKey: string | undefined,
     command: (playerId: string) => Promise<CommandResult>,
     note: (game: Game) => string,
@@ -213,23 +216,21 @@ const createGameTools = (
         return refusal(result.reason);
       }
       const keyNote = isNew
-        ? `Your player key is ${key}. Pass it as playerKey to every tool you call from now on, exactly as given: ` +
+        ? `Your Player key is ${key}. Pass it as playerKey to every tool you call from now on, exactly as given: ` +
           "it's how WZQ knows you're you, and without it you can't carry on this Game."
         : "Keep passing the same playerKey to every tool you call.";
       return viewOf(playerId, result.game, note(result.game), keyNote);
     });
   };
 
-  const playerKey = z.string({ error: missingPlayerKey }).describe("The player key create_game or join_game gave you");
-
   server.registerTool(
     "create_game",
     {
       description: "Creates a Game with you as its Host, and returns its Game code, which you give the Player you're " +
-        `playing so they can join it on the web app, and your player key. ${guide}`,
+        `playing so they can join it on the web app, and your Player key. ${guide}`,
       inputSchema: { playerKey: optionalPlayerKey },
     },
-    async (args) => start(args.playerKey, (playerId) => gameService.createGame(playerId, "ai"), (game) => {
+    async (args) => enterGame(args.playerKey, (playerId) => gameService.createGame(playerId, "ai"), (game) => {
       return `You created a Game. Tell the Player you're playing to open ${webAppUrl}, choose to join a Game, and ` +
         `enter the Game code ${game.gameCode}. You're the Host, so you go first once they've joined: call ` +
         "wait_for_turn to wait for them.";
@@ -240,14 +241,14 @@ const createGameTools = (
     "join_game",
     {
       description: "Joins the Game with this Game code as the Joiner, which starts it, and returns the Board and your " +
-        `player key. ${guide}`,
+        `Player key. ${guide}`,
       inputSchema: {
         gameCode: z.string({ error: "gameCode must be the six-digit Game code the Host gave you, as text" })
           .describe("The six-digit Game code the Host gave you"),
         playerKey: optionalPlayerKey,
       },
     },
-    async (args) => start(
+    async (args) => enterGame(
       args.playerKey,
       (playerId) => gameService.joinGame(playerId, "ai", args.gameCode.trim()),
       () => "You joined the Game. The Host goes first: call wait_for_turn to wait for their Turn.",
@@ -259,7 +260,7 @@ const createGameTools = (
     {
       description: "Waits until it's your Turn or your Game has ended, then returns the Board. If that takes too " +
         `long, it returns saying you're still waiting: call it again. ${guide}`,
-      inputSchema: { playerKey },
+      inputSchema: { playerKey: requiredPlayerKey },
     },
     async (args, { signal }) => aiPlayers.actAs(args.playerKey, async (playerId) => {
       // Listening before looking, so a change made in between still wakes the wait.
@@ -299,7 +300,7 @@ const createGameTools = (
           .describe(`The Cell's row, from 0 at the top to ${boardSize - 1}`),
         column: z.number({ error: `column must be a whole number from 0 to ${boardSize - 1}` })
           .describe(`The Cell's column, from 0 at the left to ${boardSize - 1}`),
-        playerKey,
+        playerKey: requiredPlayerKey,
       },
     },
     async ({ row, column, ...args }) => aiPlayers.actAs(args.playerKey, async (playerId) => {
@@ -320,7 +321,7 @@ const createGameTools = (
     {
       description: "Leave game: ends your Game as abandoned, with no winner. Your opponent sees that you left. " +
         guide,
-      inputSchema: { playerKey },
+      inputSchema: { playerKey: requiredPlayerKey },
     },
     async (args) => aiPlayers.actAs(args.playerKey, async (playerId) => {
       return answer(playerId, await gameService.leaveGame(playerId), "You left the Game.");
@@ -339,23 +340,28 @@ const rules = `WZQ is Five in a row, played on a ${boardSize}×${boardSize} Boar
   "first, and the Joiner goes second.";
 
 const playLoop = "To play: call create_game to host a Game, or join_game with the Game code a Host gives you. " +
-  "Either gives you a player key: pass it as playerKey to every tool you call after that. Then call " +
+  "Either gives you a Player key: pass it as playerKey to every tool you call after that. Then call " +
   "wait_for_turn, then take_turn, then wait_for_turn again, and so on until the Game ends.";
 
 /** How to play, which every tool repeats, as some clients never show the model the server's instructions. */
 const guide = `${rules} ${playLoop}`;
 
-const optionalPlayerKey = z.string({ error: "playerKey must be the player key create_game or join_game gave you" })
-  .optional()
-  .describe("The player key create_game or join_game gave you, if you've been given one in this conversation, so " +
+const playerKeyType = z.string({ error: "playerKey must be the Player key create_game or join_game gave you, as text" });
+
+// Optional in the schema, so a missing one is refused with what to do next, as other refusals are, rather than as
+// bad arguments.
+const requiredPlayerKey = playerKeyType.optional().describe("Required: the Player key create_game or join_game gave you");
+
+const optionalPlayerKey = playerKeyType.optional()
+  .describe("The Player key create_game or join_game gave you, if you've been given one in this conversation, so " +
     "you stay the same Player. Leave it out to play as a new Player.");
 
-const missingPlayerKey = "playerKey is missing: pass the player key that create_game or join_game gave you, " +
+const missingPlayerKey = "playerKey is missing: pass the Player key that create_game or join_game gave you, " +
   "exactly as given. If you haven't been given one, call create_game to host a Game, or join_game with a Host's " +
   "Game code.";
 
-const unknownPlayerKey = "That isn't a player key WZQ gave out, or the server has restarted and forgotten it. Check " +
-  "you passed the player key that create_game or join_game gave you, exactly as given. If you did, your Game is " +
+const unknownPlayerKey = "That isn't a Player key WZQ gave out, or the server has restarted and forgotten it. Check " +
+  "you passed the Player key that create_game or join_game gave you, exactly as given. If you did, your Game is " +
   "gone: call create_game or join_game without a playerKey to play a new one.";
 
 /** What each refusal means to the AI, and what to do next. */

@@ -60,7 +60,7 @@ export interface ToolResult {
 }
 
 /**
- * An AI client's conversation, connected to `/mcp` through the MCP SDK. It keeps the player key that `create_game` or
+ * An AI client's conversation, connected to `/mcp` through the MCP SDK. It keeps the Player key that `create_game` or
  * `join_game` gives it, and passes it to every later tool call, as the tools tell it to.
  */
 export interface AiPlayer {
@@ -72,7 +72,7 @@ export interface AiPlayer {
   takeTurn: (cell: Cell) => Promise<ToolResult>;
   leaveGame: () => Promise<ToolResult>;
   /**
-   * Calls a tool with any arguments, unchecked by the tool's schema and with no player key added, as no well-behaved
+   * Calls a tool with any arguments, unchecked by the tool's schema and with no Player key added, as no well-behaved
    * client would.
    */
   callUnchecked: (tool: string, args: Record<string, unknown>) => Promise<ToolResult>;
@@ -81,7 +81,7 @@ export interface AiPlayer {
    * conversation's calls on the first one's session.
    */
   sharingSession: () => AiPlayer;
-  /** Starts a new MCP session, and carries on the conversation on it with the same player key. */
+  /** Starts a new MCP session, and carries on the conversation on it with the same Player key. */
   moveToNewSession: () => Promise<void>;
   /** Ends the conversation's MCP session, as a client does when it's done with it. */
   close: () => Promise<void>;
@@ -238,7 +238,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
       return session.call(tool, playerKey === undefined ? args : { ...args, playerKey });
     };
 
-    /** Calls `create_game` or `join_game`, and keeps the player key it gives. */
+    /** Calls `create_game` or `join_game`, and keeps the Player key it gives. */
     const start = async (tool: string, args: Record<string, unknown> = {}) => {
       const reply = await call(tool, args);
       playerKey ??= playerKeyIn(reply) || undefined;
@@ -294,8 +294,8 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
 /** The Game code in what `create_game` returned. */
 export const gameCodeIn = (reply: { text: string }) => /Game code (\d{6})/.exec(reply.text)?.[1] ?? "";
 
-/** The player key in what `create_game` or `join_game` returned. */
-export const playerKeyIn = (reply: { text: string }) => /player key is ([\w-]+)/.exec(reply.text)?.[1] ?? "";
+/** The Player key in what `create_game` or `join_game` returned. */
+export const playerKeyIn = (reply: { text: string }) => /Player key is ([\w-]+)/.exec(reply.text)?.[1] ?? "";
 
 /**
  * Every Cell on the Board, shared between the Players with no five in a row: going along each row, two Cells
