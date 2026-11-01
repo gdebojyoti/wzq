@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { boardSize } from "@wzq/shared";
 
 import { drawnBoard, startServer, type TestServer } from "./testing.js";
 
@@ -37,13 +38,12 @@ describe("the debug list of Games", () => {
       joiner: null,
       turns: [],
       result: null,
-      board: Array(16).fill(expect.stringMatching(/^ ?\d+( {2}\.){16}$/)),
     }]);
     // The Turns can be a long list, so they come after everything else.
     expect(Object.keys(games[0] ?? {}).at(-1)).toBe("turns");
   });
 
-  it("shows an ongoing Game's Turns and Board by Host and Joiner, and no Game code", async () => {
+  it("shows an ongoing Game's Turns by Host and Joiner, and no Game code", async () => {
     const { host, joiner } = await server.ongoingGame();
     await host.takeTurn({ row: 0, column: 0 });
     await joiner.takeTurn({ row: 2, column: 15 });
@@ -63,12 +63,6 @@ describe("the debug list of Games", () => {
       ],
       result: null,
     });
-    expect(game.board.slice(0, 4)).toEqual([
-      " 0  H  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .",
-      " 1  .  H  .  .  .  .  .  .  .  .  .  .  .  .  .  .",
-      " 2  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  J",
-      " 3  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .",
-    ]);
   });
 
   it("never shows a player ID, only the same 6-character label for a Player in every Game", async () => {
@@ -163,7 +157,7 @@ describe("the result of a Game in the debug list", () => {
     });
   });
 
-  it("shows a Draw, with every Cell of the Board filled", async () => {
+  it("shows a Draw, with a Turn for every Cell of the Board", async () => {
     const { host, joiner } = await server.ongoingGame();
     const cells = drawnBoard();
     for (let i = 0; i < cells.host.length; i++) {
@@ -174,7 +168,7 @@ describe("the result of a Game in the debug list", () => {
     const game = await newestGame();
 
     expect(game).toMatchObject({ state: "draw", result: { outcome: "draw" } });
-    expect(game.board.join("")).not.toContain(".");
+    expect(game.turns).toHaveLength(boardSize * boardSize);
   });
 
   it("shows no result for a Game abandoned in the Lobby", async () => {
