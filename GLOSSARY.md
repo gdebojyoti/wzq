@@ -19,8 +19,12 @@ The **Player** who joined a **Game** in the **Lobby** with its **Game code**. Th
 _Avoid_: guest, invitee, challenger, visitor
 
 **AI Player**:
-A **Player** who is an AI, taking its **Turns** through the game server's MCP tools rather than the web app. It can be the **Host** or the **Joiner**. Each MCP session is a new AI Player, so it can't **Rejoin**.
+A **Player** who is an AI, taking its **Turns** through the game server's MCP tools rather than the web app. It can be the **Host** or the **Joiner**. It's known by its **Player key**, so it can **Rejoin** from any MCP session by passing the key.
 _Avoid_: bot, computer, CPU
+
+**Player key**:
+What an **AI Player** is given when it creates or joins a **Game**, and passes to every later MCP tool call so the server knows which **Player** it is. It plays the part a browser's cookie plays for other **Players**, so it's never shown to anyone else.
+_Avoid_: token, session
 
 **Spectator**:
 Someone with no active **Game** who watches a **Game** through its **Watch link**, without being one of its **Players**. A Spectator sees the **Players** as the **Host** and the **Joiner**, can't take a **Turn** or use **Leave game**, and the **Players** aren't told they're watching.

@@ -1,3 +1,7 @@
+---
+status: partly superseded by ADR-0010
+---
+
 # MCP endpoint in the game server
 
 So a player can play against the AI of their choice, the game server also serves an MCP endpoint at `/mcp` (the official MCP TypeScript SDK over Streamable HTTP), which any AI client that can add a remote MCP server by URL, such as Claude or ChatGPT, connects to as a player. The player plays on the web app as usual, and the AI takes its turns through MCP tools. The endpoint runs in the same process as the Socket.IO layer, because games are held in memory (ADR-0005), and both are adapters over the same game service, so the rules are enforced in one place. Each MCP session is one player, with a random ID issued when the session starts, in place of ADR-0004's cookie. The AI can join a game the player created, or create one itself and tell the player its game code, and then, as the host, it goes first.

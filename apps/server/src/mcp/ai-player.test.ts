@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { drawnBoard, gameCodeIn, startServer, type AiPlayer, type TestServer } from "../testing.js";
+import { drawnBoard, gameCodeIn, playerKeyIn, startServer, type TestServer } from "../testing.js";
 
 let server: TestServer;
 
@@ -26,6 +26,108 @@ describe("the tools an AI Player is given", () => {
       expect(description).toContain("The Host, who created the Game, goes first");
       expect(description).toContain("call wait_for_turn, then take_turn, then wait_for_turn again");
     }
+  });
+});
+
+describe("an AI Player's Player key", () => {
+  it("is given by create_game and join_game, which say to pass it to every later call", async () => {
+    const host = await server.connectAi();
+    const created = await host.createGame();
+    const joiner = await server.connectAi();
+    const joined = await joiner.joinGame(gameCodeIn(created));
+
+    for (const reply of [created, joined]) {
+      expect(reply.isError).toBe(false);
+      expect(playerKeyIn(reply)).not.toBe("");
+      expect(reply.text).toContain("Pass it as playerKey to every tool you call from now on");
+    }
+    expect(playerKeyIn(created)).not.toBe(playerKeyIn(joined));
+  });
+
+  it("names the Player each call acts as, so two conversations on one MCP session can host and join a Game", async () => {
+    const host = await server.connectAi();
+    const joiner = host.sharingSession();
+    const gameCode = gameCodeIn(await host.createGame());
+
+    expect((await joiner.joinGame(gameCode)).isError).toBe(false);
+    expect((await host.waitForTurn()).text).toContain("It's your Turn.");
+    await host.takeTurn({ row: 7, column: 7 });
+    const view = await joiner.waitForTurn();
+
+    expect(view.text).toContain("The last Stone placed was your opponent's, at row 7, column 7.");
+    expect(view.text).toContain("It's your Turn.");
+  });
+
+  it("keeps two conversations' Games on one MCP session apart", async () => {
+    const { host, ai: first } = await server.aiGame();
+    const second = first.sharingSession();
+    const secondCode = gameCodeIn(await second.createGame());
+    await host.takeTurn({ row: 3, column: 3 });
+
+    expect((await first.waitForTurn()).text)
+      .toContain("The last Stone placed was your opponent's, at row 3, column 3.");
+    expect(await second.waitForTurn()).toEqual({
+      isError: false,
+      text: `Still waiting for someone to join with Game code ${secondCode}: call wait_for_turn again.`,
+    });
+  });
+
+  it("carries on a Game in the Lobby, then once it's ongoing, from a new MCP session after the first has closed",
+    async () => {
+      const ai = await server.connectAi();
+      const gameCode = gameCodeIn(await ai.createGame());
+      await ai.close();
+      await ai.moveToNewSession();
+      const joiner = await server.playerWithNoGame();
+      await joiner.joinGame(gameCode);
+      await joiner.nextMessage();
+
+      expect((await ai.waitForTurn()).text).toContain("It's your Turn.");
+      await ai.close();
+      await ai.moveToNewSession();
+
+      expect((await ai.takeTurn({ row: 7, column: 7 })).isError).toBe(false);
+      expect(await joiner.nextMessage()).toMatchObject({
+        game: { turn: "you", stones: [{ row: 7, column: 7, side: "opponent" }], opponentConnected: true },
+      });
+    });
+
+  it.each(["wait_for_turn", "take_turn", "leave_game"])("is required by %s, which says how to get one", async (tool) => {
+    const { ai } = await server.aiGame();
+
+    // Refused as other refusals are, not as bad arguments.
+    expect(await ai.callUnchecked(tool, { row: 0, column: 0 }))
+      .toEqual({ isError: true, text: expect.stringMatching(/^playerKey is missing: pass the Player key that/) });
+  });
+
+  it("explains a Player key that isn't text", async () => {
+    const { ai } = await server.aiGame();
+
+    expect(await ai.callUnchecked("wait_for_turn", { playerKey: 42 })).toEqual({
+      isError: true,
+      text: expect.stringContaining("playerKey must be the Player key create_game or join_game gave you, as text"),
+    });
+  });
+
+  it.each(["wait_for_turn", "take_turn", "leave_game", "create_game", "join_game"])(
+    "is refused by %s when it's not one WZQ gave out, saying what to do",
+    async (tool) => {
+      const ai = await server.connectAi();
+
+      const reply = await ai.callUnchecked(tool, { playerKey: "not-a-key", gameCode: "123456", row: 0, column: 0 });
+
+      expect(reply).toEqual({ isError: true, text: expect.stringContaining("That isn't a Player key WZQ gave out") });
+      expect(reply.text).toContain("call create_game or join_game without a playerKey");
+    },
+  );
+
+  it("isn't given for a refused join, so trying again gives a new one", async () => {
+    const ai = await server.connectAi();
+    expect(playerKeyIn(await ai.joinGame("123456"))).toBe("");
+
+    const { gameCode } = await server.hostInLobby();
+
+    expect(playerKeyIn(await ai.joinGame(gameCode))).not.toBe("");
   });
 });
 
@@ -60,15 +162,6 @@ describe("an AI Player joining a Game", () => {
     const reply = await ai.joinGame(gameCode);
 
     expect(reply).toEqual({ isError: true, text: expect.stringContaining("You're already in a Game") });
-  });
-
-  it("gives each MCP session its own Player", async () => {
-    await server.aiGame();
-    const other = await server.connectAi();
-    const { gameCode } = await server.hostInLobby();
-
-    expect(await other.waitForTurn()).toEqual({ isError: true, text: expect.stringContaining("You're not in a Game") });
-    expect((await other.joinGame(gameCode)).isError).toBe(false);
   });
 });
 
@@ -144,20 +237,44 @@ describe("an AI Player hosting a Game", () => {
       .toEqual({ isError: true, text: expect.stringContaining("If no one has joined it yet, wait_for_turn waits") });
   });
 
-  it.each([
-    ["ends its session", (ai: AiPlayer) => ai.close()],
-    ["goes away and its session is closed as idle", (ai: AiPlayer) => ai.drop()],
-  ])("ends the Game in the Lobby when the AI %s, so its Game code stops working", async (_, goAway) => {
+  it("ends the Game in the Lobby once no call has used the AI's Player key for the idle time, so its Game code " +
+    "stops working", async () => {
     await server.close();
-    server = await startServer({ sessionIdleTimeout: 100 });
+    server = await startServer({ aiPlayerIdleTimeout: 100 });
     const ai = await server.connectAi();
     const gameCode = gameCodeIn(await ai.createGame());
 
-    await goAway(ai);
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     const joiner = await server.playerWithNoGame();
     expect(await joiner.joinGame(gameCode)).toEqual({ ok: false, reason: "gameCodeNotFound" });
+  });
+
+  it("leaves an ongoing Game for the opponent to end once the AI is idle", async () => {
+    await server.close();
+    server = await startServer({ aiPlayerIdleTimeout: 100 });
+    const { host, ai } = await server.aiGame();
+
+    expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: false } });
+
+    expect(await host.takeTurn({ row: 0, column: 0 })).toMatchObject({ ok: true });
+    expect((await ai.waitForTurn()).text).toContain("It's your Turn.");
+  });
+
+  it("keeps the Game in the Lobby while the AI's calls keep using its key, from whichever MCP session", async () => {
+    await server.close();
+    // Two waits, longer together than the idle time, with short gaps between them.
+    server = await startServer({ aiPlayerIdleTimeout: 400, waitForTurnTimeout: 300 });
+    const ai = await server.connectAi();
+    const gameCode = gameCodeIn(await ai.createGame());
+
+    await ai.waitForTurn();
+    await ai.close();
+    await ai.moveToNewSession();
+    await ai.waitForTurn();
+
+    const joiner = await server.playerWithNoGame();
+    expect(await joiner.joinGame(gameCode)).toMatchObject({ ok: true });
   });
 
   it("ends the Game in the Lobby with Leave game, so its Game code stops working", async () => {
@@ -341,22 +458,26 @@ describe("waiting for a Turn", () => {
 });
 
 describe("the AI Player's presence", () => {
-  it("shows the AI as connected while the MCP session is open, and disconnected once it closes", async () => {
+  it("shows the AI as disconnected once no call has used its Player key for the idle time, and connected again " +
+    "when one does", async () => {
+    await server.close();
+    server = await startServer({ aiPlayerIdleTimeout: 200, waitForTurnTimeout: 300 });
+    const { host, ai } = await server.aiGame();
+
+    expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: false } });
+    const waiting = ai.waitForTurn();
+
+    expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: true } });
+    await waiting;
+  });
+
+  it("keeps showing the AI as connected when its MCP session closes, as it can carry on from another", async () => {
     const { host, ai } = await server.aiGame();
 
     await ai.close();
+    await host.takeTurn({ row: 0, column: 0 });
 
-    expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: false } });
-  });
-
-  it("closes a session left idle once its client has gone, so the Host sees the AI disconnected", async () => {
-    await server.close();
-    server = await startServer({ sessionIdleTimeout: 200 });
-    const { host, ai } = await server.aiGame();
-
-    await ai.drop();
-
-    expect(await host.nextMessage()).toMatchObject({ game: { state: "ongoing", opponentConnected: false } });
+    expect(await host.nextMessage()).toMatchObject({ game: { turn: "opponent", opponentConnected: true } });
   });
 
   it("keeps a session open while a tool call is in progress, or the client keeps its stream open", async () => {
