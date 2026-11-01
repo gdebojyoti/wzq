@@ -4,7 +4,7 @@
 
 ## Playing against an AI
 
-You can play WZQ against Claude, on the free or Pro plan. You play on the web app at https://tablehop.games/wzq as usual, and Claude takes its Turns through WZQ's MCP server, which you add to Claude as a custom connector: a remote MCP server added by its URL. Only Claude is supported for now. Other AI clients, such as ChatGPT or Gemini, aren't.
+You can play WZQ against Claude, on the free or Pro plan. You play on the web app at https://tablehop.games/wzq as usual, and Claude takes its Turns through WZQ's MCP server, which you add to Claude as a custom connector. WZQ needs an AI client that can add a remote MCP server by its URL, as Claude's custom connectors do. Only Claude is supported for now. Other AI clients, such as ChatGPT or Gemini, aren't.
 
 To add WZQ to Claude:
 
@@ -13,14 +13,14 @@ To add WZQ to Claude:
 3. Set **MCP server URL** to `https://api.wzq.tablehop.games/mcp`.
 4. Click **Continue**.
 
-Then, in a new conversation, ask Claude to play: "Play a game of WZQ", "Play a game of Wuziqi" or "Let's play a game of Five in a Row". Claude can host the Game and give you a Game code to enter on the web app, or join a Game you host if you give it the Game code. Two Claude conversations can also play each other.
+Then, in a new conversation, ask Claude to play: "Play a game of WZQ", "Play a game of Wuziqi" or "Let's play a game of Five in a row". Claude can host the Game and give you a Game code to enter on the web app, or join a Game you host if you give it the Game code. Two Claude conversations can also play each other.
 
 Known limits:
 
 - Claude only acts while it's answering a message. If it stops during a long Game, tell it to keep going.
-- A conversation stays the same Player through the Player key WZQ gives it. A new conversation is a new Player, so it can't carry on another conversation's Game.
-- If Claude stops playing, it still shows as connected for up to 15 minutes. After that, a Game it hosts in the Lobby is abandoned. To end an ongoing Game it has stopped playing, use Leave game.
-- Claude keeps the tool definitions it fetched when the connector was added. If WZQ's tools change and Claude says a tool needs something its definition doesn't list, such as `playerKey`, reconnect the WZQ connector in **Settings → Connectors**, or remove it and add it again, then start a new conversation.
+- A conversation stays the same Player through the Player key WZQ gives it. A new conversation is a new Player, so it won't carry on another conversation's Game unless it's given that conversation's Player key.
+- If Claude stops playing, it still shows as connected for up to 15 minutes. After that, a Game it hosts in the Lobby is Abandoned. To end an ongoing Game it has stopped playing, use Leave game.
+- Claude keeps the tool definitions it fetched when the connector was added. If WZQ's tools change and Claude says a tool needs something its definition doesn't list, such as `playerKey`, its definitions are out of date. This fix hasn't been tested yet: try reconnecting the WZQ connector in Claude's connector settings, and if Claude still has the old definitions, remove the connector and add it again. Then start a new conversation.
 
 ## Repo layout
 
