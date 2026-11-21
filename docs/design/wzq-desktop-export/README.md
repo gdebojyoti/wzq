@@ -98,3 +98,24 @@ Every screen has two parts side by side (a flex row):
 - **Highlighter colours:** whether the opponent's turn highlight should stay blue or become pink is undecided.
 - **Board size:** 13×13 in the designs vs 16×16 in issue #17.
 - **Copy code** has no copied/confirmation state yet; **Leave game** asks for no confirmation.
+
+## Decisions made while building it
+
+These settle the open points above, and the cases the designs didn't cover. Where nothing here says otherwise, the
+mobile export's decisions (`wzq-mobile-export/README.md`) carry over.
+
+- **Where desktop starts:** windows 1024px wide and up (Tailwind's `lg`) get the desktop layout. Narrower ones get the
+  mobile layout, so the panes never wrap. This may move to `xl` (1280px) after a look at the experience.
+- **Board size:** the rules' **16×16** Board at the design's width, as on mobile.
+- **Joined view:** the mobile joined-view rules carry over.
+- **Highlighter and winning line colours:** as on mobile. The opponent is blue, and the Lost text says "Their line is
+  marked in blue."
+- **Copy, Leave game and Back to Home:** as on mobile. Copying shows "Copied" with a check icon for about 2 seconds,
+  Leave game asks for no confirmation, and NEW GAME is labelled "Back to Home".
+- **Lobby copy buttons:** the app's three copy buttons sit in the content pane under the explanation line. The pink
+  COPY JOIN LINK comes first, then the white COPY CODE and COPY WATCH LINK side by side.
+- **Spectator screen:** the Game layout. The PLAYERS list shows HOST and JOINER, and STOP WATCHING sits where Leave
+  game does.
+- **Errors and notices:** on Game (and the Spectator screen), they go in the sidebar under the headline and hint, where
+  the opponent-disconnected notice is, so the Board never moves. Start and Lobby keep room for a two-line error, as on
+  mobile.
