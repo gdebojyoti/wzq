@@ -104,8 +104,20 @@ Every screen has two parts side by side (a flex row):
 These settle the open points above, and the cases the designs didn't cover. Where nothing here says otherwise, the
 mobile export's decisions (`wzq-mobile-export/README.md`) carry over.
 
-- **Where desktop starts:** windows 1024px wide and up (Tailwind's `lg`) get the desktop layout. Narrower ones get the
-  mobile layout, so the panes never wrap. This may move to `xl` (1280px) after a look at the experience.
+- **Where desktop starts:** windows 1280px wide and up (Tailwind's `xl`) get the desktop layout. Narrower ones get the
+  mobile layout, so the panes never wrap. It was `lg` (1024px) at first, and moved to `xl` after a look at the
+  experience.
+- **Sidebar width:** a quarter of the window, at least 440px and at most 550px, the same on every screen, instead of
+  each screen's range in the Layout table.
+- **Nothing in the sidebar moves between Lobby and Game:**
+  - The Lobby uses Game's sidebar padding (32px 40px 28px) and 28px gaps.
+  - Both use Game's player rows (18px padding, 36px marks, 14px detail).
+  - The connection indicator is 28px from the bottom on every screen.
+- **Notices on desktop:** a notice under an action or headline is 15px bold on every screen, and Start and Lobby keep
+  room for two lines at that size.
+- **Start's title card and stones, and the Lobby's code and buttons:** left-aligned in a channel at most 780px wide,
+  centred in the content pane, so on a wide window they don't sit at its far left. The Lobby's WZQ wordmark stays at
+  the pane's top-left, as on Game.
 - **Board size:** the rules' **16×16** Board at the design's width, as on mobile.
 - **Joined view:** the mobile joined-view rules carry over.
 - **Highlighter and winning line colours:** as on mobile. The opponent is blue, and the Lost text says "Their line is

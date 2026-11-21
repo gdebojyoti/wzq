@@ -26,10 +26,11 @@ export default function DesktopGameLayout({ status, board, leaveButton, players,
       content={
         <div className="flex flex-1 items-center justify-center">
           {/* As wide as the design, but shrunk to fit a shorter window. */}
-          <div className="w-[min(780px,calc(100dvh_-_140px),100%)]">{board}</div>
+          <div className="w-[min(780px,calc(100dvh-140px),100%)]">{board}</div>
         </div>
       }
-      sidebarClassName="w-95 gap-7 px-10 pt-8 pb-6"
+      // The same as the Lobby's, so nothing in the sidebar moves when the Game starts.
+      sidebarClassName="gap-7 px-10 pt-8 pb-7"
       sidebar={
         <>
           <SidebarHeader>{leaveButton}</SidebarHeader>

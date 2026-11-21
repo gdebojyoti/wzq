@@ -13,7 +13,7 @@ interface Props {
   sidebar: ReactNode;
   /** The content pane's padding and the gaps between its parts, which each screen sets. */
   contentClassName: string;
-  /** The sidebar's width and padding, and the gaps between its parts, which each screen sets. */
+  /** The sidebar's padding, and the gaps between its parts, which each screen sets. */
   sidebarClassName: string;
 }
 
@@ -33,7 +33,13 @@ export default function DesktopLayout({
         {wordmark && <span className="font-display text-[32px]">{commonMessages.wordmark}</span>}
         {content}
       </main>
-      <aside className={`flex min-h-dvh flex-none flex-col border-l-3 border-ink bg-surface ${sidebarClassName}`}>
+      {/* The sidebar is a quarter of the window, from 440px to 550px, the same on every screen. */}
+      <aside
+        className={
+          "flex min-h-dvh w-1/4 max-w-137.5 min-w-110 flex-none flex-col border-l-3 border-ink bg-surface " +
+          sidebarClassName
+        }
+      >
         {sidebar}
         <footer>
           <ServerStatus status={status} />

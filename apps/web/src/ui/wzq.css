@@ -2,8 +2,8 @@
 
 /* Design tokens from docs/design/wzq-mobile-export/README.md, and docs/design/wzq-desktop-export/README.md. */
 @theme {
-  /* Where the desktop layout starts: Tailwind's lg. Keep it the same as the query in useIsDesktop.ts. */
-  --breakpoint-desktop: 64rem;
+  /* Where the desktop layout starts: Tailwind's xl. Keep it the same as the query in useIsDesktop.ts. */
+  --breakpoint-desktop: 80rem;
 
   --color-ink: #111111;
   --color-background: #ffe45e;

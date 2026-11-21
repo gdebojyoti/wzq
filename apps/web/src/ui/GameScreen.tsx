@@ -107,8 +107,8 @@ export default function GameScreen({
   );
 }
 
-// Notices line up with the Board's edge on mobile, and with the headline on desktop, a little larger.
-const noticeStyle = "px-0.5 desktop:mt-1 desktop:px-0 desktop:text-[15px]";
+// Notices line up with the Board's edge on mobile, and with the headline on desktop.
+const noticeStyle = "px-0.5 desktop:mt-1 desktop:px-0";
 
 const headline = ({ turn, result }: GameSnapshot) => {
   if (!result) return turn === "you" ? gameMessages.headlines.yourTurn : gameMessages.headlines.theirTurn;

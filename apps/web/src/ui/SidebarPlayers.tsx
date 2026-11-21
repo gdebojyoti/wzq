@@ -23,7 +23,6 @@ export default function SidebarPlayers({ top, bottom, playing }: Props) {
         detail={top.detail}
         highlight={top.isTurn ? "pink" : undefined}
         faded={playing && !top.isTurn}
-        className="py-4.5 text-sm"
       />
       <PlayerRow
         mark={<StoneMark side="opponent" className="size-9 flex-none border-4" />}
@@ -32,7 +31,6 @@ export default function SidebarPlayers({ top, bottom, playing }: Props) {
         detail={bottom.detail}
         highlight={bottom.isTurn ? "blue" : undefined}
         faded={playing && !bottom.isTurn}
-        className="py-4.5 text-sm"
       />
     </PlayerList>
   );

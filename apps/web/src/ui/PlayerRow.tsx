@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import PlayerName from "./PlayerName";
 
 interface Props {
-  /** What stands for the Player at the start of the row, such as their Stone. */
+  /** What stands for the Player at the start of the row, such as their Stone, 36px across. */
   mark: ReactNode;
   name: string;
   /** Beside the name, saying whether the Player is an AI or a human. */
@@ -13,17 +13,16 @@ interface Props {
   highlight?: "pink" | "blue";
   /** Set while the Game is being played and it isn't this Player's Turn, so they fade back. */
   faded?: boolean;
-  /** The row's padding and the detail's text size, which each screen sets. */
-  className: string;
 }
 
-// One Player in a PlayerList.
-export default function PlayerRow({ mark, name, tag, detail, highlight, faded = false, className }: Props) {
+// One Player in a PlayerList. It's the same size in the Lobby and in a Game, so the list doesn't change when the Game
+// starts.
+export default function PlayerRow({ mark, name, tag, detail, highlight, faded = false }: Props) {
   return (
     <div
       className={
-        "flex items-center gap-4 border-t-3 border-ink transition-opacity duration-200 " +
-        `${faded ? "opacity-40" : ""} ${className}`
+        "flex items-center gap-4 border-t-3 border-ink py-4.5 transition-opacity duration-200 " +
+        (faded ? "opacity-40" : "")
       }
     >
       {mark}
@@ -32,7 +31,7 @@ export default function PlayerRow({ mark, name, tag, detail, highlight, faded = 
           <PlayerName highlight={highlight}>{name}</PlayerName>
           {tag && <span className="font-display text-sm leading-[1.1] uppercase">({tag})</span>}
         </span>
-        <span className="font-semibold">{detail}</span>
+        <span className="text-sm font-semibold">{detail}</span>
       </div>
     </div>
   );

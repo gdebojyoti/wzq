@@ -114,7 +114,7 @@ export default function LobbyScreen({ game, status, disabled, error, notice, onL
   );
   // Room for a two-line error is kept, so the code and buttons don't move when one appears.
   const notices = (
-    <div className="min-h-[2.9em] text-sm">
+    <div className="min-h-[2.9em] text-sm desktop:text-[15px]">
       {error ? <Notice tone="error">{error}</Notice> : notice && <Notice>{notice}</Notice>}
     </div>
   );
@@ -126,7 +126,8 @@ export default function LobbyScreen({ game, status, disabled, error, notice, onL
         wordmark
         contentClassName="gap-8 px-18 pt-10 pb-16"
         content={
-          <div className="flex max-w-170 flex-1 flex-col justify-center gap-7">
+          // A channel at most 780px wide, centred in the pane, with the code and buttons at its left, as on Start.
+          <div className="mx-auto flex w-full max-w-195 flex-1 flex-col justify-center gap-7 *:max-w-170">
             {heading}
             {tiles}
             {shareHint}
@@ -139,35 +140,34 @@ export default function LobbyScreen({ game, status, disabled, error, notice, onL
             {notices}
           </div>
         }
-        sidebarClassName="w-100 gap-8 px-12 pt-10 pb-7"
+        // The same as a Game's, so nothing in the sidebar moves when the Game starts.
+        sidebarClassName="gap-7 px-10 pt-8 pb-7"
         sidebar={
           <>
             <SidebarHeader>
               <LeaveButton leaves="game" disabled={disabled} onClick={onLeaveGame} />
             </SidebarHeader>
-            {/* The Players' heading starts 200px from the top of the window, as it does in a Game: 40px padding,
-                48px header, 32px gap and this 80px padding. */}
-            <div role="status" className="flex-1 pt-20">
+            {/* The Players' heading starts 200px from the top of the window, as it does in a Game: 32px padding,
+                48px header, 28px gap and this 92px padding. */}
+            <div role="status" className="flex-1 pt-23">
               <PlayerList>
                 <PlayerRow
-                  mark={<StoneMark side="you" className="size-10 flex-none" />}
+                  mark={<StoneMark side="you" className="size-9 flex-none" />}
                   name={gameMessages.you}
                   detail={lobbyMessages.hostReady}
-                  className="py-5 text-[15px]"
                 />
                 <PlayerRow
                   mark={
                     <span
                       aria-hidden
                       className={
-                        "size-10 flex-none rounded-full border-3 border-dashed border-ink animate-waiting " +
+                        "size-9 flex-none rounded-full border-3 border-dashed border-ink animate-waiting " +
                         "motion-reduce:animate-none"
                       }
                     />
                   }
                   name={lobbyMessages.friend}
                   detail={lobbyMessages.friendWaiting}
-                  className="py-5 text-[15px]"
                 />
               </PlayerList>
             </div>

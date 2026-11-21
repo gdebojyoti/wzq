@@ -130,7 +130,7 @@ export default function StartScreen({
         </Button>
       </div>
       {/* Room for a two-line error is kept, so the buttons don't move when one appears. */}
-      <div className="min-h-[2.9em] text-sm">{error && <Notice tone="error">{error}</Notice>}</div>
+      <div className="min-h-[2.9em] text-sm desktop:text-[15px]">{error && <Notice tone="error">{error}</Notice>}</div>
     </form>
   );
 
@@ -138,14 +138,16 @@ export default function StartScreen({
     return (
       <DesktopLayout
         status={status}
-        contentClassName="justify-center gap-10 px-18 py-16"
+        contentClassName="justify-center px-18 py-16"
         content={
-          <>
+          // A channel at most 780px wide, centred in the pane, with the title card and stones at its left: on a wide
+          // window they stay near the middle, not at the far left.
+          <div className="mx-auto flex w-full max-w-195 flex-col gap-10">
             {titleCard}
             {stoneStrip}
-          </>
+          </div>
         }
-        sidebarClassName="w-110 gap-8 px-14 pt-16 pb-7"
+        sidebarClassName="gap-8 px-14 pt-16 pb-7"
         sidebar={
           <>
             {noticeLine}
