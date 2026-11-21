@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WZQ · Desktop screens (Neubrutalist)</title>
+<style>
+body{margin:0;padding:32px;background:#d9d9d9;font-family:system-ui,sans-serif;color:#111}
+h1{margin:0 0 8px;font-size:22px}
+p{margin:0 0 24px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:32px}
+figure{margin:0}
+figcaption{font-weight:700;margin-bottom:8px}
+figcaption a{font-weight:400;margin-left:8px;font-size:13px}
+.frame{width:720px;height:450px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.15);background:#fff}
+.frame iframe{width:1440px;height:900px;border:0;transform:scale(.5);transform-origin:0 0}
+</style>
+</head>
+<body>
+<h1>WZQ · Desktop screens (designed at 1440×900, shown at 50%)</h1>
+<p>Open a screen on its own for full size. The layout fills the browser window.</p>
+<div class="row">
+<figure><figcaption><a href="start.html" style="margin:0;font-weight:700">Start</a> <a href="start.html?notice=bad-code">bad code</a> <a href="start.html?notice=game-gone">game gone</a></figcaption><div class="frame"><iframe src="start.html?embed=1" title="Start"></iframe></div></figure>
+<figure><figcaption><a href="lobby.html" style="margin:0;font-weight:700">Lobby</a> <a href="lobby.html?connection=connecting">connecting</a> <a href="lobby.html?connection=offline">offline</a></figcaption><div class="frame"><iframe src="lobby.html?embed=1" title="Lobby"></iframe></div></figure>
+<figure><figcaption><a href="game.html" style="margin:0;font-weight:700">Game</a> <a href="game.html?scene=won">won</a> <a href="game.html?scene=lost">lost</a> <a href="game.html?scene=abandoned">abandoned</a> <a href="game.html?opponentOnline=false">opponent offline</a></figcaption><div class="frame"><iframe src="game.html?embed=1" title="Game"></iframe></div></figure>
+</div>
+</body>
+</html>

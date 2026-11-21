@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WZQ · Desktop Lobby (Neubrutalist)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Archivo:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#111111}a:hover{color:#111111}
+.e-btn{transition:transform .08s ease, box-shadow .08s ease}
+.e-btn:hover{transform:translate(-1px,-1px)!important;box-shadow:7px 7px 0 #111111!important}
+.e-btn:active{transform:translate(5px,5px)!important;box-shadow:0 0 0 #111111!important}
+.e-btn:focus-visible{outline:3px solid #111111;outline-offset:4px}
+@keyframes wzq-de-wait{0%,100%{opacity:.35}50%{opacity:1}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Screen markup (template syntax explained in wzq-lite.js) -->
+<template id="screen">
+<div style="min-height: 100vh; box-sizing: border-box; background: #ffe45e; color: #111111; font-family: 'Archivo', system-ui, sans-serif; display: flex; flex-wrap: wrap">
+<section style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 40px 72px 64px; display: flex; flex-direction: column; gap: 32px">
+<span style="font-family: 'Archivo Black', sans-serif; font-size: 32px">WZQ</span>
+<div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 28px; max-width: 680px">
+<h1 style="margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .08em">YOUR GAME CODE</h1>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+<span style="height: 120px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 3px solid #111111; font-family: 'Archivo Black', sans-serif; font-size: 64px">0</span>
+<span style="height: 120px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 3px solid #111111; font-family: 'Archivo Black', sans-serif; font-size: 64px">0</span>
+<span style="height: 120px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 3px solid #111111; font-family: 'Archivo Black', sans-serif; font-size: 64px">4</span>
+<span style="height: 120px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 3px solid #111111; font-family: 'Archivo Black', sans-serif; font-size: 64px">2</span>
+<span style="height: 120px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 3px solid #111111; font-family: 'Archivo Black', sans-serif; font-size: 64px">1</span>
+<span style="height: 120px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 3px solid #111111; font-family: 'Archivo Black', sans-serif; font-size: 64px">3</span>
+</div>
+<p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.5; text-wrap: pretty">Send this code to your friend. The game starts the moment they join.</p>
+<button class="e-btn" type="button" style="align-self: flex-start; height: 64px; padding: 0 32px; display: flex; align-items: center; gap: 12px; background: #ff8ac4; border: 3px solid #111111; border-radius: 0; box-shadow: 6px 6px 0 #111111; color: #111111; font-family: 'Archivo Black', sans-serif; font-size: 20px; cursor: pointer">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="square"><rect x="9" y="9" width="12" height="12"></rect><path d="M5 15H3V3h12v2"></path></svg>
+<span>COPY CODE</span>
+</button>
+</div>
+</section>
+<aside style="flex: 1 1 400px; max-width: 480px; min-height: 100vh; box-sizing: border-box; padding: 40px 48px 28px; background: #ffffff; border-left: 3px solid #111111; display: flex; flex-direction: column; gap: 32px">
+<div style="display: flex; justify-content: flex-end">
+<a class="e-btn" href="start.html" style="height: 48px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; gap: 8px; background: #ffffff; border: 3px solid #111111; box-shadow: 4px 4px 0 #111111; color: #111111; text-decoration: none; font-family: 'Archivo Black', sans-serif; font-size: 14px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M10 20H4V4h6"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>
+<span>LEAVE GAME</span>
+</a>
+</div>
+<div role="status" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 0; padding-top: 80px">
+<h2 style="margin: 0 0 20px; font-size: 16px; font-weight: 700; letter-spacing: .08em">PLAYERS</h2>
+<div style="display: flex; align-items: center; gap: 16px; padding: 20px 0; border-top: 3px solid #111111">
+<span aria-hidden="true" style="flex: none; width: 40px; height: 40px; border-radius: 50%; background: #111111"></span>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Archivo Black', sans-serif; font-size: 22px">YOU</span>
+<span style="font-size: 15px; font-weight: 600">Host · ready</span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 16px; padding: 20px 0; border-top: 3px solid #111111; border-bottom: 3px solid #111111">
+<span aria-hidden="true" style="flex: none; width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; border: 3px dashed #111111; animation: wzq-de-wait 1.6s ease-in-out infinite"></span>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Archivo Black', sans-serif; font-size: 22px">YOUR FRIEND</span>
+<span style="font-size: 15px; font-weight: 600">Waiting to join…</span>
+</div>
+</div>
+</div>
+<div role="status" aria-live="polite" style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: .02em; opacity: .75">
+<sc-if value="{{connected}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #1fae5b; border: 2px solid #111111"></span></sc-if>
+<sc-if value="{{connecting}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #f5b700; border: 2px solid #111111"></span></sc-if>
+<sc-if value="{{offline}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #e5383b; border: 2px solid #111111"></span></sc-if>
+<span>{{connLabel}}</span>
+</div>
+</aside>
+</div>
+</template>
+
+<!-- Tweakable props (defaults). Override with URL query params, e.g. ?connection=offline -->
+<script>window.WZQ_PROPS = {"connection":{"editor":"enum","options":["connected","connecting","offline"],"default":"connected"},"$preview":{"width":1440,"height":900}};</script>
+<script src="wzq-lite.js"></script>
+<script>
+var CONN_LABELS = { connected: 'Connected to server', connecting: 'Connecting to server…', offline: 'Not connected to server · retrying' };
+class Component extends DCLogic {
+  renderVals() {
+    var conn = this.props.connection ?? 'connected';
+    return {
+      connected: conn === 'connected',
+      connecting: conn === 'connecting',
+      offline: conn === 'offline',
+      connLabel: CONN_LABELS[conn] || CONN_LABELS.connected
+    };
+  }
+}
+WZQ_MOUNT(Component);
+</script>
+</body>
+</html>
