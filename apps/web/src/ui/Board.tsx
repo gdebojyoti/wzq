@@ -55,7 +55,8 @@ export default function Board({
             type="button"
             className={
               "relative flex aspect-square min-w-0 items-center justify-center " +
-              "shadow-[inset_-1px_-1px_0_var(--color-ink)] focus-visible:outline-3 focus-visible:-outline-offset-3 " +
+              "shadow-[inset_-1px_-1px_0_var(--color-ink)] desktop:shadow-[inset_-1.5px_-1.5px_0_var(--color-ink)] " +
+              "focus-visible:outline-3 focus-visible:-outline-offset-3 " +
               `focus-visible:outline-ink ${background} ${playableCell}`
             }
             // Any empty Cell may be played. The server checks it again.
@@ -63,7 +64,8 @@ export default function Board({
             aria-label={cellLabel(cell, stone && stoneLabels[stone.side], isLast, isWinning)}
             onClick={() => onTakeTurn(cell)}
           >
-            {stone && <StoneMark side={stone.side} className="size-[72%] border-[2.5px]" />}
+            {/* The desktop design's 3.5px ring is for 13×13 cells, so it's thinner for this Board's smaller ones. */}
+            {stone && <StoneMark side={stone.side} className="size-[72%] border-[2.5px] desktop:border-3" />}
           </button>
         );
       })}

@@ -1,14 +1,21 @@
 import type { Cell, GameResult, GameSnapshot } from "@wzq/shared";
 import Board from "./Board";
+import DesktopGameLayout from "./DesktopGameLayout";
 import GameOver from "./GameOver";
 import Header from "./Header";
 import Headline from "./Headline";
+import LeaveButton from "./LeaveButton";
+import MobileLayout from "./MobileLayout";
 import Notice from "./Notice";
-import PlayerStrip from "./PlayerStrip";
+import PlayerStrip, { type StripPlayer } from "./PlayerStrip";
+import SidebarPlayers from "./SidebarPlayers";
 import { gameMessages, playerKindTags } from "./messages";
+import type { ConnectionStatus } from "./useGameServer";
+import { useIsDesktop } from "./useIsDesktop";
 
 interface Props {
   game: GameSnapshot;
+  status: ConnectionStatus;
   disabled: boolean;
   error: string | undefined;
   /** Something that happened without the Player doing it, such as opening a watch link while playing. */
@@ -21,6 +28,7 @@ interface Props {
 // A Game being played, or one that has ended, which shows its result on the same screen.
 export default function GameScreen({
   game,
+  status,
   disabled,
   error,
   notice,
@@ -28,59 +36,87 @@ export default function GameScreen({
   onLeaveGame,
   onBackToStart,
 }: Props) {
+  const desktop = useIsDesktop();
   const { turn, result } = game;
   const playing = game.state === "ongoing";
   const winningLine = result?.outcome === "won" || result?.outcome === "lost" ? result.winningLine : null;
   const opponentStatus = game.opponentConnected ? gameMessages.opponentOnline : gameMessages.opponentDisconnected;
 
-  return (
-    <section className="flex flex-1 flex-col gap-4 pt-4 pr-3.5 pb-4 pl-3">
-      <div className="px-0.5">
-        <Header disabled={disabled} onLeaveGame={playing ? onLeaveGame : undefined} />
-      </div>
-      <PlayerStrip
-        playing={playing}
-        left={{
-          name: gameMessages.you,
-          detail: game.isHost ? gameMessages.hostRole : gameMessages.joinerRole,
-          isTurn: turn === "you",
-        }}
-        right={{
-          name: gameMessages.opponent,
-          // Only an AI opponent is tagged: the Player viewing is always human, as an AI Player plays through the MCP
-          // tools, not the web app, so tagging them would say nothing.
-          tag: game.opponentKind === "ai" ? playerKindTags.ai : undefined,
-          detail: (game.isHost ? "" : gameMessages.hostPrefix) + opponentStatus,
-          isTurn: turn === "opponent",
-        }}
-      />
-      <Headline hint={playing ? hint(game) : gameMessages.hints.gameOver}>{headline(game)}</Headline>
-      <Board
-        stones={game.stones}
-        winningLine={winningLine}
-        canTakeTurn={playing && !disabled && turn === "you"}
-        onTakeTurn={onTakeTurn}
-      />
-      {/* Everything that comes and goes sits under the Board, so the Board never moves. An error or notice shows only
-          in play: one left from before the end would be stale beside the result. */}
-      {playing && error && <Notice tone="error" className="px-0.5">{error}</Notice>}
-      {playing && notice && <Notice className="px-0.5">{notice}</Notice>}
-      {playing && !game.opponentConnected && (
-        <Notice className="px-0.5 opacity-40">{gameMessages.opponentDisconnectedNotice}</Notice>
+  const you: StripPlayer = {
+    name: gameMessages.you,
+    detail: game.isHost ? gameMessages.hostRole : gameMessages.joinerRole,
+    isTurn: turn === "you",
+  };
+  const opponent: StripPlayer = {
+    name: gameMessages.opponent,
+    // Only an AI opponent is tagged: the Player viewing is always human, as an AI Player plays through the MCP tools,
+    // not the web app, so tagging them would say nothing.
+    tag: game.opponentKind === "ai" ? playerKindTags.ai : undefined,
+    detail: (game.isHost ? "" : gameMessages.hostPrefix) + opponentStatus,
+    isTurn: turn === "opponent",
+  };
+  const board = (
+    <Board
+      stones={game.stones}
+      winningLine={winningLine}
+      canTakeTurn={playing && !disabled && turn === "you"}
+      onTakeTurn={onTakeTurn}
+    />
+  );
+  // An error or notice shows only in play: one left from before the end would be stale beside the result.
+  const notices = playing && (
+    <>
+      {error && <Notice tone="error" className={noticeStyle}>{error}</Notice>}
+      {notice && <Notice className={noticeStyle}>{notice}</Notice>}
+      {!game.opponentConnected && (
+        <Notice className={`opacity-40 ${noticeStyle}`}>{gameMessages.opponentDisconnectedNotice}</Notice>
       )}
-      {result && <GameOver onBackToStart={onBackToStart}>{resultLine(result)}</GameOver>}
-      <div className="flex-1" />
-    </section>
+    </>
+  );
+  const gameOver = result && <GameOver onBackToStart={onBackToStart}>{resultLine(result)}</GameOver>;
+
+  if (desktop) {
+    return (
+      <DesktopGameLayout
+        status={status}
+        board={board}
+        leaveButton={playing && <LeaveButton leaves="game" disabled={disabled} onClick={onLeaveGame} />}
+        players={<SidebarPlayers top={you} bottom={opponent} playing={playing} />}
+        headline={<Headline hint={playing ? hint(game, true) : undefined}>{headline(game)}</Headline>}
+        notices={notices}
+        gameOver={gameOver}
+      />
+    );
+  }
+
+  return (
+    <MobileLayout status={status}>
+      <section className="flex flex-1 flex-col gap-4 pt-4 pr-3.5 pb-4 pl-3">
+        <div className="px-0.5">
+          <Header disabled={disabled} onLeaveGame={playing ? onLeaveGame : undefined} />
+        </div>
+        <PlayerStrip playing={playing} left={you} right={opponent} />
+        <Headline hint={playing ? hint(game, false) : gameMessages.hints.gameOver}>{headline(game)}</Headline>
+        {board}
+        {/* Everything that comes and goes sits under the Board, so the Board never moves. */}
+        {notices}
+        {gameOver}
+        <div className="flex-1" />
+      </section>
+    </MobileLayout>
   );
 }
+
+// Notices line up with the Board's edge on mobile, and with the headline on desktop, a little larger.
+const noticeStyle = "px-0.5 desktop:mt-1 desktop:px-0 desktop:text-[15px]";
 
 const headline = ({ turn, result }: GameSnapshot) => {
   if (!result) return turn === "you" ? gameMessages.headlines.yourTurn : gameMessages.headlines.theirTurn;
   return gameMessages.headlines[result.outcome];
 };
 
-const hint = ({ turn, stones }: GameSnapshot) => {
-  if (turn === "you") return gameMessages.hints.yourTurn;
+const hint = ({ turn, stones }: GameSnapshot, desktop: boolean) => {
+  if (turn === "you") return desktop ? gameMessages.hints.yourTurnDesktop : gameMessages.hints.yourTurn;
   return stones.length === 0 ? gameMessages.hints.hostPlaysFirst : gameMessages.hints.theirTurn;
 };
 

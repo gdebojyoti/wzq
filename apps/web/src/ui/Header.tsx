@@ -1,5 +1,4 @@
-import Button from "./Button";
-import Icon from "./Icon";
+import LeaveButton from "./LeaveButton";
 import { commonMessages } from "./messages";
 
 interface Props {
@@ -10,23 +9,13 @@ interface Props {
   onStopWatching?: () => void;
 }
 
+// The top of a mobile screen.
 export default function Header({ disabled, onLeaveGame, onStopWatching }: Props) {
-  const onClick = onLeaveGame ?? onStopWatching;
   return (
     <header className="flex h-11 items-center justify-between">
       <span className="font-display text-[28px]">{commonMessages.wordmark}</span>
-      {onClick && (
-        <Button
-          variant="secondary"
-          shadow="small"
-          className="h-11 gap-2 px-3 text-[13px]"
-          disabled={disabled}
-          onClick={onClick}
-        >
-          <Icon name="leave" size={16} />
-          <span>{onLeaveGame ? commonMessages.leaveGame : commonMessages.stopWatching}</span>
-        </Button>
-      )}
+      {onLeaveGame && <LeaveButton leaves="game" disabled={disabled} onClick={onLeaveGame} />}
+      {!onLeaveGame && onStopWatching && <LeaveButton leaves="watching" disabled={disabled} onClick={onStopWatching} />}
     </header>
   );
 }

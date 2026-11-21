@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
-/* Design tokens from docs/design/wzq-mobile-export/README.md. */
+/* Design tokens from docs/design/wzq-mobile-export/README.md, and docs/design/wzq-desktop-export/README.md. */
 @theme {
+  /* Where the desktop layout starts: Tailwind's lg. Keep it the same as the query in useIsDesktop.ts. */
+  --breakpoint-desktop: 64rem;
+
   --color-ink: #111111;
   --color-background: #ffe45e;
   --color-surface: #ffffff;
@@ -20,6 +23,7 @@
   --font-display: "Archivo Black", sans-serif;
 
   --animate-marquee: marquee 12s linear infinite;
+  --animate-waiting: waiting 1.6s ease-in-out infinite;
 
   @keyframes marquee {
     from {
@@ -27,6 +31,16 @@
     }
     to {
       transform: translateX(-50%);
+    }
+  }
+
+  @keyframes waiting {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 1;
     }
   }
 }

@@ -1,20 +1,28 @@
 import type { PlayerKind, Role, Side, SpectatorSnapshot } from "@wzq/shared";
 import Board from "./Board";
+import DesktopGameLayout from "./DesktopGameLayout";
 import GameOver from "./GameOver";
 import Header from "./Header";
 import Headline from "./Headline";
-import PlayerStrip from "./PlayerStrip";
+import LeaveButton from "./LeaveButton";
+import MobileLayout from "./MobileLayout";
+import PlayerStrip, { type StripPlayer } from "./PlayerStrip";
+import SidebarPlayers from "./SidebarPlayers";
 import { boardMessages, playerKindTags, spectatorMessages } from "./messages";
+import type { ConnectionStatus } from "./useGameServer";
+import { useIsDesktop } from "./useIsDesktop";
 
 interface Props {
   game: SpectatorSnapshot;
+  status: ConnectionStatus;
   onStopWatching: () => void;
 }
 
 // A Game watched as a Spectator, read-only, from the Lobby until it ends. A Spectator has no "you", so each Player is
 // shown as the Host or the Joiner, drawn the way the Board draws a Player and their opponent: the Host black with a
 // pink winning line, and the Joiner white with a blue one.
-export default function SpectatorScreen({ game, onStopWatching }: Props) {
+export default function SpectatorScreen({ game, status, onStopWatching }: Props) {
+  const desktop = useIsDesktop();
   const { state, turn, result } = game;
   const playing = state === "ongoing";
   const ended = state !== "lobby" && !playing;
@@ -22,39 +30,58 @@ export default function SpectatorScreen({ game, onStopWatching }: Props) {
   const winningLine = result?.outcome === "won" ? result.winningLine : null;
   const tags = kindTags(game.hostKind, game.joinerKind);
 
+  const host: StripPlayer = {
+    name: spectatorMessages.host,
+    tag: tags.host,
+    detail: spectatorMessages.hostRole + connection(game.hostConnected),
+    isTurn: turn === "host",
+  };
+  const joiner: StripPlayer = {
+    name: spectatorMessages.joiner,
+    tag: tags.joiner,
+    detail: state === "lobby"
+      ? spectatorMessages.notJoined
+      : spectatorMessages.joinerRole + connection(game.joinerConnected),
+    isTurn: turn === "joiner",
+  };
+  const board = (
+    <Board
+      stones={stones}
+      winningLine={winningLine}
+      canTakeTurn={false}
+      onTakeTurn={() => {}}
+      stoneLabels={boardMessages.spectatorStones}
+    />
+  );
+  const gameOver = ended && <GameOver onBackToStart={onStopWatching}>{resultLine(game)}</GameOver>;
+
+  if (desktop) {
+    return (
+      <DesktopGameLayout
+        status={status}
+        board={board}
+        leaveButton={!ended && <LeaveButton leaves="watching" disabled={false} onClick={onStopWatching} />}
+        players={<SidebarPlayers top={host} bottom={joiner} playing={playing} />}
+        headline={<Headline hint={ended ? undefined : hint(game)}>{headline(game)}</Headline>}
+        notices={null}
+        gameOver={gameOver}
+      />
+    );
+  }
+
   return (
-    <section className="flex flex-1 flex-col gap-4 pt-4 pr-3.5 pb-4 pl-3">
-      <div className="px-0.5">
-        <Header disabled={false} onStopWatching={ended ? undefined : onStopWatching} />
-      </div>
-      <PlayerStrip
-        playing={playing}
-        left={{
-          name: spectatorMessages.host,
-          tag: tags.host,
-          detail: spectatorMessages.hostRole + connection(game.hostConnected),
-          isTurn: turn === "host",
-        }}
-        right={{
-          name: spectatorMessages.joiner,
-          tag: tags.joiner,
-          detail: state === "lobby"
-            ? spectatorMessages.notJoined
-            : spectatorMessages.joinerRole + connection(game.joinerConnected),
-          isTurn: turn === "joiner",
-        }}
-      />
-      <Headline hint={hint(game)}>{headline(game)}</Headline>
-      <Board
-        stones={stones}
-        winningLine={winningLine}
-        canTakeTurn={false}
-        onTakeTurn={() => {}}
-        stoneLabels={boardMessages.spectatorStones}
-      />
-      {ended && <GameOver onBackToStart={onStopWatching}>{resultLine(game)}</GameOver>}
-      <div className="flex-1" />
-    </section>
+    <MobileLayout status={status}>
+      <section className="flex flex-1 flex-col gap-4 pt-4 pr-3.5 pb-4 pl-3">
+        <div className="px-0.5">
+          <Header disabled={false} onStopWatching={ended ? undefined : onStopWatching} />
+        </div>
+        <PlayerStrip playing={playing} left={host} right={joiner} />
+        <Headline hint={hint(game)}>{headline(game)}</Headline>
+        {board}
+        {gameOver}
+        <div className="flex-1" />
+      </section>
+    </MobileLayout>
   );
 }
 
