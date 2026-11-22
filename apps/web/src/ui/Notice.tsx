@@ -10,7 +10,7 @@ interface Props {
 }
 
 const sizes = {
-  small: { text: "gap-2 text-sm font-bold", icon: 18 },
+  small: { text: "gap-2 text-sm font-bold desktop:text-[15px]", icon: 18 },
   large: { text: "gap-2.5 text-[15px] font-semibold", icon: 20 },
 };
 

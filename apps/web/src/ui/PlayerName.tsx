@@ -10,10 +10,15 @@ interface Props {
   highlight?: keyof typeof highlights;
 }
 
-// The name of a Player in the strip above the Board.
+// The name of a Player: in the strip above the Board, or in a desktop sidebar's list of Players.
 export default function PlayerName({ children, highlight }: Props) {
   return (
-    <span className={`font-display text-base leading-[1.1] uppercase ${highlight ? highlights[highlight] : ""}`}>
+    <span
+      className={
+        "font-display text-base leading-[1.1] uppercase desktop:text-[22px] " +
+        (highlight ? highlights[highlight] : "")
+      }
+    >
       {children}
     </span>
   );

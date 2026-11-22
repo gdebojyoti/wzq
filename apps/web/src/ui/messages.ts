@@ -32,6 +32,7 @@ export const commonMessages = {
   wordmark: "WZQ",
   leaveGame: "Leave game",
   stopWatching: "Stop watching",
+  players: "Players",
 };
 
 export const startMessages = {
@@ -39,6 +40,11 @@ export const startMessages = {
   sticker: "5 in a row",
   startGame: "Start a game",
   gameCodeLabel: "Got a code? Join in",
+  // On desktop, the two ways to start sit under their own headings, with "or" between them.
+  newGameHeading: "Start a new game",
+  newGameHint: "You'll get a six-digit code to send to your friend.",
+  or: "or",
+  joinHeading: "Join a friend's game",
   gameCodePlaceholder: "000000",
   joinGame: "Join",
   invalidJoinLink: "That join link isn't valid. Check it with your friend.",
@@ -54,6 +60,10 @@ export const lobbyMessages = {
   copied: "Copied",
   waiting: "Waiting for your friend",
   waitingForScreenReaders: "Waiting for your friend to join",
+  // The desktop list of Players, which shows the waiting instead of a ticker.
+  hostReady: "Host · ready",
+  friend: "Your friend",
+  friendWaiting: "Waiting to join…",
 };
 
 export const playerKindTags = {
@@ -83,6 +93,7 @@ export const gameMessages = {
   },
   hints: {
     yourTurn: "Tap any empty cell to place your stone.",
+    yourTurnDesktop: "Click any empty cell to place your stone.",
     theirTurn: "Waiting for your opponent to play.",
     hostPlaysFirst: "The host places the first stone.",
     // Keep this to one line: it fills the hint's place once the Game has ended, so the Board doesn't move.
