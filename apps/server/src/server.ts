@@ -37,7 +37,7 @@ export interface GameServerOptions {
 export const createGameServer = (config: Config, options: GameServerOptions = {}): GameServer => {
   const app = express();
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok" });
+    res.json({ status: "ok", msg: `Available on ${process.env.HOST_NAME}` });
   });
 
   const httpServer = createServer(app);

@@ -1,6 +1,6 @@
 import type { AddressInfo } from "node:net";
 import { io, type Socket } from "socket.io-client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClientToServerEvents, ServerToClientEvents } from "@wzq/shared";
 import { createGameServer, type GameServer } from "./server.js";
 
@@ -19,15 +19,18 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.unstubAllEnvs();
   await server.io.close();
 });
 
 describe("createGameServer", () => {
   it("answers the health check", async () => {
+    vi.stubEnv("HOST_NAME", "render");
+
     const response = await fetch(`${url}/health`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ status: "ok" });
+    expect(await response.json()).toEqual({ status: "ok", msg: "Available on render" });
   });
 
   it("answers a ping from a connected web app", async () => {
