@@ -182,10 +182,10 @@ export const useGameServer = () => {
     setGame(null);
   };
 
-  // "Stop watching", or "Back to start" once the watched Game has ended: back to the start screen, and the server
+  // "Stop watching", or "Back to Home" once the watched Game has ended: back to the start screen, and the server
   // sends this tab nothing more about the Game.
   const stopWatching = () => {
-    // Stop watching while the Game goes on, or Back to start once it has ended.
+    // Stop watching while the Game goes on, or Back to Home once it has ended.
     const ended = watched?.state !== "lobby" && watched?.state !== "ongoing";
     track("watch_stop", { via: ended ? "back_to_start" : "stop" });
     removeWatchLinkFromAddress();
