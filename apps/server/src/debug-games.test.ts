@@ -22,6 +22,8 @@ const newestGame = async () => {
   return game;
 };
 
+const label = expect.stringMatching(/^[0-9a-f]{6}$/);
+
 describe("the debug list of Games", () => {
   it("shows a Game in the Lobby with its Host, its masked Game code and when it was created", async () => {
     const { gameCode } = await server.hostInLobby();
@@ -34,16 +36,25 @@ describe("the debug list of Games", () => {
       gameCode: `${gameCode.slice(0, 2)}****`,
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
-      host: { label: expect.stringMatching(/^[0-9a-f]{6}$/), kind: "browser", connected: true },
-      joiner: null,
-      turns: [],
-      result: null,
+      players: [{ label, role: "host", kind: "browser", connected: true }],
+      board: null,
     }]);
-    // The Turns can be a long list, so they come after everything else.
-    expect(Object.keys(games[0] ?? {}).at(-1)).toBe("turns");
+    // The Board is the longest part, so it comes after everything else.
+    expect(Object.keys(games[0] ?? {}).at(-1)).toBe("board");
   });
 
-  it("shows an ongoing Game's Turns by Host and Joiner, and no Game code", async () => {
+  it("puts how many Games there are first, so it's clear when the list leaves some out", async () => {
+    const { host } = await server.hostInLobby();
+    await host.leaveGame();
+    await host.createGame();
+
+    const { body, total } = await server.debugGames();
+
+    expect(Object.keys(JSON.parse(body))).toEqual(["total", "games"]);
+    expect(total).toBe(2);
+  });
+
+  it("shows an ongoing Game's Players, whose Turn it is and its Stones by Host and Joiner, and no Game code", async () => {
     const { host, joiner } = await server.ongoingGame();
     await host.takeTurn({ row: 0, column: 0 });
     await joiner.takeTurn({ row: 2, column: 15 });
@@ -54,14 +65,19 @@ describe("the debug list of Games", () => {
     expect(game).toMatchObject({
       state: "ongoing",
       gameCode: null,
-      host: { kind: "browser", connected: true },
-      joiner: { label: expect.stringMatching(/^[0-9a-f]{6}$/), kind: "browser", connected: true },
-      turns: [
-        { row: 0, column: 0, role: "host" },
-        { row: 2, column: 15, role: "joiner" },
-        { row: 1, column: 1, role: "host" },
+      players: [
+        { label, role: "host", kind: "browser", connected: true },
+        { label, role: "joiner", kind: "browser", connected: true },
       ],
-      result: null,
+      board: {
+        turn: "joiner",
+        result: null,
+        stones: [
+          { row: 0, column: 0, role: "host" },
+          { row: 2, column: 15, role: "joiner" },
+          { row: 1, column: 1, role: "host" },
+        ],
+      },
     });
   });
 
@@ -83,9 +99,8 @@ describe("the debug list of Games", () => {
       expect(gameIds).toContain(uuid);
     }
     const [, newGame, oldGame] = games;
-    expect(newGame?.host.label).toBe(hostId.slice(0, 6));
-    expect(oldGame?.host.label).toBe(hostId.slice(0, 6));
-    expect(oldGame?.joiner?.label).toBe(joinerId.slice(0, 6));
+    expect(newGame?.players.map((player) => player.label)).toEqual([hostId.slice(0, 6)]);
+    expect(oldGame?.players.map((player) => player.label)).toEqual([hostId.slice(0, 6), joinerId.slice(0, 6)]);
   });
 
   it("shows whether each Player is connected right now", async () => {
@@ -94,8 +109,7 @@ describe("the debug list of Games", () => {
 
     const game = await newestGame();
 
-    expect(game.host.connected).toBe(true);
-    expect(game.joiner?.connected).toBe(false);
+    expect(game.players.map((player) => player.connected)).toEqual([true, false]);
   });
 
   it("shows an AI Player who hosted or joined through the MCP tools as an AI Player", async () => {
@@ -105,12 +119,11 @@ describe("the debug list of Games", () => {
 
     const [joinedByAi, hostedByAi] = (await server.debugGames()).games;
 
-    expect(joinedByAi?.host.kind).toBe("browser");
-    expect(joinedByAi?.joiner?.kind).toBe("ai");
-    expect(hostedByAi?.host.kind).toBe("ai");
+    expect(joinedByAi?.players.map((player) => player.kind)).toEqual(["browser", "ai"]);
+    expect(hostedByAi?.players.map((player) => player.kind)).toEqual(["ai"]);
   });
 
-  it("lists only the newest 100 Games, newest first", async () => {
+  it("lists only the newest 100 Games, newest first, with how many there are in all", async () => {
     await server.ongoingGame();
     const host = await server.playerWithNoGame();
     for (let i = 0; i < 100; i++) {
@@ -118,8 +131,9 @@ describe("the debug list of Games", () => {
       if (i < 99) await host.leaveGame();
     }
 
-    const { games } = await server.debugGames();
+    const { total, games } = await server.debugGames();
 
+    expect(total).toBe(101);
     expect(games).toHaveLength(100);
     expect(games[0]?.state).toBe("lobby");
     // The ongoing Game was created first, so it's the one left out.
@@ -141,7 +155,10 @@ describe("the result of a Game in the debug list", () => {
     const game = await newestGame();
 
     const winningLine = [0, 1, 2, 3, 4].map((column) => ({ row: 0, column }));
-    expect(game).toMatchObject({ state: "won", result: { outcome: "won", winner: "host", winningLine } });
+    expect(game).toMatchObject({
+      state: "won",
+      board: { turn: null, result: { outcome: "won", winner: "host", winningLine } },
+    });
   });
 
   it("shows who used Leave game", async () => {
@@ -153,11 +170,11 @@ describe("the result of a Game in the debug list", () => {
     expect(game).toMatchObject({
       state: "abandoned",
       gameCode: null,
-      result: { outcome: "abandoned", leaver: "joiner" },
+      board: { turn: null, result: { outcome: "abandoned", leaver: "joiner" } },
     });
   });
 
-  it("shows a Draw, with a Turn for every Cell of the Board", async () => {
+  it("shows a Draw, with a Stone on every Cell of the Board", async () => {
     const { host, joiner } = await server.ongoingGame();
     const cells = drawnBoard();
     for (let i = 0; i < cells.host.length; i++) {
@@ -167,17 +184,18 @@ describe("the result of a Game in the debug list", () => {
 
     const game = await newestGame();
 
-    expect(game).toMatchObject({ state: "draw", result: { outcome: "draw" } });
-    expect(game.turns).toHaveLength(boardSize * boardSize);
+    expect(game).toMatchObject({ state: "draw", board: { result: { outcome: "draw" } } });
+    expect(game.board?.stones).toHaveLength(boardSize * boardSize);
   });
 
-  it("shows no result for a Game abandoned in the Lobby", async () => {
+  it("shows no Board, so no result, for a Game abandoned in the Lobby", async () => {
     const { host } = await server.hostInLobby();
     await host.leaveGame();
 
     const game = await newestGame();
 
-    expect(game).toMatchObject({ state: "abandoned", gameCode: null, joiner: null, result: null });
+    expect(game).toMatchObject({ state: "abandoned", gameCode: null, players: [{ role: "host" }], board: null });
+    expect(game.players).toHaveLength(1);
   });
 });
 

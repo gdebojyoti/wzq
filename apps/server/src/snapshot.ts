@@ -60,10 +60,10 @@ export const toSpectatorSnapshot = (game: Game, isConnected: (playerId: string) 
 };
 
 /** Whose Turn it is once this many Turns have been taken, named as the Host or the Joiner. */
-export const roleAfter = (turnsTaken: number): Role => (isPlayersTurn(true, turnsTaken) ? "host" : "joiner");
+const roleAfter = (turnsTaken: number): Role => (isPlayersTurn(true, turnsTaken) ? "host" : "joiner");
 
 /** Names each of the Game's Players as the Host or the Joiner. */
-export const roleIn = (game: Game) => (playerId: string): Role => (playerId === game.hostId ? "host" : "joiner");
+const roleIn = (game: Game) => (playerId: string): Role => (playerId === game.hostId ? "host" : "joiner");
 
 /** How the Game ended, as this Player sees it, or null if it hasn't. */
 const resultFor = (game: Game, playerId: string): GameResult | null => {

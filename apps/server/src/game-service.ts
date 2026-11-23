@@ -119,7 +119,13 @@ export const createGameService = (
 
   const findLastGame = oneAtATime((playerId: string) => store.findLastGameByPlayer(playerId));
 
-  const findNewestGames = oneAtATime((limit: number) => store.findNewestGames(limit));
+  /**
+   * The newest Games, up to `limit` of them, with how many Games there are in all. It's queued with the commands,
+   * so the count and the Games are read with no command between them.
+   */
+  const findNewestGames = oneAtATime(async (limit: number) => {
+    return { total: await store.countGames(), games: await store.findNewestGames(limit) };
+  });
 
   return {
     createGame,

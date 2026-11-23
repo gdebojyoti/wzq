@@ -17,7 +17,7 @@ import {
   type SpectatorSnapshot,
 } from "@wzq/shared";
 
-import type { DebugGame } from "./debug-games.js";
+import type { DebugGames } from "./debug-games.js";
 import { playerIdCookieName } from "./identity.js";
 import { createGameServer, type GameServerOptions } from "./server.js";
 
@@ -123,8 +123,8 @@ export interface TestServer {
     browsers: { host: Player; joiner: Player };
     gameId: string;
   }>;
-  /** Opens `/debug/games` as a browser does, and returns the body as it was sent and as JSON. */
-  debugGames: () => Promise<{ body: string; games: DebugGame[] }>;
+  /** Opens `/debug/games` as a browser does, and returns the body as it was sent, and the list in it. */
+  debugGames: () => Promise<{ body: string } & DebugGames>;
   close: () => Promise<void>;
 }
 
@@ -281,7 +281,7 @@ export const startServer = async (options?: GameServerOptions): Promise<TestServ
     const response = await fetch(`${url}/debug/games`);
     if (!response.ok) throw new Error(`/debug/games answered ${response.status}`);
     const body = await response.text();
-    return { body, games: JSON.parse(body) };
+    return { body, ...(JSON.parse(body) as DebugGames) };
   };
 
   const close = async () => {
