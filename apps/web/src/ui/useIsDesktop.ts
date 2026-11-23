@@ -10,7 +10,8 @@ const subscribe = (onChange: () => void) => {
   return () => query.removeEventListener("change", onChange);
 };
 
-const isDesktop = () => window.matchMedia(desktopQuery).matches;
+/** Whether the window is wide enough for the desktop layout right now. */
+export const isDesktop = () => window.matchMedia(desktopQuery).matches;
 
 /** Whether the window is wide enough for the desktop layout, kept up to date as it's resized. */
 export const useIsDesktop = () => useSyncExternalStore(subscribe, isDesktop);
