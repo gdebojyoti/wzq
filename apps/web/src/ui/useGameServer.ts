@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { gameCodeLength } from "@wzq/shared";
 import type { Acknowledgement, Cell, GameSnapshot, SpectatorSnapshot } from "@wzq/shared";
+import { track } from "./analytics";
 import { gameCodeInAddress, isGameCode, removeJoinLinkFromAddress } from "./joinLink";
 import { rejectionMessages, startMessages } from "./messages";
 import { connectToServer, type GameSocket } from "./socket";
+import { useGameAnalytics } from "./useGameAnalytics";
 import { removeWatchLinkFromAddress, watchedGameIdInAddress } from "./watchLink";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
@@ -28,6 +30,7 @@ export const useGameServer = () => {
   const [busy, setBusy] = useState(false);
   // The code from a join link that didn't work, filled in on the start screen so it can be fixed by hand.
   const [gameCodeFromLink, setGameCodeFromLink] = useState("");
+  const { joined } = useGameAnalytics(game, watched);
   // The Game on screen, for the socket's handlers, which are set up once.
   const shownGameRef = useRef(game);
   useEffect(() => {
@@ -79,7 +82,10 @@ export const useGameServer = () => {
           // No reply if the connection drops first. If the server joined the Game anyway, it sends it when the
           // connection comes back.
           const reply = await socket.emitWithAck("joinGame", gameCode).catch(() => undefined);
-          if (reply?.ok) return setGame(reply.game);
+          if (reply?.ok) {
+            joined("link");
+            return setGame(reply.game);
+          }
           // A Game of the Player's own arrived meanwhile, such as one they started in another tab.
           if (gamesReceived !== gamesBefore) return;
           setError(reply ? rejectionMessages[reply.reason] : startMessages.joinLinkNoReply);
@@ -128,7 +134,8 @@ export const useGameServer = () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, []);
+    // joined never changes, so this runs once.
+  }, [joined]);
 
   const send = async <Result extends object>(command: (socket: GameSocket) => Promise<Acknowledgement<Result>>) => {
     const socket = socketRef.current;
@@ -146,15 +153,20 @@ export const useGameServer = () => {
     }
   };
 
-  // Sends a command that puts the Player in a Game, and shows the Game from its reply.
+  // Sends a command that puts the Player in a Game, and shows the Game from its reply. Says whether it worked.
   const enterGame = async (command: (socket: GameSocket) => Promise<Acknowledgement<{ game: GameSnapshot }>>) => {
     const reply = await send(command);
     if (reply?.ok) setGame(reply.game);
+    return !!reply?.ok;
   };
 
-  const createGame = () => enterGame((socket) => socket.emitWithAck("createGame"));
+  const createGame = async () => {
+    if (await enterGame((socket) => socket.emitWithAck("createGame"))) track("game_created");
+  };
 
-  const joinGame = (gameCode: string) => enterGame((socket) => socket.emitWithAck("joinGame", gameCode));
+  const joinGame = async (gameCode: string) => {
+    if (await enterGame((socket) => socket.emitWithAck("joinGame", gameCode))) joined("code");
+  };
 
   // On success the server sends the abandoned Game. From the lobby, the Host goes back to the start screen; during
   // play, both Players see the result on the game screen.
@@ -165,6 +177,7 @@ export const useGameServer = () => {
 
   // Leaves a Game that has ended for the start screen. The server sends nothing more about it.
   const backToStart = () => {
+    if (game?.result) track("back_to_start", { outcome: game.result.outcome });
     setError(undefined);
     setGame(null);
   };
@@ -172,6 +185,9 @@ export const useGameServer = () => {
   // "Stop watching", or "Back to start" once the watched Game has ended: back to the start screen, and the server
   // sends this tab nothing more about the Game.
   const stopWatching = () => {
+    // Stop watching while the Game goes on, or Back to start once it has ended.
+    const ended = watched?.state !== "lobby" && watched?.state !== "ongoing";
+    track("watch_stop", { via: ended ? "back_to_start" : "stop" });
     removeWatchLinkFromAddress();
     setWatched(null);
     setNotice(undefined);

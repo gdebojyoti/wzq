@@ -10,6 +10,7 @@ import PlayerList from "./PlayerList";
 import PlayerRow from "./PlayerRow";
 import SidebarHeader from "./SidebarHeader";
 import StoneMark from "./StoneMark";
+import { track } from "./analytics";
 import { gameMessages, lobbyMessages } from "./messages";
 import { joinLinkFor } from "./joinLink";
 import type { ConnectionStatus } from "./useGameServer";
@@ -28,6 +29,9 @@ interface Props {
 
 /** What the Host can copy to share the Game. */
 type Copyable = "joinLink" | "code" | "watchLink";
+
+// What the link_copied event calls each.
+const copyableNames: Record<Copyable, string> = { joinLink: "join_link", code: "code", watchLink: "watch_link" };
 
 // How long a copy button shows that it worked.
 const copiedFor = 2000;
@@ -49,6 +53,7 @@ export default function LobbyScreen({ game, status, disabled, error, notice, onL
     try {
       await navigator.clipboard.writeText(text);
       setCopied(what);
+      track("link_copied", { what: copyableNames[what] });
     } catch {
       // The browser refused. The code is on screen to copy by hand, and either button can be tried again.
     }
